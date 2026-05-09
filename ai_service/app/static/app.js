@@ -493,8 +493,8 @@ authForm.addEventListener("submit", (event) => {
   const password = String(formData.get("password") || "");
 
   if (!email.endsWith("@cgi.com")) {
-    setAuthError("Email incorrect. Utilisez une adresse au format xxx@cgi.com.");
-    emailInput.setCustomValidity("Seules les adresses email @cgi.com sont acceptées.");
+    setAuthError("Email incorrect.");
+    emailInput.setCustomValidity("Email incorrect.");
     emailInput.reportValidity();
     return;
   }
@@ -502,7 +502,7 @@ authForm.addEventListener("submit", (event) => {
   emailInput.setCustomValidity("");
 
   if (password.length < 6) {
-    setAuthError("Mot de passe incorrect. Il doit contenir au moins 6 caractères.");
+    setAuthError("Mot de passe incorrect.");
     passwordInput.setCustomValidity("Mot de passe incorrect.");
     passwordInput.reportValidity();
     return;
