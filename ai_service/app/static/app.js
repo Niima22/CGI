@@ -450,6 +450,14 @@ function updateScrollTopButton() {
   backToTopButton.classList.toggle("is-hidden", workspace.scrollTop < 160);
 }
 
+function resetAgentForm() {
+  agentForm.reset();
+  ticketActions = [];
+  renderActionList();
+  lastGeneratedFrame = "";
+  resolutionOutput.textContent = "La trame générée apparaîtra ici.";
+}
+
 authTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     authMode = tab.dataset.authMode;
@@ -522,11 +530,7 @@ navItems.forEach((item) => {
 });
 
 newTicketButton.addEventListener("click", () => {
-  agentForm.reset();
-  ticketActions = [];
-  renderActionList();
-  lastGeneratedFrame = "";
-  resolutionOutput.textContent = "La trame générée apparaîtra ici.";
+  resetAgentForm();
   copyFeedback.textContent = "";
   setView("agent");
 });
@@ -561,7 +565,8 @@ copyResolutionButton.addEventListener("click", async () => {
 
   try {
     await navigator.clipboard.writeText(lastGeneratedFrame);
-    copyFeedback.textContent = "Trame copiée.";
+    resetAgentForm();
+    copyFeedback.textContent = "Trame copiée. Le formulaire a été vidé.";
   } catch (error) {
     copyFeedback.textContent = "Copie impossible depuis ce navigateur.";
   }
