@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analyse Lab</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="auth-shell" id="auth-screen">
+      <section class="auth-hero" aria-label="Product identity">
+        <img class="auth-logo" src="/static/cgi-logo.png" alt="CGI" />
+        <div>
+          <h1>Analyse Lab</h1>
+          <p>Prototype sécurisé pour générer et analyser les trames de résolution des tickets.</p>
+        </div>
+      </section>
+
+      <section class="auth-panel" aria-label="Authentication">
+        <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+          <button class="auth-tab active" type="button" data-auth-mode="login">Login</button>
+          <button class="auth-tab" type="button" data-auth-mode="signup">Sign up</button>
+        </div>
+
+        <form class="auth-form" id="auth-form">
+          <div>
+            <span class="form-label">Role</span>
+            <div class="role-grid" role="radiogroup" aria-label="Choose account type">
+              <label class="role-card active">
+                <input type="radio" name="role" value="Employee" checked />
+                <strong>Agent</strong>
+                <span>Générer une trame claire avant clôture du ticket.</span>
+              </label>
+              <label class="role-card">
+                <input type="radio" name="role" value="Supervisor" />
+                <strong>Superviseur</strong>
+                <span>Analyser la qualité et la cohérence du traitement.</span>
+              </label>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="form-label">Email</span>
+            <input type="email" name="email" placeholder="name@company.com" required />
+          </label>
+
+          <label class="field">
+            <span class="form-label">Mot de passe</span>
+            <input type="password" name="password" placeholder="Entrer le mot de passe" required />
+          </label>
+
+          <label class="field signup-only" hidden>
+            <span class="form-label">Nom complet</span>
+            <input type="text" name="full_name" placeholder="Votre nom complet" />
+          </label>
+
+          <button class="auth-submit" type="submit">Continuer</button>
+          <p class="auth-note">Prototype uniquement. Aucun compte n'est créé et aucun mot de passe n'est stocké.</p>
+        </form>
+      </section>
+    </main>
+
+    <main class="app-shell is-hidden" id="app-screen">
+      <aside class="sidebar" aria-label="Conversation history">
+        <div class="brand">
+          <button class="brand-logo-button" type="button" id="sidebar-toggle" aria-label="Réduire le menu" aria-expanded="true">
+            <img class="brand-logo" src="/static/cgi-logo.png" alt="CGI" />
+          </button>
+          <div>
+            <strong>Analyse Lab</strong>
+            <span>Analyse assistée tickets</span>
+          </div>
+        </div>
+
+        <button class="new-chat" type="button" id="new-chat" title="Nouvelle trame">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+          </span>
+          <span class="nav-label">Nouvelle trame</span>
+        </button>
+
+        <nav class="history" aria-label="Recent drafts">
+          <button type="button" class="history-item active" data-view="agent" title="Partie Agent">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
+            </span>
+            <span class="nav-label">Partie Agent</span>
+          </button>
+          <button type="button" class="history-item" data-view="supervisor" title="Partie Superviseur">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z" /><path d="M9 12l2 2 4-5" /></svg>
+            </span>
+            <span class="nav-label">Partie Superviseur</span>
+          </button>
+          <button type="button" class="history-item" data-view="saved" title="Analyses validées">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+            </span>
+            <span class="nav-label">Analyses validées</span>
+          </button>
+        </nav>
+
+      </aside>
+
+      <section class="chat-panel" aria-label="Analyse Lab">
+        <header class="topbar">
+          <div>
+            <h1>Analyse IA des tickets</h1>
+            <p id="role-context">Module fonctionnel de génération et revue des trames de résolution.</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="theme-toggle" type="button" id="theme-toggle" aria-pressed="false">
+              <span class="theme-toggle-track">
+                <span class="theme-toggle-thumb"></span>
+              </span>
+              <span id="theme-toggle-label">Dark mode</span>
+            </button>
+            <div class="user-menu">
+              <button class="status-pill role-menu-button" type="button" id="role-menu-button" aria-expanded="false">
+                <span id="role-pill">Prototype</span>
+              </button>
+              <div class="role-menu is-hidden" id="role-menu">
+                <button type="button" id="logout-button">Se déconnecter</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="workspace" id="workspace">
+          <section class="module-view" id="agent-view" aria-label="Partie Agent">
+            <form class="ticket-form" id="agent-ticket-form">
+              <div class="section-head">
+                <h2>Formulaire agent</h2>
+                <p>Remplir les informations du ticket pour générer une trame de résolution.</p>
+              </div>
+
+              <label class="field">
+                <span class="form-label">Titre du ticket *</span>
+                <input type="text" name="title" placeholder="Ex: VPN inaccessible après changement de mot de passe" required />
+              </label>
+
+              <label class="field">
+                <span class="form-label">Bannette / département concerné *</span>
+                <select name="department" required>
+                  <option value="">Sélectionner une bannette</option>
+                  <option>DS Magasin</option>
+                  <option>Matériel</option>
+                  <option>Réseau</option>
+                  <option>Autre</option>
+                </select>
+              </label>
+
+              <label class="field field-wide">
+                <span class="form-label">Synthèse du problème *</span>
+                <textarea name="summary" rows="4" placeholder="Décrire clairement la problématique signalée dans le ticket." required></textarea>
+              </label>
+
+              <div class="field field-wide">
+                <span class="form-label">Actions réalisées *</span>
+                <div class="action-entry">
+                  <input
+                    type="text"
+                    id="action-input"
+                    placeholder="Ex: Vérification de l'état du service"
+                    autocomplete="off"
+                  />
+                  <button class="send-button action-add-button" type="button" id="add-action">Ajouter l'action</button>
+                </div>
+                <ol class="action-list" id="action-list" aria-label="Actions ajoutées"></ol>
+                <p class="validation-feedback" id="actions-feedback" aria-live="polite"></p>
+              </div>
+
+              <label class="field">
+                <span class="form-label">Outils utilisés</span>
+                <input type="text" name="tools" placeholder="Ex: GLPI, VPN Console, Active Directory" />
+              </label>
+
+              <label class="field">
+                <span class="form-label">Partie concernée</span>
+                <select name="concerned_party">
+                  <option value="">Sélectionner une partie</option>
+                  <option>Utilisateur / Utilisatrice</option>
+                  <option>Agent</option>
+                  <option>Application</option>
+                  <option>Poste de travail</option>
+                  <option>Magasin</option>
+                  <option>Équipement</option>
+                  <option>Serveur</option>
+                  <option>Autre</option>
+                </select>
+              </label>
+
+              <label class="field field-wide">
+                <span class="form-label">Résultat obtenu *</span>
+                <textarea name="result" rows="3" placeholder="Expliquer le résultat après intervention." required></textarea>
+              </label>
+
+              <label class="field">
+                <span class="form-label">Statut final du ticket *</span>
+                <select name="final_status" required>
+                  <option value="">Sélectionner un statut</option>
+                  <option>Résolu</option>
+                  <option>Non résolu</option>
+                  <option>Transféré</option>
+                  <option>Escaladé</option>
+                </select>
+              </label>
+
+              <div class="form-actions field-wide">
+                <button class="send-button" type="submit">Générer la trame de résolution</button>
+              </div>
+            </form>
+
+            <section class="result-panel" aria-label="Trame générée">
+              <div class="section-head">
+                <h2>Trame générée</h2>
+                <p>Copier cette trame dans le ticket initial avant clôture.</p>
+              </div>
+              <pre class="resolution-output" id="resolution-output">La trame générée apparaîtra ici.</pre>
+              <button class="send-button copy-button" type="button" id="copy-resolution">Copier la trame</button>
+              <p class="copy-feedback" id="copy-feedback" aria-live="polite"></p>
+            </section>
+          </section>
+
+          <section class="module-view is-hidden" id="supervisor-view" aria-label="Partie Superviseur">
+            <div class="section-head">
+              <h2>Revue superviseur</h2>
+              <p>Analyser les traitements des tickets générés par les agents.</p>
+            </div>
+            <div class="ticket-review-list" id="ticket-review-list"></div>
+          </section>
+
+          <section class="module-view is-hidden" id="saved-view" aria-label="Analyses validées">
+            <div class="section-head">
+              <h2>Analyses validées</h2>
+              <p>Liste locale des validations superviseur sauvegardées pendant cette session.</p>
+            </div>
+            <div class="ticket-review-list" id="saved-analysis-list"></div>
+          </section>
+          <footer class="platform-footer" aria-label="Informations plateforme">
+            <div>
+              <strong>Analyse Lab</strong>
+              <span>Module IA tickets · Prototype local · v0.1</span>
+            </div>
+            <div class="footer-links">
+              <a href="/health" target="_blank" rel="noreferrer">Health</a>
+              <a href="/docs" target="_blank" rel="noreferrer">API Docs</a>
+              <span>Données mockées</span>
+            </div>
+          </footer>
+        </div>
+        <footer class="platform-footer app-footer" aria-label="Informations plateforme">
+          <span>© 2026 CGI</span>
+          <a href="https://www.cgi.com" target="_blank" rel="noreferrer">CGI website</a>
+          <a href="https://www.linkedin.com/company/cgi" target="_blank" rel="noreferrer">LinkedIn</a>
+        </footer>
+        <button class="scroll-top-button is-hidden" type="button" id="back-to-top" aria-label="Retour en haut">↑</button>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
