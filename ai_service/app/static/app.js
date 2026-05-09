@@ -467,6 +467,16 @@ authForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const formData = new FormData(authForm);
+  const emailInput = authForm.elements.email;
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+
+  if (!email.endsWith("@cgi.com")) {
+    emailInput.setCustomValidity("Seules les adresses email @cgi.com sont acceptées.");
+    emailInput.reportValidity();
+    return;
+  }
+
+  emailInput.setCustomValidity("");
   currentRole = formData.get("role") || "Employee";
   const isSupervisor = currentRole === "Supervisor";
 

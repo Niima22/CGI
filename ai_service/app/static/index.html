@@ -41,7 +41,14 @@
 
           <label class="field">
             <span class="form-label">Email</span>
-            <input type="email" name="email" placeholder="name@company.com" required />
+            <input
+              type="email"
+              name="email"
+              placeholder="name@cgi.com"
+              pattern="^[A-Za-z0-9._%+-]+@cgi\.com$"
+              title="Utiliser une adresse email CGI au format nom@cgi.com"
+              required
+            />
           </label>
 
           <label class="field">
