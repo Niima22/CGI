@@ -53,7 +53,7 @@
 
           <label class="field">
             <span class="form-label">Mot de passe</span>
-            <input type="password" name="password" placeholder="Entrer le mot de passe" required />
+            <input type="password" name="password" placeholder="Entrer le mot de passe" minlength="6" required />
           </label>
 
           <label class="field signup-only" hidden>
@@ -62,6 +62,7 @@
           </label>
 
           <button class="auth-submit" type="submit">Continuer</button>
+          <p class="auth-error" id="auth-error" aria-live="polite"></p>
           <p class="auth-note">Prototype uniquement. Aucun compte n'est créé et aucun mot de passe n'est stocké.</p>
         </form>
       </section>

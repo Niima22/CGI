@@ -238,6 +238,14 @@ select {
   font-size: 13px;
 }
 
+.auth-error {
+  min-height: 18px;
+  margin: -4px 0 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);

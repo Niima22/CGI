@@ -2,6 +2,7 @@ const authScreen = document.querySelector("#auth-screen");
 const appScreen = document.querySelector("#app-screen");
 const sidebarToggle = document.querySelector("#sidebar-toggle");
 const authForm = document.querySelector("#auth-form");
+const authError = document.querySelector("#auth-error");
 const authTabs = document.querySelectorAll("[data-auth-mode]");
 const signupOnlyFields = document.querySelectorAll(".signup-only");
 const roleCards = document.querySelectorAll(".role-card");
@@ -73,6 +74,10 @@ let generatedTickets = [
   },
 ];
 let savedAnalyses = [];
+
+function setAuthError(message) {
+  authError.textContent = message;
+}
 
 function applySidebarState(isCollapsed) {
   appScreen.classList.toggle("sidebar-collapsed", isCollapsed);
@@ -456,6 +461,13 @@ authTabs.forEach((tab) => {
   });
 });
 
+["email", "password"].forEach((fieldName) => {
+  authForm.elements[fieldName].addEventListener("input", () => {
+    authForm.elements[fieldName].setCustomValidity("");
+    setAuthError("");
+  });
+});
+
 roleCards.forEach((card) => {
   card.addEventListener("click", () => {
     roleCards.forEach((item) => item.classList.remove("active"));
@@ -468,15 +480,28 @@ authForm.addEventListener("submit", (event) => {
 
   const formData = new FormData(authForm);
   const emailInput = authForm.elements.email;
+  const passwordInput = authForm.elements.password;
   const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
 
   if (!email.endsWith("@cgi.com")) {
+    setAuthError("Email incorrect. Utilisez une adresse au format xxx@cgi.com.");
     emailInput.setCustomValidity("Seules les adresses email @cgi.com sont acceptées.");
     emailInput.reportValidity();
     return;
   }
 
   emailInput.setCustomValidity("");
+
+  if (password.length < 6) {
+    setAuthError("Mot de passe incorrect. Il doit contenir au moins 6 caractères.");
+    passwordInput.setCustomValidity("Mot de passe incorrect.");
+    passwordInput.reportValidity();
+    return;
+  }
+
+  passwordInput.setCustomValidity("");
+  setAuthError("");
   currentRole = formData.get("role") || "Employee";
   const isSupervisor = currentRole === "Supervisor";
 
@@ -578,6 +603,7 @@ document.addEventListener("click", (event) => {
 
 logoutButton.addEventListener("click", () => {
   authForm.reset();
+  setAuthError("");
   roleCards.forEach((item, index) => {
     item.classList.toggle("active", index === 0);
   });
