@@ -235,13 +235,17 @@
               <h2>Revue superviseur</h2>
               <p>Analyser les traitements des tickets générés par les agents.</p>
             </div>
+            <div class="dashboard-grid" id="supervisor-dashboard" aria-label="Dashboard superviseur"></div>
             <div class="ticket-review-list" id="ticket-review-list"></div>
           </section>
 
           <section class="module-view is-hidden" id="saved-view" aria-label="Analyses validées">
-            <div class="section-head">
-              <h2>Analyses validées</h2>
-              <p>Liste locale des validations superviseur sauvegardées pendant cette session.</p>
+            <div class="section-head section-head-row">
+              <div>
+                <h2>Analyses validées</h2>
+                <p>Liste locale des validations superviseur sauvegardées pendant cette session.</p>
+              </div>
+              <button class="send-button" type="button" id="export-csv">Exporter CSV</button>
             </div>
             <div class="ticket-review-list" id="saved-analysis-list"></div>
           </section>

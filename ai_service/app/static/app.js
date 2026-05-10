@@ -27,6 +27,8 @@ const copyFeedback = document.querySelector("#copy-feedback");
 const workspace = document.querySelector("#workspace");
 const ticketReviewList = document.querySelector("#ticket-review-list");
 const savedAnalysisList = document.querySelector("#saved-analysis-list");
+const supervisorDashboard = document.querySelector("#supervisor-dashboard");
+const exportCsvButton = document.querySelector("#export-csv");
 const actionInput = document.querySelector("#action-input");
 const addActionButton = document.querySelector("#add-action");
 const actionList = document.querySelector("#action-list");
@@ -138,6 +140,133 @@ function createTicketFromForm(formData) {
 
   ticket.resolutionFrame = buildResolutionFrame(ticket);
   return ticket;
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "").replace(/\r?\n/g, " ");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadCsv(filename, rows) {
+  const csvContent = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([`\uFEFF${csvContent}`], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportAnalysesCsv() {
+  if (!savedAnalyses.length) {
+    return;
+  }
+
+  const rows = [
+    [
+      "Ticket",
+      "Bannette",
+      "Synthèse du problème",
+      "Actions réalisées",
+      "Outils utilisés",
+      "Partie concernée",
+      "Résultat obtenu",
+      "Statut final",
+      "Trame de résolution",
+      "Type de résolution",
+      "Statut OK / KO",
+      "Commentaire superviseur",
+      "Date de validation",
+    ],
+    ...savedAnalyses.map((analysis) => [
+      analysis.ticket.title,
+      analysis.ticket.department,
+      analysis.ticket.summary,
+      formatActionsForDisplay(analysis.ticket.actions),
+      analysis.ticket.tools,
+      analysis.ticket.concernedParty,
+      analysis.ticket.result,
+      analysis.ticket.finalStatus,
+      analysis.resolutionFrame,
+      analysis.resolutionType,
+      analysis.analysisStatus,
+      analysis.supervisorComment,
+      analysis.validatedAt,
+    ]),
+  ];
+
+  downloadCsv("analyse-lab-validations.csv", rows);
+}
+
+function countBy(items, getKey) {
+  return items.reduce((accumulator, item) => {
+    const key = getKey(item) || "Non renseigné";
+    accumulator[key] = (accumulator[key] || 0) + 1;
+    return accumulator;
+  }, {});
+}
+
+function formatBreakdown(counts) {
+  const entries = Object.entries(counts);
+
+  if (!entries.length) {
+    return "Aucune donnée";
+  }
+
+  return entries.map(([key, count]) => `${key}: ${count}`).join(" · ");
+}
+
+function renderDashboard() {
+  const totalTickets = generatedTickets.length;
+  const totalAnalyses = savedAnalyses.length;
+  const okCount = savedAnalyses.filter((analysis) => analysis.analysisStatus === "OK").length;
+  const koCount = savedAnalyses.filter((analysis) => analysis.analysisStatus === "KO").length;
+  const incompleteCount = savedAnalyses.filter((analysis) =>
+    ["Résolution incomplète", "Résolution non justifiée", "Traitement à revoir"].includes(analysis.resolutionType)
+  ).length;
+  const incompleteRate = totalAnalyses ? Math.round((incompleteCount / totalAnalyses) * 100) : 0;
+  const departments = countBy(generatedTickets, (ticket) => ticket.department);
+
+  const cards = [
+    {
+      value: totalTickets,
+      label: "Tickets disponibles",
+      helper: "Tickets mockés + trames générées",
+    },
+    {
+      value: totalAnalyses,
+      label: "Tickets analysés",
+      helper: `${okCount} OK · ${koCount} KO`,
+    },
+    {
+      value: `${incompleteRate}%`,
+      label: "Traitements à risque",
+      helper: `${incompleteCount} analyse(s) incomplète(s) ou à revoir`,
+    },
+    {
+      value: Object.keys(departments).length,
+      label: "Bannettes",
+      helper: formatBreakdown(departments),
+    },
+  ];
+
+  supervisorDashboard.innerHTML = "";
+  cards.forEach((card) => {
+    const article = document.createElement("article");
+    article.className = "dashboard-card";
+    article.innerHTML = `
+      <strong>${card.value}</strong>
+      <span>${card.label}</span>
+      <small>${card.helper}</small>
+    `;
+    supervisorDashboard.appendChild(article);
+  });
 }
 
 function formatActionsForDisplay(actions) {
@@ -274,6 +403,7 @@ function setView(viewName) {
   });
 
   if (viewName === "supervisor") {
+    renderDashboard();
     renderSupervisorTickets();
   }
 
@@ -385,6 +515,7 @@ function createTicketCard(ticket) {
 
     savedAnalyses.unshift(analysis);
     feedback.textContent = `Analyse sauvegardée le ${analysis.validatedAt}.`;
+    renderDashboard();
     renderSavedAnalyses();
   });
 
@@ -410,6 +541,7 @@ function renderSupervisorTickets() {
 
 function renderSavedAnalyses() {
   savedAnalysisList.innerHTML = "";
+  exportCsvButton.disabled = !savedAnalyses.length;
 
   if (!savedAnalyses.length) {
     const empty = document.createElement("p");
@@ -553,6 +685,7 @@ agentForm.addEventListener("submit", (event) => {
   lastGeneratedFrame = ticket.resolutionFrame;
   resolutionOutput.textContent = lastGeneratedFrame;
   copyFeedback.textContent = "Trame générée et ajoutée à la liste superviseur.";
+  renderDashboard();
   renderSupervisorTickets();
   scrollToResultPanel();
 });
@@ -575,6 +708,7 @@ copyResolutionButton.addEventListener("click", async () => {
 backToTopButton.addEventListener("click", scrollWorkspaceToTop);
 
 workspace.addEventListener("scroll", updateScrollTopButton);
+exportCsvButton.addEventListener("click", exportAnalysesCsv);
 
 addActionButton.addEventListener("click", addAction);
 
@@ -624,6 +758,7 @@ logoutButton.addEventListener("click", () => {
 applyTheme(localStorage.getItem("analyse-lab-theme") || "light");
 applySidebarState(localStorage.getItem("analyse-lab-sidebar-collapsed") === "true");
 renderActionList();
+renderDashboard();
 renderSupervisorTickets();
 renderSavedAnalyses();
 updateScrollTopButton();

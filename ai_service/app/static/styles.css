@@ -575,6 +575,7 @@ body.dark-mode .field select,
 body.dark-mode .field textarea,
 body.dark-mode .ticket-form,
 body.dark-mode .result-panel,
+body.dark-mode .dashboard-card,
 body.dark-mode .ticket-card,
 body.dark-mode .empty-state,
 body.dark-mode .resolution-output,
@@ -695,6 +696,11 @@ body.dark-mode .resolution-output {
   background: var(--brand-gradient-hover);
 }
 
+.send-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .workspace {
   overflow-y: auto;
   scroll-behavior: smooth;
@@ -709,6 +715,7 @@ body.dark-mode .resolution-output {
 
 .ticket-form,
 .result-panel,
+.dashboard-card,
 .ticket-card,
 .empty-state {
   border: 1px solid var(--line);
@@ -740,6 +747,43 @@ body.dark-mode .resolution-output {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.45;
+}
+
+.section-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-card {
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+}
+
+.dashboard-card strong {
+  color: var(--text);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.dashboard-card span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-card small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .field-wide,
@@ -1117,9 +1161,15 @@ body.dark-mode .footer-links span {
   }
 
   .ticket-form,
+  .dashboard-grid,
   .ticket-detail-grid,
   .analysis-form {
     grid-template-columns: 1fr;
+  }
+
+  .section-head-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .ticket-card-header {
