@@ -28,7 +28,9 @@ const workspace = document.querySelector("#workspace");
 const ticketReviewList = document.querySelector("#ticket-review-list");
 const savedAnalysisList = document.querySelector("#saved-analysis-list");
 const supervisorDashboard = document.querySelector("#supervisor-dashboard");
+const savedDashboard = document.querySelector("#saved-dashboard");
 const exportCsvButton = document.querySelector("#export-csv");
+const exportFeedback = document.querySelector("#export-feedback");
 const actionInput = document.querySelector("#action-input");
 const addActionButton = document.querySelector("#add-action");
 const actionList = document.querySelector("#action-list");
@@ -165,6 +167,7 @@ function downloadCsv(filename, rows) {
 
 function exportAnalysesCsv() {
   if (!savedAnalyses.length) {
+    exportFeedback.textContent = "Aucune analyse validée à exporter.";
     return;
   }
 
@@ -202,6 +205,7 @@ function exportAnalysesCsv() {
   ];
 
   downloadCsv("analyse-lab-validations.csv", rows);
+  exportFeedback.textContent = "Export CSV généré.";
 }
 
 function countBy(items, getKey) {
@@ -222,7 +226,7 @@ function formatBreakdown(counts) {
   return entries.map(([key, count]) => `${key}: ${count}`).join(" · ");
 }
 
-function renderDashboard() {
+function renderDashboardCards(container) {
   const totalTickets = generatedTickets.length;
   const totalAnalyses = savedAnalyses.length;
   const okCount = savedAnalyses.filter((analysis) => analysis.analysisStatus === "OK").length;
@@ -256,7 +260,7 @@ function renderDashboard() {
     },
   ];
 
-  supervisorDashboard.innerHTML = "";
+  container.innerHTML = "";
   cards.forEach((card) => {
     const article = document.createElement("article");
     article.className = "dashboard-card";
@@ -265,8 +269,13 @@ function renderDashboard() {
       <span>${card.label}</span>
       <small>${card.helper}</small>
     `;
-    supervisorDashboard.appendChild(article);
+    container.appendChild(article);
   });
+}
+
+function renderDashboard() {
+  renderDashboardCards(supervisorDashboard);
+  renderDashboardCards(savedDashboard);
 }
 
 function formatActionsForDisplay(actions) {
@@ -408,6 +417,7 @@ function setView(viewName) {
   }
 
   if (viewName === "saved") {
+    renderDashboard();
     renderSavedAnalyses();
   }
 }
@@ -515,6 +525,7 @@ function createTicketCard(ticket) {
 
     savedAnalyses.unshift(analysis);
     feedback.textContent = `Analyse sauvegardée le ${analysis.validatedAt}.`;
+    exportFeedback.textContent = "";
     renderDashboard();
     renderSavedAnalyses();
   });
@@ -541,7 +552,6 @@ function renderSupervisorTickets() {
 
 function renderSavedAnalyses() {
   savedAnalysisList.innerHTML = "";
-  exportCsvButton.disabled = !savedAnalyses.length;
 
   if (!savedAnalyses.length) {
     const empty = document.createElement("p");
