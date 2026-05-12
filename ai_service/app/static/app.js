@@ -87,7 +87,7 @@ function applySidebarState(isCollapsed) {
   appScreen.classList.toggle("sidebar-collapsed", isCollapsed);
   sidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
   sidebarToggle.setAttribute("aria-label", isCollapsed ? "Ouvrir le menu" : "Réduire le menu");
-  localStorage.setItem("analyse-lab-sidebar-collapsed", String(isCollapsed));
+  localStorage.setItem("quality-lab-sidebar-collapsed", String(isCollapsed));
 }
 
 function applyTheme(theme) {
@@ -96,7 +96,7 @@ function applyTheme(theme) {
   document.body.classList.toggle("dark-mode", isDark);
   themeToggle.setAttribute("aria-pressed", String(isDark));
   themeToggleLabel.textContent = isDark ? "Light mode" : "Dark mode";
-  localStorage.setItem("analyse-lab-theme", theme);
+  localStorage.setItem("quality-lab-theme", theme);
 }
 
 function formValue(formData, key, fallback = "Non renseigné") {
@@ -209,7 +209,7 @@ function exportAnalysesCsv() {
     ]),
   ];
 
-  downloadCsv("analyse-lab-validations.csv", rows);
+  downloadCsv("quality-lab-validations.csv", rows);
   exportFeedback.textContent = "Export CSV généré.";
 }
 
@@ -772,8 +772,8 @@ logoutButton.addEventListener("click", () => {
   authScreen.classList.remove("is-hidden");
 });
 
-applyTheme(localStorage.getItem("analyse-lab-theme") || "light");
-applySidebarState(localStorage.getItem("analyse-lab-sidebar-collapsed") === "true");
+applyTheme(localStorage.getItem("quality-lab-theme") || "light");
+applySidebarState(localStorage.getItem("quality-lab-sidebar-collapsed") === "true");
 renderActionList();
 renderDashboard();
 renderSupervisorTickets();
