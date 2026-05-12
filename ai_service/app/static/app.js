@@ -57,7 +57,7 @@ let generatedTickets = [
     result: "Connexion VPN rétablie et test validé avec l'utilisateur.",
     finalStatus: "Résolu",
     resolutionFrame:
-      "Après analyse du ticket intitulé \"VPN inaccessible après changement de mot de passe\", la problématique signalée concerne : L'utilisateur ne parvient plus à se connecter au VPN après modification de son mot de passe.\n\nLe ticket appartient à la bannette / département : Réseau.\n\nLes actions suivantes ont été réalisées :\n- Vérification du compte\n- Suppression des identifiants enregistrés\n- Synchronisation du profil\n- Test de connexion\n\nLes outils utilisés pendant le traitement sont :\nActive Directory, Console VPN\n\nLa partie concernée par le ticket est :\nUtilisateur / Utilisatrice\n\nRésultat obtenu :\nConnexion VPN rétablie et test validé avec l'utilisateur.\n\nStatut final du ticket :\nRésolu",
+      "ID du ticket :\nMOCK-001\n\nAprès analyse du ticket intitulé \"VPN inaccessible après changement de mot de passe\", la problématique signalée concerne : L'utilisateur ne parvient plus à se connecter au VPN après modification de son mot de passe.\n\nLe ticket appartient à la bannette / département : Réseau.\n\nLes actions suivantes ont été réalisées :\n- Vérification du compte\n- Suppression des identifiants enregistrés\n- Synchronisation du profil\n- Test de connexion\n\nLes outils utilisés pendant le traitement sont :\nActive Directory, Console VPN\n\nLa partie concernée par le ticket est :\nUtilisateur / Utilisatrice\n\nRésultat obtenu :\nConnexion VPN rétablie et test validé avec l'utilisateur.\n\nStatut final du ticket :\nRésolu",
   },
   {
     id: "MOCK-002",
@@ -74,7 +74,7 @@ let generatedTickets = [
     result: "Impression de test réussie après redémarrage du service.",
     finalStatus: "Résolu",
     resolutionFrame:
-      "Après analyse du ticket intitulé \"Imprimante magasin indisponible\", la problématique signalée concerne : Le magasin signale une impossibilité d'imprimer les documents de caisse.\n\nLe ticket appartient à la bannette / département : DS Magasin.\n\nLes actions suivantes ont été réalisées :\n- Contrôle de la connectivité\n- Vidage de la file d'attente\n- Redémarrage du service d'impression\n\nLes outils utilisés pendant le traitement sont :\nConsole impression, outil réseau\n\nLa partie concernée par le ticket est :\nÉquipement\n\nRésultat obtenu :\nImpression de test réussie après redémarrage du service.\n\nStatut final du ticket :\nRésolu",
+      "ID du ticket :\nMOCK-002\n\nAprès analyse du ticket intitulé \"Imprimante magasin indisponible\", la problématique signalée concerne : Le magasin signale une impossibilité d'imprimer les documents de caisse.\n\nLe ticket appartient à la bannette / département : DS Magasin.\n\nLes actions suivantes ont été réalisées :\n- Contrôle de la connectivité\n- Vidage de la file d'attente\n- Redémarrage du service d'impression\n\nLes outils utilisés pendant le traitement sont :\nConsole impression, outil réseau\n\nLa partie concernée par le ticket est :\nÉquipement\n\nRésultat obtenu :\nImpression de test réussie après redémarrage du service.\n\nStatut final du ticket :\nRésolu",
   },
 ];
 let savedAnalyses = [];
@@ -107,7 +107,10 @@ function formValue(formData, key, fallback = "Non renseigné") {
 function buildResolutionFrame(ticket) {
   const actionLines = ticket.actions.map((action) => `- ${action}`).join("\n");
 
-  return `Après analyse du ticket intitulé "${ticket.title}", la problématique signalée concerne : ${ticket.summary}.
+  return `ID du ticket :
+${ticket.id}
+
+Après analyse du ticket intitulé "${ticket.title}", la problématique signalée concerne : ${ticket.summary}.
 
 Le ticket appartient à la bannette / département : ${ticket.department}.
 
@@ -173,6 +176,7 @@ function exportAnalysesCsv() {
 
   const rows = [
     [
+      "ID ticket",
       "Ticket",
       "Bannette",
       "Synthèse du problème",
@@ -188,6 +192,7 @@ function exportAnalysesCsv() {
       "Date de validation",
     ],
     ...savedAnalyses.map((analysis) => [
+      analysis.ticket.id,
       analysis.ticket.title,
       analysis.ticket.department,
       analysis.ticket.summary,
@@ -450,7 +455,7 @@ function createTicketCard(ticket) {
 
   const meta = document.createElement("div");
   meta.className = "ticket-meta";
-  [ticket.department, ticket.finalStatus, ticket.concernedParty || "Partie non renseignée"].forEach((item) => {
+  [ticket.id, ticket.department, ticket.finalStatus, ticket.concernedParty || "Partie non renseignée"].forEach((item) => {
     const pill = document.createElement("span");
     pill.className = "meta-pill";
     pill.textContent = item;
@@ -464,6 +469,7 @@ function createTicketCard(ticket) {
 
   const details = document.createElement("div");
   details.className = "ticket-detail-grid";
+  details.appendChild(detailBlock("ID ticket", ticket.id));
   details.appendChild(detailBlock("Bannette / département", ticket.department));
   details.appendChild(detailBlock("Statut final du ticket", ticket.finalStatus));
   details.appendChild(detailBlock("Synthèse du problème", ticket.summary, true));
@@ -564,6 +570,7 @@ function renderSavedAnalyses() {
   savedAnalyses.forEach((analysis) => {
     const card = document.createElement("article");
     card.className = "ticket-card";
+    card.appendChild(detailBlock("ID ticket", analysis.ticket.id));
     card.appendChild(detailBlock("Ticket", analysis.ticket.title));
     card.appendChild(detailBlock("Statut OK / KO", analysis.analysisStatus));
     card.appendChild(detailBlock("Type de résolution", analysis.resolutionType));
