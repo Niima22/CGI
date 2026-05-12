@@ -48,3 +48,18 @@ venv/
 .pytest_cache/
 .mypy_cache/
 /models/
+
+### AI engine artifacts ###
+ai-engine/datasets/raw/*
+ai-engine/datasets/processed/*
+ai-engine/datasets/exports/*
+ai-engine/models/*
+!ai-engine/datasets/raw/.gitkeep
+!ai-engine/datasets/processed/.gitkeep
+!ai-engine/datasets/exports/.gitkeep
+!ai-engine/models/.gitkeep
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+*.onnx
