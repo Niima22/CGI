@@ -10,6 +10,12 @@ def normalize_text(value: object) -> str:
     if value is None:
         return ""
 
+    try:
+        if value != value:
+            return ""
+    except Exception:
+        pass
+
     text = str(value)
     text = html.unescape(text)
     text = unicodedata.normalize("NFKC", text)

@@ -55,7 +55,15 @@ pip install -r requirements.txt
 
 ## Prepare Dataset
 
-Put the Excel file in `datasets/raw/`, then run:
+Put one or more Excel files in `datasets/raw/`, then run:
+
+```powershell
+python -m preprocessing.excel_ingestion
+```
+
+The ingestion pipeline scans all `.xlsx`, `.xlsm`, and `.xls` files in `datasets/raw/`, detects the usable sheet and schema, prints detected/mapped/skipped columns, skips invalid files safely, and merges valid rows into one dataset.
+
+You can still process one explicit file:
 
 ```powershell
 python -m preprocessing.excel_ingestion --excel datasets/raw/tickets.xlsx --sheet Picking
@@ -68,6 +76,16 @@ Outputs are written to `datasets/processed/`:
 - `test.jsonl`
 - `generation_train.jsonl`
 - `full_cleaned.jsonl`
+
+The normalized classifier columns are:
+
+- `ticket_text`
+- `text` for backward compatibility with training
+- `source_file`
+- `synthese_demande`
+- `actions_resultat`
+- `formule_politesse`
+- `conformite_solution`
 
 ## Train Supervision Classifier
 
@@ -104,13 +122,13 @@ For larger models like Mistral 7B, Qwen2.5 7B, or Llama 3 Instruct, use a GPU en
 ## Run Full Pipeline
 
 ```powershell
-python -m training.run_pipeline --excel datasets/raw/tickets.xlsx --sheet Picking
+python -m training.run_pipeline
 ```
 
 Skip generation fine-tuning if you only want the classifier:
 
 ```powershell
-python -m training.run_pipeline --excel datasets/raw/tickets.xlsx --sheet Picking --skip-generator
+python -m training.run_pipeline --skip-generator
 ```
 
 ## Run API
