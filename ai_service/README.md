@@ -30,6 +30,22 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
+## PostgreSQL Accounts
+
+The login and signup screens use PostgreSQL-backed accounts. Create the database, then set one of these environment variables before starting Uvicorn:
+
+```powershell
+$env:QUALITY_LAB_DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/quality_lab"
+```
+
+or:
+
+```powershell
+$env:DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/quality_lab"
+```
+
+Tables are created automatically on the first auth request.
+
 For local transformer embeddings, install the optional ML dependency:
 
 ```bash

@@ -26,16 +26,49 @@ class TicketSupervisor:
         self.max_length = max_length
         self.tokenizer = None
         self.model = None
+        self.loaded_model_dir: Path | None = None
 
     def load(self) -> None:
+        model_dir = self._resolve_model_dir()
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+            self.model = AutoModelForSequenceClassification.from_pretrained(model_dir)
+        except (OSError, ValueError) as exc:
+            raise ClassifierModelNotReady(
+                f"Classifier model could not be loaded from {model_dir}. "
+                "Check that the folder contains config, model, and tokenizer files."
+            ) from exc
+
+        self.model.eval()
+        self.loaded_model_dir = model_dir
+
+    def _resolve_model_dir(self) -> Path:
         if not self.model_dir.exists() or not any(self.model_dir.iterdir()):
             raise ClassifierModelNotReady(
                 f"Classifier model not found in {self.model_dir}. Run training/train_classifier.py first."
             )
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_dir)
-        self.model.eval()
+        if self._looks_like_model_dir(self.model_dir):
+            return self.model_dir
+
+        candidates = [path for path in self.model_dir.iterdir() if path.is_dir() and self._looks_like_model_dir(path)]
+        if len(candidates) == 1:
+            return candidates[0]
+
+        candidate_names = ", ".join(path.name for path in candidates) or "none"
+        raise ClassifierModelNotReady(
+            f"No complete classifier model found in {self.model_dir}. "
+            f"Detected model subdirectories: {candidate_names}."
+        )
+
+    def _looks_like_model_dir(self, path: Path) -> bool:
+        has_config = (path / "config.json").exists()
+        has_weights = any((path / name).exists() for name in ["model.safetensors", "pytorch_model.bin"])
+        has_tokenizer = any(
+            (path / name).exists()
+            for name in ["tokenizer.json", "sentencepiece.bpe.model", "tokenizer.model", "vocab.txt"]
+        )
+        return has_config and has_weights and has_tokenizer
 
     def analyze(self, payload: dict) -> dict:
         if self.model is None or self.tokenizer is None:
@@ -61,7 +94,11 @@ class TicketSupervisor:
         predictions = (probabilities >= 0.5).astype(int)
         criteria = {criterion: int(predictions[index]) for index, criterion in enumerate(CRITERIA)}
         conformite = int(all(criteria.values()))
-        confidence = float(min(max(probabilities), 1 - min(probabilities)))
+        criterion_confidences = [
+            probability if prediction == 1 else 1 - probability
+            for probability, prediction in zip(probabilities, predictions)
+        ]
+        confidence = float(min(criterion_confidences))
         non_conformes = [CRITERION_LABELS[key] for key, value in criteria.items() if value == 0]
 
         status = "Conforme" if conformite else "Non conforme"

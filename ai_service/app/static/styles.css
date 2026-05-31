@@ -577,6 +577,9 @@ body.dark-mode .ticket-form,
 body.dark-mode .result-panel,
 body.dark-mode .dashboard-card,
 body.dark-mode .ticket-card,
+body.dark-mode .evaluation-card,
+body.dark-mode .metrics-panel,
+body.dark-mode .metric-chart,
 body.dark-mode .empty-state,
 body.dark-mode .resolution-output,
 body.dark-mode .action-edit-input,
@@ -760,6 +763,175 @@ body.dark-mode .resolution-output {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}
+
+.evaluation-result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.evaluation-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.evaluation-card span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.evaluation-card strong {
+  width: max-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.evaluation-card.ok strong {
+  background: #1f8f4d;
+}
+
+.evaluation-card.ko strong {
+  background: #c71957;
+}
+
+.evaluation-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.metrics-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.metrics-panel,
+.metric-chart {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.metrics-panel {
+  overflow: hidden;
+}
+
+.metrics-panel h3,
+.metric-chart h3 {
+  margin: 0;
+  padding: 12px 14px;
+  background: #4b4b4b;
+  color: #ffffff;
+  font-size: 16px;
+  text-align: center;
+}
+
+.metrics-table-wrap {
+  overflow-x: auto;
+}
+
+.metrics-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.metrics-table th,
+.metrics-table td {
+  border: 1px solid #111827;
+  padding: 6px 5px;
+  text-align: center;
+}
+
+.metrics-table thead th {
+  background: #b7d7ef;
+  font-weight: 800;
+}
+
+.metrics-table .ok-cell {
+  background: #c6efce;
+  color: #008000;
+}
+
+.metrics-table .ko-cell {
+  background: #ffc7ce;
+  color: #c00000;
+}
+
+.metrics-table tbody th {
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.metrics-table tbody tr:last-child th,
+.metrics-table tbody tr:last-child td {
+  background: #5b9bd5;
+  font-weight: 800;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.metric-chart {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 72px;
+  gap: 10px;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.stacked-bar {
+  display: flex;
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f1eef4;
+}
+
+.bar-ok {
+  background: #2f80ed;
+}
+
+.bar-ko {
+  background: #d64545;
+}
+
+.ticket-evaluation-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ticket-evaluation-summary strong {
+  color: var(--text);
 }
 
 .dashboard-card {
@@ -1163,8 +1335,15 @@ body.dark-mode .footer-links span {
 
   .ticket-form,
   .dashboard-grid,
+  .evaluation-result-grid,
+  .metrics-layout,
+  .chart-grid,
   .ticket-detail-grid,
   .analysis-form {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-row {
     grid-template-columns: 1fr;
   }
 

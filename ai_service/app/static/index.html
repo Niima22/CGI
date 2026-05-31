@@ -23,12 +23,12 @@
         </div>
 
         <form class="auth-form" id="auth-form">
-          <div>
+          <div class="signup-only" hidden>
             <span class="form-label">Role</span>
             <div class="role-grid" role="radiogroup" aria-label="Choose account type">
               <label class="role-card active">
-                <input type="radio" name="role" value="Employee" checked />
-                <strong>Agent</strong>
+                <input type="radio" name="role" value="Consultant" checked />
+                <strong>Consultant</strong>
                 <span>Générer une trame claire avant clôture du ticket.</span>
               </label>
               <label class="role-card">
@@ -42,7 +42,8 @@
           <label class="field">
             <span class="form-label">Email</span>
             <input
-              type="email"
+              type="text"
+              inputmode="email"
               name="email"
               placeholder="name@cgi.com"
               pattern="^[A-Za-z0-9._%+-]+@cgi\.com$"
@@ -88,23 +89,23 @@
         </button>
 
         <nav class="history" aria-label="Recent drafts">
-          <button type="button" class="history-item active" data-view="agent" title="Partie Agent">
+          <button type="button" class="history-item active" data-view="agent" title="Formulaire Consultant">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8" /><path d="M8 17h5" /></svg>
             </span>
-            <span class="nav-label">Partie Agent</span>
+            <span class="nav-label">Formulaire</span>
           </button>
-          <button type="button" class="history-item" data-view="supervisor" title="Supervision">
+          <button type="button" class="history-item supervisor-only is-hidden" data-view="supervisor" title="Supervision">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z" /><path d="M9 12l2 2 4-5" /></svg>
             </span>
             <span class="nav-label">Supervision</span>
           </button>
-          <button type="button" class="history-item" data-view="saved" title="Analyses validées">
+          <button type="button" class="history-item supervisor-only is-hidden" data-view="metrics" title="Metrics">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
             </span>
-            <span class="nav-label">Analyses validées</span>
+            <span class="nav-label">Metrics</span>
           </button>
         </nav>
 
@@ -135,10 +136,10 @@
         </header>
 
         <div class="workspace" id="workspace">
-          <section class="module-view" id="agent-view" aria-label="Partie Agent">
+          <section class="module-view" id="agent-view" aria-label="Formulaire Consultant">
             <form class="ticket-form" id="agent-ticket-form">
               <div class="section-head">
-                <h2>Formulaire agent</h2>
+                <h2>Formulaire Consultant</h2>
                 <p>Remplir les informations du ticket pour générer une trame de résolution.</p>
               </div>
 
@@ -151,15 +152,17 @@
                 <span class="form-label">Bannette / département concerné *</span>
                 <select name="department" required>
                   <option value="">Sélectionner une bannette</option>
-                  <option>DS Magasin</option>
-                  <option>Matériel</option>
-                  <option>Réseau</option>
-                  <option>Autre</option>
+                  <option>FO</option>
+                  <option>BO</option>
+                  <option>PROXI-PMC</option>
+                  <option>Partenaire</option>
+                  <option>Supply</option>
+                  <option>DS-Magasin</option>
                 </select>
               </label>
 
               <label class="field field-wide">
-                <span class="form-label">Synthèse du problème *</span>
+                <span class="form-label">Synthèse de la demande *</span>
                 <textarea name="summary" rows="4" placeholder="Décrire clairement la problématique signalée dans le ticket." required></textarea>
               </label>
 
@@ -178,40 +181,9 @@
                 <p class="validation-feedback" id="actions-feedback" aria-live="polite"></p>
               </div>
 
-              <label class="field">
+              <label class="field field-wide">
                 <span class="form-label">Outils utilisés</span>
                 <input type="text" name="tools" placeholder="Ex: GLPI, VPN Console, Active Directory" />
-              </label>
-
-              <label class="field">
-                <span class="form-label">Partie concernée</span>
-                <select name="concerned_party">
-                  <option value="">Sélectionner une partie</option>
-                  <option>Utilisateur / Utilisatrice</option>
-                  <option>Agent</option>
-                  <option>Application</option>
-                  <option>Poste de travail</option>
-                  <option>Magasin</option>
-                  <option>Équipement</option>
-                  <option>Serveur</option>
-                  <option>Autre</option>
-                </select>
-              </label>
-
-              <label class="field field-wide">
-                <span class="form-label">Résultat obtenu *</span>
-                <textarea name="result" rows="3" placeholder="Expliquer le résultat après intervention." required></textarea>
-              </label>
-
-              <label class="field">
-                <span class="form-label">Statut final du ticket *</span>
-                <select name="final_status" required>
-                  <option value="">Sélectionner un statut</option>
-                  <option>Résolu</option>
-                  <option>Non résolu</option>
-                  <option>Transféré</option>
-                  <option>Escaladé</option>
-                </select>
               </label>
 
               <div class="form-actions field-wide">
@@ -233,23 +205,43 @@
           <section class="module-view is-hidden" id="supervisor-view" aria-label="Supervision">
             <div class="section-head">
               <h2>Supervision</h2>
-              <p>Analyser les traitements des tickets générés par les agents.</p>
+              <p>Sélectionner une solution Consultant, l'envoyer à l'évaluation IA, puis consulter le jugement OK / KO.</p>
             </div>
-            <div class="dashboard-grid" id="supervisor-dashboard" aria-label="Dashboard superviseur"></div>
+            <section class="result-panel">
+              <label class="field">
+                <span class="form-label">Solution Consultant</span>
+                <select id="solution-selector"></select>
+              </label>
+              <pre class="resolution-output" id="selected-solution-output">Sélectionner une solution à évaluer.</pre>
+              <div class="form-actions">
+                <button class="send-button" type="button" id="evaluate-solution">Envoyer à l'évaluation IA</button>
+              </div>
+              <p class="validation-feedback" id="evaluation-feedback" aria-live="polite"></p>
+              <div class="evaluation-result-grid" id="evaluation-result-grid"></div>
+            </section>
             <div class="ticket-review-list" id="ticket-review-list"></div>
           </section>
 
-          <section class="module-view is-hidden" id="saved-view" aria-label="Analyses validées">
+          <section class="module-view is-hidden" id="metrics-view" aria-label="Metrics">
             <div class="section-head section-head-row">
               <div>
-                <h2>Analyses validées</h2>
-                <p>Liste locale des validations superviseur sauvegardées pendant cette session.</p>
+                <h2>Metrics dashboard</h2>
+                <p>Suivi hebdomadaire et mensuel des évaluations par bannette.</p>
               </div>
               <button class="send-button" type="button" id="export-csv">Exporter CSV</button>
             </div>
-            <div class="dashboard-grid" id="saved-dashboard" aria-label="Dashboard des analyses validées"></div>
+            <div class="metrics-layout">
+              <section class="metrics-panel">
+                <h3>Weekly</h3>
+                <div class="metrics-table-wrap" id="weekly-metrics-table"></div>
+              </section>
+              <section class="metrics-panel">
+                <h3>Monthly</h3>
+                <div class="metrics-table-wrap" id="monthly-metrics-table"></div>
+              </section>
+            </div>
+            <div class="chart-grid" id="metrics-charts"></div>
             <p class="export-feedback" id="export-feedback" aria-live="polite"></p>
-            <div class="ticket-review-list" id="saved-analysis-list"></div>
           </section>
           <footer class="platform-footer" aria-label="Informations plateforme">
             <div>

@@ -9,6 +9,7 @@ const roleCards = document.querySelectorAll(".role-card");
 const rolePill = document.querySelector("#role-pill");
 const roleContext = document.querySelector("#role-context");
 const navItems = document.querySelectorAll("[data-view]");
+const supervisorOnlyItems = document.querySelectorAll(".supervisor-only");
 const newTicketButton = document.querySelector("#new-chat");
 const themeToggle = document.querySelector("#theme-toggle");
 const themeToggleLabel = document.querySelector("#theme-toggle-label");
@@ -18,7 +19,7 @@ const roleMenu = document.querySelector("#role-menu");
 
 const agentView = document.querySelector("#agent-view");
 const supervisorView = document.querySelector("#supervisor-view");
-const savedView = document.querySelector("#saved-view");
+const metricsView = document.querySelector("#metrics-view");
 const agentForm = document.querySelector("#agent-ticket-form");
 const resolutionOutput = document.querySelector("#resolution-output");
 const copyResolutionButton = document.querySelector("#copy-resolution");
@@ -26,58 +27,63 @@ const backToTopButton = document.querySelector("#back-to-top");
 const copyFeedback = document.querySelector("#copy-feedback");
 const workspace = document.querySelector("#workspace");
 const ticketReviewList = document.querySelector("#ticket-review-list");
-const savedAnalysisList = document.querySelector("#saved-analysis-list");
-const supervisorDashboard = document.querySelector("#supervisor-dashboard");
-const savedDashboard = document.querySelector("#saved-dashboard");
 const exportCsvButton = document.querySelector("#export-csv");
 const exportFeedback = document.querySelector("#export-feedback");
 const actionInput = document.querySelector("#action-input");
 const addActionButton = document.querySelector("#add-action");
 const actionList = document.querySelector("#action-list");
 const actionsFeedback = document.querySelector("#actions-feedback");
+const solutionSelector = document.querySelector("#solution-selector");
+const selectedSolutionOutput = document.querySelector("#selected-solution-output");
+const evaluateSolutionButton = document.querySelector("#evaluate-solution");
+const evaluationFeedback = document.querySelector("#evaluation-feedback");
+const evaluationResultGrid = document.querySelector("#evaluation-result-grid");
+const weeklyMetricsTable = document.querySelector("#weekly-metrics-table");
+const monthlyMetricsTable = document.querySelector("#monthly-metrics-table");
+const metricsCharts = document.querySelector("#metrics-charts");
+
+const BANNETTES = ["FO", "BO", "PROXI-PMC", "Partenaire", "Supply", "DS-Magasin"];
 
 let authMode = "login";
-let currentRole = "Employee";
+let currentRole = "Consultant";
+let authToken = localStorage.getItem("quality-lab-auth-token") || "";
 let lastGeneratedFrame = "";
 let ticketActions = [];
 let generatedTickets = [
   {
     id: "MOCK-001",
-    title: "VPN inaccessible après changement de mot de passe",
-    department: "Réseau",
-    summary: "L'utilisateur ne parvient plus à se connecter au VPN après modification de son mot de passe.",
+    title: "VPN inaccessible apres changement de mot de passe",
+    department: "FO",
+    summary: "L'utilisateur ne parvient plus a se connecter au VPN apres modification de son mot de passe.",
     actions: [
-      "Vérification du compte",
-      "Suppression des identifiants enregistrés",
+      "Verification du compte",
+      "Suppression des identifiants enregistres",
       "Synchronisation du profil",
       "Test de connexion",
     ],
     tools: "Active Directory, Console VPN",
-    concernedParty: "Utilisateur / Utilisatrice",
-    result: "Connexion VPN rétablie et test validé avec l'utilisateur.",
-    finalStatus: "Résolu",
-    resolutionFrame:
-      "ID du ticket :\nMOCK-001\n\nAprès analyse du ticket intitulé \"VPN inaccessible après changement de mot de passe\", la problématique signalée concerne : L'utilisateur ne parvient plus à se connecter au VPN après modification de son mot de passe.\n\nLe ticket appartient à la bannette / département : Réseau.\n\nLes actions suivantes ont été réalisées :\n- Vérification du compte\n- Suppression des identifiants enregistrés\n- Synchronisation du profil\n- Test de connexion\n\nLes outils utilisés pendant le traitement sont :\nActive Directory, Console VPN\n\nLa partie concernée par le ticket est :\nUtilisateur / Utilisatrice\n\nRésultat obtenu :\nConnexion VPN rétablie et test validé avec l'utilisateur.\n\nStatut final du ticket :\nRésolu",
+    createdAt: new Date().toISOString(),
   },
   {
     id: "MOCK-002",
     title: "Imprimante magasin indisponible",
-    department: "DS Magasin",
-    summary: "Le magasin signale une impossibilité d'imprimer les documents de caisse.",
+    department: "DS-Magasin",
+    summary: "Le magasin signale une impossibilite d'imprimer les documents de caisse.",
     actions: [
-      "Contrôle de la connectivité",
+      "Controle de la connectivite",
       "Vidage de la file d'attente",
-      "Redémarrage du service d'impression",
+      "Redemarrage du service d'impression",
     ],
-    tools: "Console impression, outil réseau",
-    concernedParty: "Équipement",
-    result: "Impression de test réussie après redémarrage du service.",
-    finalStatus: "Résolu",
-    resolutionFrame:
-      "ID du ticket :\nMOCK-002\n\nAprès analyse du ticket intitulé \"Imprimante magasin indisponible\", la problématique signalée concerne : Le magasin signale une impossibilité d'imprimer les documents de caisse.\n\nLe ticket appartient à la bannette / département : DS Magasin.\n\nLes actions suivantes ont été réalisées :\n- Contrôle de la connectivité\n- Vidage de la file d'attente\n- Redémarrage du service d'impression\n\nLes outils utilisés pendant le traitement sont :\nConsole impression, outil réseau\n\nLa partie concernée par le ticket est :\nÉquipement\n\nRésultat obtenu :\nImpression de test réussie après redémarrage du service.\n\nStatut final du ticket :\nRésolu",
+    tools: "Console impression, outil reseau",
+    createdAt: new Date().toISOString(),
   },
 ];
-let savedAnalyses = [];
+let savedEvaluations = [];
+
+generatedTickets = generatedTickets.map((ticket) => ({
+  ...ticket,
+  resolutionFrame: buildResolutionFrame(ticket),
+}));
 
 function setAuthError(message) {
   authError.textContent = message;
@@ -86,7 +92,7 @@ function setAuthError(message) {
 function applySidebarState(isCollapsed) {
   appScreen.classList.toggle("sidebar-collapsed", isCollapsed);
   sidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
-  sidebarToggle.setAttribute("aria-label", isCollapsed ? "Ouvrir le menu" : "Réduire le menu");
+  sidebarToggle.setAttribute("aria-label", isCollapsed ? "Ouvrir le menu" : "Reduire le menu");
   localStorage.setItem("quality-lab-sidebar-collapsed", String(isCollapsed));
 }
 
@@ -99,7 +105,73 @@ function applyTheme(theme) {
   localStorage.setItem("quality-lab-theme", theme);
 }
 
-function formValue(formData, key, fallback = "Non renseigné") {
+function applyRoleAccess() {
+  const isSupervisor = currentRole === "Supervisor";
+
+  appScreen.dataset.role = currentRole;
+  supervisorOnlyItems.forEach((item) => {
+    item.classList.toggle("is-hidden", !isSupervisor);
+  });
+
+  if (!isSupervisor && !agentView.classList.contains("is-hidden")) {
+    return;
+  }
+
+  if (!isSupervisor) {
+    setView("agent");
+  }
+}
+
+function applyAuthenticatedUser(user, token) {
+  authToken = token;
+  localStorage.setItem("quality-lab-auth-token", token);
+  currentRole = user.role;
+
+  const isSupervisor = currentRole === "Supervisor";
+  rolePill.textContent = isSupervisor ? "Superviseur" : "Consultant";
+  roleContext.textContent = isSupervisor
+    ? "Espace superviseur pour generer, evaluer et suivre les trames de resolution."
+    : "Espace Consultant limite a la generation de trames de resolution.";
+
+  authScreen.classList.add("is-hidden");
+  appScreen.classList.remove("is-hidden");
+  applyRoleAccess();
+  loadTicketsFromApi().finally(() => {
+    renderSolutionSelector();
+    renderSupervisorTickets();
+  });
+  setView("agent");
+}
+
+async function submitAuthRequest(formData) {
+  const role = String(formData.get("role") || "Consultant");
+  const payload = {
+    email: String(formData.get("email") || "").trim(),
+    password: String(formData.get("password") || ""),
+  };
+
+  if (authMode === "signup") {
+    payload.role = role;
+    payload.full_name = String(formData.get("full_name") || "").trim();
+  }
+
+  const response = await fetch(authMode === "signup" ? "/auth/signup" : "/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || "Authentification impossible.");
+  }
+
+  return data;
+}
+
+function formValue(formData, key, fallback = "Non renseigne") {
   const value = String(formData.get(key) || "").trim();
   return value || fallback;
 }
@@ -110,24 +182,20 @@ function buildResolutionFrame(ticket) {
   return `ID du ticket :
 ${ticket.id}
 
-Après analyse du ticket intitulé "${ticket.title}", la problématique signalée concerne : ${ticket.summary}.
+Titre :
+${ticket.title}
 
-Le ticket appartient à la bannette / département : ${ticket.department}.
+Synthese de la demande :
+${ticket.summary}
 
-Les actions suivantes ont été réalisées :
+Bannette :
+${ticket.department}
+
+Actions realisees :
 ${actionLines}
 
-Les outils utilisés pendant le traitement sont :
-${ticket.tools || "Non renseigné"}
-
-La partie concernée par le ticket est :
-${ticket.concernedParty || "Non renseigné"}
-
-Résultat obtenu :
-${ticket.result}
-
-Statut final du ticket :
-${ticket.finalStatus}`;
+Outils utilises :
+${ticket.tools || "Non renseigne"}`;
 }
 
 function createTicketFromForm(formData) {
@@ -138,13 +206,63 @@ function createTicketFromForm(formData) {
     summary: formValue(formData, "summary"),
     actions: [...ticketActions],
     tools: formValue(formData, "tools", ""),
-    concernedParty: formValue(formData, "concerned_party", ""),
-    result: formValue(formData, "result"),
-    finalStatus: formValue(formData, "final_status"),
+    createdAt: new Date().toISOString(),
   };
 
   ticket.resolutionFrame = buildResolutionFrame(ticket);
   return ticket;
+}
+
+function ticketFromApi(data) {
+  return {
+    id: data.id,
+    title: data.title,
+    department: data.department,
+    summary: data.summary,
+    actions: data.actions,
+    tools: data.tools || "",
+    resolutionFrame: data.resolution_frame,
+    createdAt: data.created_at,
+  };
+}
+
+async function loadTicketsFromApi() {
+  const response = await fetch("/tickets");
+  if (!response.ok) {
+    return;
+  }
+
+  const tickets = await response.json();
+  generatedTickets = tickets.map(ticketFromApi);
+}
+
+async function saveTicketToApi(ticket) {
+  if (!authToken) {
+    return;
+  }
+
+  const response = await fetch("/tickets", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({
+      id: ticket.id,
+      title: ticket.title,
+      department: ticket.department,
+      summary: ticket.summary,
+      actions: ticket.actions,
+      tools: ticket.tools,
+      resolution_frame: ticket.resolutionFrame,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Sauvegarde PostgreSQL impossible.");
+  }
+
+  return ticketFromApi(await response.json());
 }
 
 function csvEscape(value) {
@@ -168,9 +286,9 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
-function exportAnalysesCsv() {
-  if (!savedAnalyses.length) {
-    exportFeedback.textContent = "Aucune analyse validée à exporter.";
+function exportEvaluationsCsv() {
+  if (!savedEvaluations.length) {
+    exportFeedback.textContent = "Aucune evaluation a exporter.";
     return;
   }
 
@@ -179,116 +297,34 @@ function exportAnalysesCsv() {
       "ID ticket",
       "Ticket",
       "Bannette",
-      "Synthèse du problème",
-      "Actions réalisées",
-      "Outils utilisés",
-      "Partie concernée",
-      "Résultat obtenu",
-      "Statut final",
-      "Trame de résolution",
-      "Type de résolution",
-      "Statut OK / KO",
-      "Commentaire superviseur",
-      "Date de validation",
+      "Trame de resolution",
+      "Type de resolution",
+      "Commentaire trame",
+      "Commentaire type",
+      "Date evaluation",
     ],
-    ...savedAnalyses.map((analysis) => [
-      analysis.ticket.id,
-      analysis.ticket.title,
-      analysis.ticket.department,
-      analysis.ticket.summary,
-      formatActionsForDisplay(analysis.ticket.actions),
-      analysis.ticket.tools,
-      analysis.ticket.concernedParty,
-      analysis.ticket.result,
-      analysis.ticket.finalStatus,
-      analysis.resolutionFrame,
-      analysis.resolutionType,
-      analysis.analysisStatus,
-      analysis.supervisorComment,
-      analysis.validatedAt,
+    ...savedEvaluations.map((evaluation) => [
+      evaluation.ticket.id,
+      evaluation.ticket.title,
+      evaluation.ticket.department,
+      evaluation.trameResolution,
+      evaluation.typeResolution,
+      evaluation.trameComment,
+      evaluation.typeComment,
+      evaluation.evaluatedAtLabel,
     ]),
   ];
 
-  downloadCsv("quality-lab-validations.csv", rows);
-  exportFeedback.textContent = "Export CSV généré.";
-}
-
-function countBy(items, getKey) {
-  return items.reduce((accumulator, item) => {
-    const key = getKey(item) || "Non renseigné";
-    accumulator[key] = (accumulator[key] || 0) + 1;
-    return accumulator;
-  }, {});
-}
-
-function formatBreakdown(counts) {
-  const entries = Object.entries(counts);
-
-  if (!entries.length) {
-    return "Aucune donnée";
-  }
-
-  return entries.map(([key, count]) => `${key}: ${count}`).join(" · ");
-}
-
-function renderDashboardCards(container) {
-  const totalTickets = generatedTickets.length;
-  const totalAnalyses = savedAnalyses.length;
-  const okCount = savedAnalyses.filter((analysis) => analysis.analysisStatus === "OK").length;
-  const koCount = savedAnalyses.filter((analysis) => analysis.analysisStatus === "KO").length;
-  const incompleteCount = savedAnalyses.filter((analysis) =>
-    ["Résolution incomplète", "Résolution non justifiée", "Traitement à revoir"].includes(analysis.resolutionType)
-  ).length;
-  const incompleteRate = totalAnalyses ? Math.round((incompleteCount / totalAnalyses) * 100) : 0;
-  const departments = countBy(generatedTickets, (ticket) => ticket.department);
-
-  const cards = [
-    {
-      value: totalTickets,
-      label: "Tickets disponibles",
-      helper: "Tickets mockés + trames générées",
-    },
-    {
-      value: totalAnalyses,
-      label: "Tickets analysés",
-      helper: `${okCount} OK · ${koCount} KO`,
-    },
-    {
-      value: `${incompleteRate}%`,
-      label: "Traitements à risque",
-      helper: `${incompleteCount} analyse(s) incomplète(s) ou à revoir`,
-    },
-    {
-      value: Object.keys(departments).length,
-      label: "Bannettes",
-      helper: formatBreakdown(departments),
-    },
-  ];
-
-  container.innerHTML = "";
-  cards.forEach((card) => {
-    const article = document.createElement("article");
-    article.className = "dashboard-card";
-    article.innerHTML = `
-      <strong>${card.value}</strong>
-      <span>${card.label}</span>
-      <small>${card.helper}</small>
-    `;
-    container.appendChild(article);
-  });
-}
-
-function renderDashboard() {
-  renderDashboardCards(supervisorDashboard);
-  renderDashboardCards(savedDashboard);
+  downloadCsv("quality-lab-evaluations.csv", rows);
+  exportFeedback.textContent = "Export CSV genere.";
 }
 
 function formatActionsForDisplay(actions) {
   if (!Array.isArray(actions) || !actions.length) {
-    return "Non renseigné";
+    return "Non renseigne";
   }
 
-  return actions.map((action, index) => `${index + 1}. ${action}`).join("\n");
+  return actions.map((action) => `- ${action}`).join("\n");
 }
 
 function renderActionList() {
@@ -331,7 +367,7 @@ function renderActionList() {
     actionList.appendChild(item);
   });
 
-  actionsFeedback.textContent = ticketActions.length ? "" : "Ajouter au moins une action réalisée.";
+  actionsFeedback.textContent = ticketActions.length ? "" : "Ajouter au moins une action realisee.";
 }
 
 function addAction() {
@@ -372,7 +408,7 @@ function startActionEdit(index, row) {
     const editedAction = editInput.value.trim();
 
     if (!editedAction) {
-      actionsFeedback.textContent = "Une action modifiée ne peut pas être vide.";
+      actionsFeedback.textContent = "Une action modifiee ne peut pas etre vide.";
       editInput.focus();
       return;
     }
@@ -402,29 +438,34 @@ function startActionEdit(index, row) {
 }
 
 function setView(viewName) {
+  const isSupervisor = currentRole === "Supervisor";
+  const nextView = !isSupervisor && viewName !== "agent" ? "agent" : viewName;
   const views = {
     agent: agentView,
     supervisor: supervisorView,
-    saved: savedView,
+    metrics: metricsView,
   };
 
   Object.entries(views).forEach(([name, view]) => {
-    view.classList.toggle("is-hidden", name !== viewName);
+    view.classList.toggle("is-hidden", name !== nextView);
   });
 
   navItems.forEach((item) => {
-    item.classList.toggle("active", item.dataset.view === viewName);
+    item.classList.toggle("active", item.dataset.view === nextView);
   });
 
-  if (viewName === "supervisor") {
-    renderDashboard();
-    renderSupervisorTickets();
+  if (nextView === "supervisor") {
+    loadTicketsFromApi().finally(() => {
+      renderSolutionSelector();
+      renderSupervisorTickets();
+    });
   }
 
-  if (viewName === "saved") {
-    renderDashboard();
-    renderSavedAnalyses();
+  if (nextView === "metrics") {
+    renderMetricsDashboard();
   }
+
+  scrollWorkspaceToTop();
 }
 
 function detailBlock(label, value, isFull = false) {
@@ -435,11 +476,135 @@ function detailBlock(label, value, isFull = false) {
   title.textContent = label;
 
   const content = document.createElement(isFull ? "p" : "span");
-  content.textContent = value || "Non renseigné";
+  content.textContent = value || "Non renseigne";
 
   block.appendChild(title);
   block.appendChild(content);
   return block;
+}
+
+function getSelectedTicket() {
+  return generatedTickets.find((ticket) => ticket.id === solutionSelector.value);
+}
+
+function renderSolutionSelector() {
+  solutionSelector.innerHTML = "";
+
+  if (!generatedTickets.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Aucune solution disponible";
+    solutionSelector.appendChild(option);
+    selectedSolutionOutput.textContent = "Aucune solution Consultant a evaluer.";
+    evaluateSolutionButton.disabled = true;
+    return;
+  }
+
+  generatedTickets.forEach((ticket) => {
+    const option = document.createElement("option");
+    option.value = ticket.id;
+    option.textContent = `${ticket.id} - ${ticket.department} - ${ticket.title}`;
+    solutionSelector.appendChild(option);
+  });
+
+  evaluateSolutionButton.disabled = false;
+  renderSelectedSolution();
+}
+
+function renderSelectedSolution() {
+  const ticket = getSelectedTicket();
+  selectedSolutionOutput.textContent = ticket ? ticket.resolutionFrame : "Selectionner une solution a evaluer.";
+  evaluationFeedback.textContent = "";
+  evaluationResultGrid.innerHTML = "";
+}
+
+function renderEvaluationResult(evaluation) {
+  const cards = [
+    {
+      label: "Trame de resolution",
+      status: evaluation.trameResolution,
+      comment: evaluation.trameComment,
+    },
+    {
+      label: "Type de resolution",
+      status: evaluation.typeResolution,
+      comment: evaluation.typeComment,
+    },
+  ];
+
+  evaluationResultGrid.innerHTML = "";
+  cards.forEach((card) => {
+    const article = document.createElement("article");
+    article.className = `evaluation-card ${card.status === "OK" ? "ok" : "ko"}`;
+    article.innerHTML = `
+      <span>${card.label}</span>
+      <strong>${card.status}</strong>
+      <p>${card.comment}</p>
+    `;
+    evaluationResultGrid.appendChild(article);
+  });
+}
+
+async function evaluateSelectedSolution() {
+  const ticket = getSelectedTicket();
+
+  if (!ticket) {
+    evaluationFeedback.textContent = "Selectionner une solution Consultant.";
+    return;
+  }
+
+  evaluationFeedback.textContent = "Evaluation IA en cours...";
+  evaluateSolutionButton.disabled = true;
+
+  try {
+    const response = await fetch("/ai/evaluate-solution", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ticket_id: ticket.id,
+        title: ticket.title,
+        bannette: ticket.department,
+        synthese: ticket.summary,
+        actions: ticket.actions,
+        outils: ticket.tools,
+        resolution_frame: ticket.resolutionFrame,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Evaluation unavailable");
+    }
+
+    const result = await response.json();
+    const evaluatedAt = new Date();
+    const evaluation = {
+      id: `EV-${String(Date.now()).slice(-6)}`,
+      ticket,
+      trameResolution: result.trame_resolution.status,
+      trameComment: result.trame_resolution.comment,
+      typeResolution: result.type_resolution.status,
+      typeComment: result.type_resolution.comment,
+      evaluatedAt,
+      evaluatedAtLabel: evaluatedAt.toLocaleString("fr-FR"),
+    };
+
+    savedEvaluations.unshift(evaluation);
+    evaluationFeedback.textContent = `Evaluation sauvegardee le ${evaluation.evaluatedAtLabel}.`;
+    exportFeedback.textContent = "";
+    renderEvaluationResult(evaluation);
+    renderSupervisorTickets();
+    renderMetricsDashboard();
+  } catch (error) {
+    evaluationFeedback.textContent = "Evaluation impossible pour le moment.";
+  } finally {
+    evaluateSolutionButton.disabled = false;
+  }
+}
+
+function latestEvaluationForTicket(ticketId) {
+  return savedEvaluations.find((evaluation) => evaluation.ticket.id === ticketId);
 }
 
 function createTicketCard(ticket) {
@@ -455,7 +620,7 @@ function createTicketCard(ticket) {
 
   const meta = document.createElement("div");
   meta.className = "ticket-meta";
-  [ticket.id, ticket.department, ticket.finalStatus, ticket.concernedParty || "Partie non renseignée"].forEach((item) => {
+  [ticket.id, ticket.department].forEach((item) => {
     const pill = document.createElement("span");
     pill.className = "meta-pill";
     pill.textContent = item;
@@ -470,73 +635,25 @@ function createTicketCard(ticket) {
   const details = document.createElement("div");
   details.className = "ticket-detail-grid";
   details.appendChild(detailBlock("ID ticket", ticket.id));
-  details.appendChild(detailBlock("Bannette / département", ticket.department));
-  details.appendChild(detailBlock("Statut final du ticket", ticket.finalStatus));
-  details.appendChild(detailBlock("Synthèse du problème", ticket.summary, true));
-  details.appendChild(detailBlock("Actions réalisées", formatActionsForDisplay(ticket.actions), true));
-  details.appendChild(detailBlock("Outils utilisés", ticket.tools));
-  details.appendChild(detailBlock("Partie concernée", ticket.concernedParty));
-  details.appendChild(detailBlock("Résultat obtenu", ticket.result, true));
-  details.appendChild(detailBlock("Trame de résolution générée", ticket.resolutionFrame, true));
+  details.appendChild(detailBlock("Bannette", ticket.department));
+  details.appendChild(detailBlock("Synthese de la demande", ticket.summary, true));
+  details.appendChild(detailBlock("Actions realisees", formatActionsForDisplay(ticket.actions), true));
+  details.appendChild(detailBlock("Outils utilises", ticket.tools));
+  details.appendChild(detailBlock("Trame de resolution generee", ticket.resolutionFrame, true));
   card.appendChild(details);
 
-  const analysisForm = document.createElement("form");
-  analysisForm.className = "analysis-form";
-  analysisForm.dataset.ticketId = ticket.id;
-  analysisForm.innerHTML = `
-    <label class="field">
-      <span class="form-label">Statut d'analyse</span>
-      <select name="analysis_status" required>
-        <option value="">Sélectionner</option>
-        <option>OK</option>
-        <option>KO</option>
-      </select>
-    </label>
-    <label class="field">
-      <span class="form-label">Type de résolution</span>
-      <select name="resolution_type" required>
-        <option value="">Sélectionner</option>
-        <option>Résolution correcte</option>
-        <option>Résolution incomplète</option>
-        <option>Résolution non justifiée</option>
-        <option>Ticket transféré</option>
-        <option>Ticket escaladé</option>
-        <option>Problème non reproduit</option>
-        <option>Traitement à revoir</option>
-      </select>
-    </label>
-    <label class="field field-wide">
-      <span class="form-label">Commentaire superviseur</span>
-      <textarea name="supervisor_comment" rows="3" placeholder="Expliquer pourquoi le ticket est OK ou KO."></textarea>
-    </label>
-    <div class="form-actions field-wide">
-      <button class="send-button" type="submit">Valider l'analyse</button>
-    </div>
-    <p class="validation-feedback" aria-live="polite"></p>
-  `;
+  const evaluation = latestEvaluationForTicket(ticket.id);
+  if (evaluation) {
+    const result = document.createElement("div");
+    result.className = "ticket-evaluation-summary";
+    result.innerHTML = `
+      <span>Trame de resolution: <strong>${evaluation.trameResolution}</strong></span>
+      <span>Type de resolution: <strong>${evaluation.typeResolution}</strong></span>
+      <span>${evaluation.evaluatedAtLabel}</span>
+    `;
+    card.appendChild(result);
+  }
 
-  analysisForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(analysisForm);
-    const feedback = analysisForm.querySelector(".validation-feedback");
-    const analysis = {
-      id: `AN-${String(Date.now()).slice(-6)}`,
-      ticket,
-      resolutionFrame: ticket.resolutionFrame,
-      resolutionType: formValue(formData, "resolution_type"),
-      analysisStatus: formValue(formData, "analysis_status"),
-      supervisorComment: formValue(formData, "supervisor_comment", ""),
-      validatedAt: new Date().toLocaleString("fr-FR"),
-    };
-
-    savedAnalyses.unshift(analysis);
-    feedback.textContent = `Analyse sauvegardée le ${analysis.validatedAt}.`;
-    exportFeedback.textContent = "";
-    renderDashboard();
-    renderSavedAnalyses();
-  });
-
-  card.appendChild(analysisForm);
   return card;
 }
 
@@ -556,29 +673,139 @@ function renderSupervisorTickets() {
   });
 }
 
-function renderSavedAnalyses() {
-  savedAnalysisList.innerHTML = "";
+function isSameWeek(date, now) {
+  const current = new Date(now);
+  const target = new Date(date);
+  const day = (current.getDay() + 6) % 7;
+  const weekStart = new Date(current);
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(current.getDate() - day);
 
-  if (!savedAnalyses.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = "Aucune analyse validée pour le moment.";
-    savedAnalysisList.appendChild(empty);
-    return;
-  }
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
 
-  savedAnalyses.forEach((analysis) => {
-    const card = document.createElement("article");
-    card.className = "ticket-card";
-    card.appendChild(detailBlock("ID ticket", analysis.ticket.id));
-    card.appendChild(detailBlock("Ticket", analysis.ticket.title));
-    card.appendChild(detailBlock("Statut OK / KO", analysis.analysisStatus));
-    card.appendChild(detailBlock("Type de résolution", analysis.resolutionType));
-    card.appendChild(detailBlock("Commentaire superviseur", analysis.supervisorComment || "Non renseigné", true));
-    card.appendChild(detailBlock("Date de validation", analysis.validatedAt));
-    card.appendChild(detailBlock("Trame de résolution générée", analysis.resolutionFrame, true));
-    savedAnalysisList.appendChild(card);
+  return target >= weekStart && target < weekEnd;
+}
+
+function isSameMonth(date, now) {
+  const target = new Date(date);
+  return target.getFullYear() === now.getFullYear() && target.getMonth() === now.getMonth();
+}
+
+function emptyMetrics() {
+  return BANNETTES.map((bannette) => ({
+    bannette,
+    tickets: 0,
+    trameOk: 0,
+    trameKo: 0,
+    typeOk: 0,
+    typeKo: 0,
+  }));
+}
+
+function buildMetrics(filterPredicate) {
+  const metrics = emptyMetrics();
+  const byBannette = Object.fromEntries(metrics.map((item) => [item.bannette, item]));
+
+  savedEvaluations.filter((evaluation) => filterPredicate(evaluation.evaluatedAt)).forEach((evaluation) => {
+    const row = byBannette[evaluation.ticket.department];
+    if (!row) {
+      return;
+    }
+
+    row.tickets += 1;
+    row.trameOk += evaluation.trameResolution === "OK" ? 1 : 0;
+    row.trameKo += evaluation.trameResolution === "KO" ? 1 : 0;
+    row.typeOk += evaluation.typeResolution === "OK" ? 1 : 0;
+    row.typeKo += evaluation.typeResolution === "KO" ? 1 : 0;
   });
+
+  return metrics;
+}
+
+function renderMetricsTable(container, rows) {
+  const table = document.createElement("table");
+  table.className = "metrics-table";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th rowspan="2">Bannettes</th>
+        <th rowspan="2">Nr ticket</th>
+        <th colspan="2">Trame de resolution</th>
+        <th colspan="2">Type de resolution</th>
+      </tr>
+      <tr>
+        <th class="ok-cell">OK</th>
+        <th class="ko-cell">KO</th>
+        <th class="ok-cell">OK</th>
+        <th class="ko-cell">KO</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows
+        .map(
+          (row) => `
+        <tr>
+          <th>${row.bannette}</th>
+          <td>${row.tickets}</td>
+          <td>${row.trameOk}</td>
+          <td>${row.trameKo}</td>
+          <td>${row.typeOk}</td>
+          <td>${row.typeKo}</td>
+        </tr>
+      `
+        )
+        .join("")}
+    </tbody>
+  `;
+
+  container.innerHTML = "";
+  container.appendChild(table);
+}
+
+function percent(ok, ko) {
+  const total = ok + ko;
+  return total ? Math.round((ok / total) * 100) : 0;
+}
+
+function renderChart(title, rows, okKey, koKey) {
+  const chart = document.createElement("article");
+  chart.className = "metric-chart";
+  chart.innerHTML = `<h3>${title}</h3>`;
+
+  rows.forEach((row) => {
+    const total = row[okKey] + row[koKey];
+    const okPercent = percent(row[okKey], row[koKey]);
+    const koPercent = total ? 100 - okPercent : 0;
+    const line = document.createElement("div");
+    line.className = "chart-row";
+    line.innerHTML = `
+      <span>${row.bannette}</span>
+      <div class="stacked-bar" aria-label="${row.bannette} ${okPercent}% OK ${koPercent}% KO">
+        <span class="bar-ok" style="width: ${okPercent}%"></span>
+        <span class="bar-ko" style="width: ${koPercent}%"></span>
+      </div>
+      <strong>${okPercent}% OK</strong>
+    `;
+    chart.appendChild(line);
+  });
+
+  return chart;
+}
+
+function renderMetricsDashboard() {
+  const now = new Date();
+  const weekly = buildMetrics((date) => isSameWeek(date, now));
+  const monthly = buildMetrics((date) => isSameMonth(date, now));
+
+  renderMetricsTable(weeklyMetricsTable, weekly);
+  renderMetricsTable(monthlyMetricsTable, monthly);
+
+  metricsCharts.innerHTML = "";
+  metricsCharts.appendChild(renderChart("Weekly - Trame de resolution", weekly, "trameOk", "trameKo"));
+  metricsCharts.appendChild(renderChart("Weekly - Type de resolution", weekly, "typeOk", "typeKo"));
+  metricsCharts.appendChild(renderChart("Monthly - Trame de resolution", monthly, "trameOk", "trameKo"));
+  metricsCharts.appendChild(renderChart("Monthly - Type de resolution", monthly, "typeOk", "typeKo"));
 }
 
 function scrollToResultPanel() {
@@ -604,7 +831,7 @@ function resetAgentForm() {
   ticketActions = [];
   renderActionList();
   lastGeneratedFrame = "";
-  resolutionOutput.textContent = "La trame générée apparaîtra ici.";
+  resolutionOutput.textContent = "La trame generee apparaitra ici.";
 }
 
 authTabs.forEach((tab) => {
@@ -632,7 +859,7 @@ roleCards.forEach((card) => {
   });
 });
 
-authForm.addEventListener("submit", (event) => {
+authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(authForm);
@@ -659,17 +886,13 @@ authForm.addEventListener("submit", (event) => {
 
   passwordInput.setCustomValidity("");
   setAuthError("");
-  currentRole = formData.get("role") || "Employee";
-  const isSupervisor = currentRole === "Supervisor";
 
-  rolePill.textContent = isSupervisor ? "Superviseur" : "Agent";
-  roleContext.textContent = isSupervisor
-    ? "Espace superviseur pour analyser la qualité et la cohérence des traitements."
-    : "Espace agent pour générer une trame de résolution avant clôture.";
-
-  authScreen.classList.add("is-hidden");
-  appScreen.classList.remove("is-hidden");
-  setView(isSupervisor ? "supervisor" : "agent");
+  try {
+    const data = await submitAuthRequest(formData);
+    applyAuthenticatedUser(data.user, data.token);
+  } catch (error) {
+    setAuthError(error.message);
+  }
 });
 
 navItems.forEach((item) => {
@@ -684,11 +907,11 @@ newTicketButton.addEventListener("click", () => {
   setView("agent");
 });
 
-agentForm.addEventListener("submit", (event) => {
+agentForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!ticketActions.length) {
-    actionsFeedback.textContent = "Ajouter au moins une action réalisée.";
+    actionsFeedback.textContent = "Ajouter au moins une action realisee.";
     actionInput.focus();
     return;
   }
@@ -697,26 +920,35 @@ agentForm.addEventListener("submit", (event) => {
     return;
   }
 
-  const ticket = createTicketFromForm(new FormData(agentForm));
-  generatedTickets.unshift(ticket);
+  let ticket = createTicketFromForm(new FormData(agentForm));
+  copyFeedback.textContent = "Sauvegarde de la trame...";
+
+  try {
+    ticket = (await saveTicketToApi(ticket)) || ticket;
+  } catch (error) {
+    copyFeedback.textContent = error.message;
+    return;
+  }
+
+  generatedTickets = [ticket, ...generatedTickets.filter((item) => item.id !== ticket.id)];
   lastGeneratedFrame = ticket.resolutionFrame;
   resolutionOutput.textContent = lastGeneratedFrame;
-  copyFeedback.textContent = "Trame générée et ajoutée à la liste superviseur.";
-  renderDashboard();
+  copyFeedback.textContent = "Trame generee et sauvegardee pour le superviseur.";
+  renderSolutionSelector();
   renderSupervisorTickets();
   scrollToResultPanel();
 });
 
 copyResolutionButton.addEventListener("click", async () => {
   if (!lastGeneratedFrame) {
-    copyFeedback.textContent = "Aucune trame à copier.";
+    copyFeedback.textContent = "Aucune trame a copier.";
     return;
   }
 
   try {
     await navigator.clipboard.writeText(lastGeneratedFrame);
     resetAgentForm();
-    copyFeedback.textContent = "Trame copiée. Le formulaire a été vidé.";
+    copyFeedback.textContent = "Trame copiee. Le formulaire a ete vide.";
   } catch (error) {
     copyFeedback.textContent = "Copie impossible depuis ce navigateur.";
   }
@@ -725,7 +957,9 @@ copyResolutionButton.addEventListener("click", async () => {
 backToTopButton.addEventListener("click", scrollWorkspaceToTop);
 
 workspace.addEventListener("scroll", updateScrollTopButton);
-exportCsvButton.addEventListener("click", exportAnalysesCsv);
+exportCsvButton.addEventListener("click", exportEvaluationsCsv);
+solutionSelector.addEventListener("change", renderSelectedSolution);
+evaluateSolutionButton.addEventListener("click", evaluateSelectedSolution);
 
 addActionButton.addEventListener("click", addAction);
 
@@ -759,23 +993,27 @@ document.addEventListener("click", (event) => {
 
 logoutButton.addEventListener("click", () => {
   authForm.reset();
+  authToken = "";
+  localStorage.removeItem("quality-lab-auth-token");
   setAuthError("");
   roleCards.forEach((item, index) => {
     item.classList.toggle("active", index === 0);
   });
-  currentRole = "Employee";
+  currentRole = "Consultant";
   rolePill.textContent = "Prototype";
-  roleContext.textContent = "Module fonctionnel de génération et revue des trames de résolution.";
+  roleContext.textContent = "Module fonctionnel de generation et revue des trames de resolution.";
   roleMenu.classList.add("is-hidden");
   roleMenuButton.setAttribute("aria-expanded", "false");
   appScreen.classList.add("is-hidden");
   authScreen.classList.remove("is-hidden");
+  applyRoleAccess();
 });
 
 applyTheme(localStorage.getItem("quality-lab-theme") || "light");
 applySidebarState(localStorage.getItem("quality-lab-sidebar-collapsed") === "true");
+applyRoleAccess();
 renderActionList();
-renderDashboard();
+renderSolutionSelector();
 renderSupervisorTickets();
-renderSavedAnalyses();
+renderMetricsDashboard();
 updateScrollTopButton();
