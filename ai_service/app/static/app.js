@@ -22,6 +22,7 @@ const supervisorView = document.querySelector("#supervisor-view");
 const metricsView = document.querySelector("#metrics-view");
 const agentForm = document.querySelector("#agent-ticket-form");
 const resolutionOutput = document.querySelector("#resolution-output");
+const resolutionInsights = document.querySelector("#resolution-insights");
 const copyResolutionButton = document.querySelector("#copy-resolution");
 const backToTopButton = document.querySelector("#back-to-top");
 const copyFeedback = document.querySelector("#copy-feedback");
@@ -213,6 +214,19 @@ function createTicketFromForm(formData) {
   return ticket;
 }
 
+function createTicketFromGenerator(formData, actions, resolutionFrame) {
+  return {
+    id: `TCK-${String(Date.now()).slice(-6)}`,
+    title: formValue(formData, "title"),
+    department: formValue(formData, "department"),
+    summary: formValue(formData, "summary"),
+    actions,
+    tools: formValue(formData, "tools", ""),
+    resolutionFrame,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 function ticketFromApi(data) {
   return {
     id: data.id,
@@ -263,6 +277,23 @@ async function saveTicketToApi(ticket) {
   }
 
   return ticketFromApi(await response.json());
+}
+
+async function generateResolutionFrame(payload) {
+  const response = await fetch("/generate-resolution-frame", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || "Generation de la trame impossible.");
+  }
+
+  return data;
 }
 
 function csvEscape(value) {
@@ -325,6 +356,98 @@ function formatActionsForDisplay(actions) {
   }
 
   return actions.map((action) => `- ${action}`).join("\n");
+}
+
+function collectActionsForGeneration() {
+  const actions = [...ticketActions];
+  const pendingAction = actionInput.value.trim();
+
+  if (pendingAction && !actions.includes(pendingAction)) {
+    actions.push(pendingAction);
+  }
+
+  return actions;
+}
+
+function splitToolsForGeneration(value) {
+  return String(value || "")
+    .split(",")
+    .map((tool) => tool.trim())
+    .filter(Boolean);
+}
+
+function formatScore(score) {
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore)) {
+    return "0%";
+  }
+
+  return `${Math.round(numericScore * 100)}%`;
+}
+
+function renderResolutionInsights(result) {
+  resolutionInsights.innerHTML = "";
+  resolutionInsights.classList.remove("is-hidden");
+
+  const scoreGrid = document.createElement("div");
+  scoreGrid.className = "resolution-score-grid";
+
+  [
+    ["Type de résolution", result.resolutionType || "Non renseigné"],
+    ["Qualité", formatScore(result.qualityScore)],
+    ["Confiance", formatScore(result.confidenceScore)],
+  ].forEach(([label, value]) => {
+    const item = document.createElement("div");
+    item.className = "resolution-score-card";
+
+    const labelElement = document.createElement("span");
+    labelElement.textContent = label;
+
+    const valueElement = document.createElement("strong");
+    valueElement.textContent = value;
+
+    item.appendChild(labelElement);
+    item.appendChild(valueElement);
+    scoreGrid.appendChild(item);
+  });
+
+  resolutionInsights.appendChild(scoreGrid);
+
+  if (Array.isArray(result.missingElements) && result.missingElements.length) {
+    const missingBlock = document.createElement("div");
+    missingBlock.className = "resolution-detail-block warning";
+    const title = document.createElement("strong");
+    title.textContent = "Éléments manquants";
+    const list = document.createElement("ul");
+
+    result.missingElements.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item;
+      list.appendChild(listItem);
+    });
+
+    missingBlock.appendChild(title);
+    missingBlock.appendChild(list);
+    resolutionInsights.appendChild(missingBlock);
+  }
+
+  if (Array.isArray(result.similarCases) && result.similarCases.length) {
+    const similarBlock = document.createElement("div");
+    similarBlock.className = "resolution-detail-block";
+    const title = document.createElement("strong");
+    title.textContent = "Cas similaires";
+    const list = document.createElement("ol");
+
+    result.similarCases.slice(0, 3).forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item.ticketTitle || "Titre non renseigné";
+      list.appendChild(listItem);
+    });
+
+    similarBlock.appendChild(title);
+    similarBlock.appendChild(list);
+    resolutionInsights.appendChild(similarBlock);
+  }
 }
 
 function renderActionList() {
@@ -831,7 +954,9 @@ function resetAgentForm() {
   ticketActions = [];
   renderActionList();
   lastGeneratedFrame = "";
-  resolutionOutput.textContent = "La trame generee apparaitra ici.";
+  resolutionOutput.textContent = "La trame générée apparaîtra ici.";
+  resolutionInsights.innerHTML = "";
+  resolutionInsights.classList.add("is-hidden");
 }
 
 authTabs.forEach((tab) => {
@@ -910,33 +1035,49 @@ newTicketButton.addEventListener("click", () => {
 agentForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!ticketActions.length) {
-    actionsFeedback.textContent = "Ajouter au moins une action realisee.";
-    actionInput.focus();
-    return;
-  }
-
   if (!agentForm.reportValidity()) {
     return;
   }
 
-  let ticket = createTicketFromForm(new FormData(agentForm));
-  copyFeedback.textContent = "Sauvegarde de la trame...";
+  const formData = new FormData(agentForm);
+  const actions = collectActionsForGeneration();
+  const tools = splitToolsForGeneration(formData.get("tools"));
+  const submitButton = agentForm.querySelector('button[type="submit"]');
 
   try {
-    ticket = (await saveTicketToApi(ticket)) || ticket;
+    submitButton.disabled = true;
+    copyFeedback.textContent = "Génération de la trame IA...";
+    actionsFeedback.textContent = "";
+
+    const result = await generateResolutionFrame({
+      ticketTitle: formValue(formData, "title", ""),
+      bannette: formValue(formData, "department", ""),
+      requestSummary: formValue(formData, "summary", ""),
+      actionsDone: actions,
+      toolsUsed: tools,
+    });
+
+    lastGeneratedFrame = result.resolutionFrame;
+    resolutionOutput.textContent = lastGeneratedFrame;
+    renderResolutionInsights(result);
+
+    if (actions.length) {
+      let ticket = createTicketFromGenerator(formData, actions, lastGeneratedFrame);
+      ticket = (await saveTicketToApi(ticket)) || ticket;
+      generatedTickets = [ticket, ...generatedTickets.filter((item) => item.id !== ticket.id)];
+      renderSolutionSelector();
+      renderSupervisorTickets();
+      copyFeedback.textContent = "Trame générée et sauvegardée pour le superviseur.";
+    } else {
+      copyFeedback.textContent = "Trame générée. Ajoutez au moins une action réalisée pour la sauvegarder.";
+    }
+
+    scrollToResultPanel();
   } catch (error) {
     copyFeedback.textContent = error.message;
-    return;
+  } finally {
+    submitButton.disabled = false;
   }
-
-  generatedTickets = [ticket, ...generatedTickets.filter((item) => item.id !== ticket.id)];
-  lastGeneratedFrame = ticket.resolutionFrame;
-  resolutionOutput.textContent = lastGeneratedFrame;
-  copyFeedback.textContent = "Trame generee et sauvegardee pour le superviseur.";
-  renderSolutionSelector();
-  renderSupervisorTickets();
-  scrollToResultPanel();
 });
 
 copyResolutionButton.addEventListener("click", async () => {

@@ -46,6 +46,30 @@ class SearchResponse(BaseModel):
     matches: list[KnowledgeBaseMatch]
 
 
+class GenerateResolutionFrameRequest(BaseModel):
+    ticketTitle: str = Field(..., min_length=1)
+    bannette: str = Field(..., min_length=1)
+    requestSummary: str = ""
+    actionsDone: list[str] = Field(default_factory=list)
+    toolsUsed: list[str] = Field(default_factory=list)
+
+
+class SimilarResolutionCase(BaseModel):
+    ticketTitle: str
+    solution: str
+    resolutionType: str
+    similarityScore: float
+
+
+class GenerateResolutionFrameResponse(BaseModel):
+    resolutionFrame: str
+    resolutionType: str
+    qualityScore: float
+    confidenceScore: float
+    missingElements: list[str]
+    similarCases: list[SimilarResolutionCase]
+
+
 class SolutionEvaluationRequest(BaseModel):
     ticket_id: str = Field(..., min_length=1)
     title: str = Field(..., min_length=1)

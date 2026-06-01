@@ -96,6 +96,7 @@ select {
 
 .auth-panel {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 36px;
@@ -108,10 +109,11 @@ select {
 }
 
 .auth-tabs {
+  order: 2;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-top: 14px;
 }
 
 .auth-tab {
@@ -131,6 +133,7 @@ select {
 }
 
 .auth-form {
+  order: 1;
   display: grid;
   gap: 18px;
   padding: 24px;
@@ -602,6 +605,11 @@ body.dark-mode .resolution-output {
   background: #181320;
 }
 
+body.dark-mode .resolution-score-card,
+body.dark-mode .resolution-detail-block {
+  background: #181320;
+}
+
 .messages {
   display: flex;
   flex-direction: column;
@@ -992,6 +1000,66 @@ body.dark-mode .resolution-output {
   font: 14px/1.6 Consolas, "Courier New", monospace;
 }
 
+.resolution-insights {
+  display: grid;
+  gap: 12px;
+}
+
+.resolution-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.resolution-score-card,
+.resolution-detail-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbf8fc;
+}
+
+.resolution-score-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.resolution-score-card span,
+.resolution-detail-block strong {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.resolution-score-card strong {
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.resolution-detail-block {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.resolution-detail-block.warning {
+  border-color: #edc2d1;
+  background: #fff4f7;
+}
+
+.resolution-detail-block ul,
+.resolution-detail-block ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .copy-button {
   justify-self: start;
 }
@@ -1338,6 +1406,7 @@ body.dark-mode .footer-links span {
   .evaluation-result-grid,
   .metrics-layout,
   .chart-grid,
+  .resolution-score-grid,
   .ticket-detail-grid,
   .analysis-form {
     grid-template-columns: 1fr;

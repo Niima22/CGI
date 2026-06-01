@@ -5,6 +5,8 @@ from app.models.schemas import (
     AccountRequest,
     AuthResponse,
     AuthUser,
+    GenerateResolutionFrameRequest,
+    GenerateResolutionFrameResponse,
     SearchRequest,
     SearchResponse,
     SolutionEvaluationRequest,
@@ -15,6 +17,7 @@ from app.models.schemas import (
 )
 from app.services.auth_service import AccountExistsError, AuthError, AuthService
 from app.services.evaluation_service import EvaluationService
+from app.services.resolution_generator_service import ResolutionGeneratorService
 from app.services.search_service import SearchService
 from app.services.ticket_service import TicketService
 
@@ -23,6 +26,7 @@ auth_service = AuthService()
 search_service = SearchService()
 evaluation_service = EvaluationService()
 ticket_service = TicketService()
+resolution_generator_service = ResolutionGeneratorService()
 
 
 def _token_from_header(authorization: str) -> str:
@@ -73,6 +77,11 @@ def me(authorization: str = Header(default="")) -> AuthUser:
 @router.post("/ai/search", response_model=SearchResponse)
 def search_knowledge_base(request: SearchRequest) -> SearchResponse:
     return search_service.search(request)
+
+
+@router.post("/generate-resolution-frame", response_model=GenerateResolutionFrameResponse)
+def generate_resolution_frame(request: GenerateResolutionFrameRequest) -> GenerateResolutionFrameResponse:
+    return resolution_generator_service.generate(request)
 
 
 @router.get("/tickets", response_model=list[TicketResponse])
