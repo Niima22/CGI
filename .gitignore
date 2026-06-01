@@ -78,3 +78,12 @@ ai-engine/models/*
 *.safetensors
 *.ckpt
 *.onnx
+
+### Node / React frontend ###
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/vite.*.log
+frontend-old/
+*.tsbuildinfo
