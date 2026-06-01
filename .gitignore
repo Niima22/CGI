@@ -39,6 +39,20 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Java artifacts ###
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.ctxt
+.mtj.tmp/
+hs_err_pid*
+replay_pid*
+
 ### Python / AI service ###
 __pycache__/
 *.py[cod]
