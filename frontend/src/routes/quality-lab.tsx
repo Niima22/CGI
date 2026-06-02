@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Sparkles, FileText, Wand2, CheckCircle2, AlertCircle, BookOpen, BarChart3, Eye } from "lucide-react";
+import { ArrowLeft, Sparkles, FileText, Wand2, CheckCircle2, AlertCircle, BookOpen, BarChart3, Eye, Copy, ChevronDown } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { useAuth } from "@/lib/auth-store";
 
@@ -35,9 +35,9 @@ function QualityLabPage() {
   const [tab, setTab] = useState<Tab>("form");
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+    <AppShell lockScroll>
+      <div className="flex h-full min-h-0 origin-top scale-[0.96] flex-col gap-3 overflow-hidden">
+        <div className="flex shrink-0 items-center justify-between gap-4 flex-wrap">
           <div>
             <Link
               to="/dashboard"
@@ -45,23 +45,23 @@ function QualityLabPage() {
             >
               <ArrowLeft className="h-4 w-4" /> Retour Dashboard
             </Link>
-            <h1 className="mt-2 text-3xl font-bold text-foreground flex items-center gap-3">
-              <span className="h-10 w-10 rounded-xl bg-cgi-gradient flex items-center justify-center shadow-glow">
+            <h1 className="mt-1 text-2xl font-bold text-foreground flex items-center gap-2">
+              <span className="h-8 w-8 rounded-xl bg-cgi-gradient flex items-center justify-center shadow-glow">
                 <Sparkles className="h-5 w-5 text-white" />
               </span>
               Quality Lab IA
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+            <p className="mt-0.5 text-sm text-muted-foreground max-w-2xl">
               Génération, supervision et analyse des trames de résolution.
             </p>
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cgi-gradient text-white shadow-glow">
+          <span className="hidden">
             Rôle : {role}
           </span>
         </div>
 
         {isSup && (
-          <div className="inline-flex p-1 rounded-xl bg-muted border border-border">
+          <div className="inline-flex shrink-0 p-1 rounded-xl bg-muted border border-border">
             {([
               { id: "form", label: "Formulaire", icon: FileText },
               { id: "supervision", label: "Supervision", icon: Eye },
@@ -156,12 +156,14 @@ function splitList(value: string) {
 }
 
 function ConsultantForm() {
-  const [form, setForm] = useState({ titre: "", bannette: "", synthese: "", actions: "", outils: "" });
+  const emptyForm = { titre: "", bannette: "", synthese: "", actions: "", outils: "" };
+  const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MockResult | null>(null);
   const [error, setError] = useState("");
+  const [copyNotice, setCopyNotice] = useState("");
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
@@ -169,6 +171,7 @@ function ConsultantForm() {
     setLoading(true);
     // mock — real Angular app calls POST http://127.0.0.1:8001/generate-resolution-frame
     setError("");
+    setCopyNotice("");
     setResult(null);
 
     try {
@@ -205,25 +208,59 @@ function ConsultantForm() {
     }
   };
 
+  const copyGeneratedResult = async () => {
+    if (!result) return;
+
+    try {
+      await navigator.clipboard.writeText(result.resolutionFrame);
+      setForm(emptyForm);
+      setResult(null);
+      setError("");
+      setCopyNotice("Trame copiée. Formulaire réinitialisé.");
+    } catch {
+      setError("Impossible de copier la trame générée.");
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[520px_minmax(0,1fr)]">
       <form
         onSubmit={submit}
-        className="xl:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-card space-y-4"
+        className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card p-5 shadow-card"
       >
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-cgi-pink" />
-          <h2 className="font-semibold">Formulaire Consultant</h2>
-        </div>
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-cgi-pink" />
+              <h2 className="text-lg font-semibold">Formulaire Consultant</h2>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="shrink-0 rounded-xl bg-cgi-gradient px-4 py-2 text-xs font-semibold text-white shadow-glow transition hover:opacity-95 active:scale-[0.99] disabled:opacity-70"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Wand2 className="h-4 w-4" />
+                {loading ? "Génération..." : "Générer"}
+              </span>
+            </button>
+          </div>
 
         <Input label="Titre du ticket" value={form.titre} onChange={set("titre")} placeholder="Ex : Échec authentification SSO" />
-        <Input label="Bannette / département concerné" value={form.bannette} onChange={set("bannette")} placeholder="Support N2" />
+        <Select
+          label="Bannette / département concerné"
+          value={form.bannette}
+          onChange={set("bannette")}
+          options={["reseau", "burautique", "materiel", "magasin", "supply"]}
+        />
         <Textarea label="Synthèse de la demande" value={form.synthese} onChange={set("synthese")} rows={3} placeholder="Décrivez brièvement la demande..." />
         <Textarea label="Actions réalisées" value={form.actions} onChange={set("actions")} rows={3} placeholder="- Vérification logs..." />
         <Input label="Outils utilisés" value={form.outils} onChange={set("outils")} placeholder="ServiceNow, AD, Splunk..." />
 
+        </div>
+
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-[color:var(--cgi-red)]">
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-[color:var(--cgi-red)]">
             {error}
           </div>
         )}
@@ -231,7 +268,7 @@ function ConsultantForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-cgi-gradient text-white font-semibold text-sm shadow-glow hover:opacity-95 active:scale-[0.99] transition disabled:opacity-70"
+          className="hidden"
         >
           <span className="inline-flex items-center gap-2">
             <Wand2 className="h-4 w-4" />
@@ -240,38 +277,48 @@ function ConsultantForm() {
         </button>
       </form>
 
-      <div className="xl:col-span-3 bg-card border border-border rounded-2xl p-6 shadow-card">
-        <div className="flex items-center justify-between mb-4">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="mb-4 flex shrink-0 items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-cgi-pink" />
-            <h2 className="font-semibold">Trame générée</h2>
+            <Sparkles className="h-5 w-5 text-cgi-pink" />
+            <h2 className="text-lg font-semibold">Trame générée</h2>
           </div>
           {result && (
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-              {result.resolutionType}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                {result.resolutionType}
+              </span>
+              <button
+                type="button"
+                onClick={copyGeneratedResult}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+              >
+                <Copy className="h-4 w-4" />
+                Copier
+              </button>
+            </div>
           )}
         </div>
 
         {!result && !loading && (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            <div className="mx-auto h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center text-muted-foreground text-sm">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
               <Sparkles className="h-6 w-6 text-cgi-pink" />
             </div>
-            Remplissez le formulaire puis lancez la génération.
+            {copyNotice || "Remplissez le formulaire puis lancez la génération."}
           </div>
         )}
 
         {loading && (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            <div className="mx-auto h-10 w-10 rounded-full border-2 border-muted border-t-[color:var(--cgi-pink)] animate-spin mb-3" />
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center text-muted-foreground text-sm">
+            <div className="mx-auto mb-3 h-10 w-10 rounded-full border-2 border-muted border-t-[color:var(--cgi-pink)] animate-spin" />
             L'IA prépare votre trame...
           </div>
         )}
 
         {result && (
-          <div className="space-y-5">
-            <pre className="whitespace-pre-wrap text-sm bg-muted/60 rounded-xl p-4 border border-border font-mono leading-relaxed">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-2">
+            <pre className="whitespace-pre-wrap rounded-xl border border-border bg-muted/60 p-4 font-mono text-sm leading-relaxed">
               {result.resolutionFrame}
             </pre>
 
@@ -281,7 +328,7 @@ function ConsultantForm() {
             </div>
 
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="mb-2 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-[color:var(--cgi-red)]" />
                 <h3 className="text-sm font-semibold">Éléments manquants</h3>
               </div>
@@ -290,21 +337,21 @@ function ConsultantForm() {
                   {result.missingElements.map((m) => (
                     <li
                       key={m}
-                      className="text-sm text-foreground flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/60 border border-border"
+                      className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm text-foreground"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--cgi-red)]" /> {m}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-emerald-700 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                   Aucun element manquant detecte.
                 </div>
               )}
             </div>
 
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="mb-2 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-[color:var(--cgi-purple)]" />
                 <h3 className="text-sm font-semibold">Cas similaires</h3>
               </div>
@@ -312,7 +359,7 @@ function ConsultantForm() {
                 {result.similarCases.map((c) => (
                   <div
                     key={`${c.ticketTitle}-${c.similarityScore}`}
-                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/60 border border-border hover:bg-muted transition"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/60 p-3 transition hover:bg-muted"
                   >
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-muted-foreground">{c.resolutionType}</div>
@@ -336,13 +383,13 @@ function ConsultantForm() {
 function ScoreCard({ label, value }: { label: string; value: number }) {
   const pct = Math.round(value * 100);
   return (
-    <div className="p-4 rounded-xl bg-muted/60 border border-border">
+    <div className="rounded-xl border border-border bg-muted/60 p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{label}</span>
-        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
       </div>
       <div className="mt-2 text-2xl font-bold text-foreground">{pct}%</div>
-      <div className="mt-2 h-1.5 rounded-full bg-border overflow-hidden">
+      <div className="mt-2 h-2 rounded-full bg-border overflow-hidden">
         <div
           className="h-full bg-cgi-gradient"
           style={{ width: `${pct}%` }}
@@ -358,11 +405,37 @@ function Input({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-foreground mb-1.5 block">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-foreground">{label}</span>
       <input
         {...props}
-        className="w-full px-3 py-2.5 rounded-xl bg-muted border border-transparent focus:border-ring focus:bg-card outline-none text-sm transition-all"
+        className="w-full rounded-xl border border-transparent bg-muted px-3 py-2.5 text-sm outline-none transition-all focus:border-ring focus:bg-card"
       />
+    </label>
+  );
+}
+
+function Select({
+  label,
+  options,
+  ...props
+}: { label: string; options: string[] } & React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-foreground">{label}</span>
+      <div className="relative">
+        <select
+          {...props}
+          className="w-full appearance-none rounded-xl border border-transparent bg-muted px-3 py-2.5 pr-10 text-sm outline-none transition-all focus:border-ring focus:bg-card"
+        >
+          <option value="">Choisir une bannette</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
     </label>
   );
 }
@@ -373,10 +446,10 @@ function Textarea({
 }: { label: string } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-foreground mb-1.5 block">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-foreground">{label}</span>
       <textarea
         {...props}
-        className="w-full px-3 py-2.5 rounded-xl bg-muted border border-transparent focus:border-ring focus:bg-card outline-none text-sm transition-all resize-none"
+        className="w-full resize-none rounded-xl border border-transparent bg-muted px-3 py-2.5 text-sm outline-none transition-all focus:border-ring focus:bg-card"
       />
     </label>
   );
