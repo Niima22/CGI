@@ -5,7 +5,6 @@ import {
   Sparkles,
   BookOpen,
   Users,
-  Bell,
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
@@ -18,7 +17,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
-import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -62,41 +60,39 @@ const kpis: Kpi[] = [
 ];
 
 function DashboardPage() {
-  const { email, role } = useAuth();
-  const displayName = email?.split("@")[0]?.split(".")[0] ?? "collaborateur";
-
   return (
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <p className="text-xs font-medium text-cgi-gradient uppercase tracking-wider">
-            Bienvenue, {displayName} · {role}
-          </p>
-          <h1 className="mt-1 text-3xl font-bold text-foreground">Centre de contrôle</h1>
+          <h1 className="text-3xl font-bold text-foreground">Centre de contrôle</h1>
           <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
             Snapshot opérationnel en temps réel de la plateforme CGI Intranet.
           </p>
         </div>
 
-        {/* Global KPI cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {kpis.map((k) => {
-            const Icon = k.icon;
-            return (
-              <div
-                key={k.label}
-                className="bg-card border border-border rounded-2xl p-4 shadow-card hover:shadow-glow transition-all"
-              >
-                <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tone}`}>
-                  <Icon className="h-4 w-4" />
+        {/* Dashboard overview */}
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1fr_320px]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {kpis.map((k) => {
+              const Icon = k.icon;
+              return (
+                <div
+                  key={k.label}
+                  className="bg-card border border-border rounded-2xl p-4 shadow-card hover:shadow-glow transition-all"
+                >
+                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="mt-3 text-2xl font-bold text-foreground leading-tight">{k.value}</div>
+                  <div className="text-xs font-medium text-foreground/80 mt-1">{k.label}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{k.hint}</div>
                 </div>
-                <div className="mt-3 text-2xl font-bold text-foreground leading-tight">{k.value}</div>
-                <div className="text-xs font-medium text-foreground/80 mt-1">{k.label}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">{k.hint}</div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <QuickActionsCard />
         </div>
 
         {/* Row 1: Incidents + SLA */}
@@ -105,19 +101,15 @@ function DashboardPage() {
           <SLACard />
         </div>
 
-        {/* Row 2: Quality Lab (wide) + Alerts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <QualityLabCard />
-          </div>
-          <AlertsCard />
+        {/* Row 2: Quality Lab */}
+        <div className="grid grid-cols-1 gap-4">
+          <QualityLabCard />
         </div>
 
-        {/* Row 3: Employees + Knowledge + Quick actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Row 3: Employees + Knowledge */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <EmployeesCard />
           <KnowledgeCard />
-          <QuickActionsCard />
         </div>
       </div>
     </AppShell>
@@ -299,37 +291,6 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
         />
       </div>
     </div>
-  );
-}
-
-/* ---------- Alerts ---------- */
-function AlertsCard() {
-  const alerts = [
-    { icon: ShieldCheck, label: "SLA dépassés", count: 2, tone: "text-[color:var(--cgi-red)] bg-red-50" },
-    { icon: AlertTriangle, label: "SLA proches limite", count: 6, tone: "text-amber-600 bg-amber-50" },
-    { icon: Ticket, label: "Tickets sans affectation", count: 3, tone: "text-cgi-pink bg-pink-50" },
-    { icon: Calendar, label: "Conflit planning", count: 1, tone: "text-[color:var(--cgi-purple)] bg-purple-50" },
-  ];
-  return (
-    <SectionCard title="Alertes" icon={Bell} badge="Live">
-      <div className="space-y-2">
-        {alerts.map((a) => {
-          const Icon = a.icon;
-          return (
-            <div
-              key={a.label}
-              className="flex items-center gap-3 rounded-xl border border-border bg-background/60 px-3 py-2.5"
-            >
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${a.tone}`}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <span className="flex-1 text-xs font-medium text-foreground">{a.label}</span>
-              <span className="text-sm font-bold text-foreground tabular-nums">{a.count}</span>
-            </div>
-          );
-        })}
-      </div>
-    </SectionCard>
   );
 }
 
