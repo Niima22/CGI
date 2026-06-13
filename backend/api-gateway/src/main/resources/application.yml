@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-user-service
+              uri: lb://auth-user-service
+              predicates:
+                - Path=/api/auth/**
+            - id: employee-service
+              uri: lb://employee-service
+              predicates:
+                - Path=/api/employees/**
+            - id: ticket-service
+              uri: lb://ticket-service
+              predicates:
+                - Path=/api/tickets/**
+            - id: sla-service
+              uri: lb://sla-service
+              predicates:
+                - Path=/api/sla/**
+            - id: planning-service
+              uri: lb://planning-service
+              predicates:
+                - Path=/api/plannings/**
+            - id: knowledge-service
+              uri: lb://knowledge-service
+              predicates:
+                - Path=/api/knowledge/**
+            - id: dashboard-service
+              uri: lb://dashboard-service
+              predicates:
+                - Path=/api/dashboard/**
+            - id: messaging-service
+              uri: lb://messaging-service
+              predicates:
+                - Path=/api/messages/**
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+            - id: transport-service
+              uri: lb://transport-service
+              predicates:
+                - Path=/api/transport/**
+            - id: ai-service
+              uri: http://localhost:8001
+              predicates:
+                - Path=/api/ai/**
+              filters:
+                - StripPrefix=2
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka

@@ -1,5 +1,36 @@
-# Placeholder only.
-# Docker services will be added later when the frontend, Spring Boot services,
-# PostgreSQL, and FastAPI AI service runtime contracts are finalized.
+services:
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: cgi-flow-auth-postgres
+    environment:
+      POSTGRES_DB: cgi_flow_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cgi_flow_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
-services: {}
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.3
+    container_name: cgi-flow-keycloak
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8085
+    ports:
+      - "127.0.0.1:8085:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    restart: unless-stopped
+
+volumes:
+  auth-postgres-data:
+  keycloak-data:
