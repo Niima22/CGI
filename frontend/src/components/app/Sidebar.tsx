@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Ticket,
@@ -13,12 +13,13 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 
 const logoUrl = "/images/logo.png";
 
-const menu = [
+const baseMenu = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" as const, enabled: true },
   { label: "Gestion des incidents", icon: Ticket, to: "/dashboard" as const, enabled: false },
   { label: "Suivi SLA", icon: Clock, to: "/dashboard" as const, enabled: false },
@@ -35,8 +36,26 @@ const menu = [
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, hasRole } = useAuth();
+  const isAdmin = hasRole("ADMIN");
+  const isManager = isAdmin || hasRole("MANAGER");
+  const menu = [
+    ...baseMenu,
+    ...(isManager
+      ? [{ label: "Gestion d'equipe", icon: Users, to: "/dashboard" as const, enabled: false }]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            label: "Gestion des utilisateurs",
+            icon: Settings,
+            to: "/users" as const,
+            enabled: true,
+          },
+          { label: "Ajouter un utilisateur", icon: UserPlus, to: "/users" as const, enabled: true },
+        ]
+      : []),
+  ];
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -80,8 +99,7 @@ export function Sidebar() {
 
         <button
           onClick={() => {
-            logout();
-            navigate({ to: "/" });
+            void logout();
           }}
           className="mt-4 w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all"
         >

@@ -2,7 +2,7 @@ import { Bell, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 
 export function Topbar({ compact = false }: { compact?: boolean }) {
-  const { role, email } = useAuth();
+  const { roles, email, fullName } = useAuth();
   const initial = (email?.[0] ?? "U").toUpperCase();
 
   return (
@@ -36,8 +36,12 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
           <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cgi-gradient" />
         </button>
 
+        <div className="hidden min-w-0 text-right xl:block">
+          <div className="truncate text-sm font-medium text-foreground">{fullName}</div>
+          <div className="truncate text-xs text-muted-foreground">{email}</div>
+        </div>
         <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-cgi-gradient text-white shadow-glow">
-          {role}
+          {roles.filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role)).join(", ")}
         </span>
         <div
           className={`flex items-center justify-center rounded-xl bg-cgi-gradient text-sm font-semibold text-white shadow-glow ${
