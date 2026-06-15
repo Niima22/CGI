@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Ticket,
   Clock,
@@ -29,16 +29,6 @@ export const Route = createFileRoute("/dashboard")({
       },
     ],
   }),
-  beforeLoad: () => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("cgi-auth");
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (!parsed?.isAuthenticated) throw redirect({ to: "/" });
-    } catch (e) {
-      if ((e as { isRedirect?: boolean })?.isRedirect) throw e;
-    }
-  },
   component: DashboardPage,
 });
 

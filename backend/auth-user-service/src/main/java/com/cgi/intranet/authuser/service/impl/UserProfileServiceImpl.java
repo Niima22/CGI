@@ -1,5 +1,6 @@
 package com.cgi.intranet.authuser.service.impl;
 
+import com.cgi.intranet.authuser.dto.request.CreateUserRequest;
 import com.cgi.intranet.authuser.dto.request.SyncUserRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserRoleRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserStatusRequest;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,6 +34,15 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
+    public Optional<UserProfileResponse> findUserProfile(String keycloakId, String email) {
+        Optional<UserProfile> userProfile = userProfileRepository.findByKeycloakId(keycloakId);
+        if (userProfile.isEmpty() && email != null && !email.isBlank()) {
+            userProfile = userProfileRepository.findByEmail(email);
+        }
+        return userProfile.map(this::toUserProfileResponse);
+    }
+
+    @Override
     public List<UserProfileResponse> getAllUsers() {
         return userProfileRepository.findAll().stream()
                 .map(this::toUserProfileResponse)
@@ -46,19 +57,30 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Override
     @Transactional
     public UserProfileResponse syncUser(SyncUserRequest request) {
-        UserProfile userProfile = userProfileRepository.findByKeycloakId(request.keycloakId())
-                .orElseGet(() -> new UserProfile(
-                        request.keycloakId(),
-                        request.fullName(),
-                        request.email(),
-                        request.role()
-                ));
+        return saveUserProfile(
+                request.keycloakId(),
+                request.fullName(),
+                request.email(),
+                request.role(),
+                true,
+                false
+        );
+    }
 
-        userProfile.setFullName(request.fullName());
-        userProfile.setEmail(request.email());
-        userProfile.setRole(request.role());
-
-        return toUserProfileResponse(userProfileRepository.save(userProfile));
+    @Override
+    @Transactional
+    public UserProfileResponse syncProvisionedUser(
+            String keycloakId,
+            CreateUserRequest request
+    ) {
+        return saveUserProfile(
+                keycloakId,
+                request.fullName(),
+                request.email(),
+                request.role(),
+                request.active(),
+                true
+        );
     }
 
     @Override
@@ -80,6 +102,29 @@ public class UserProfileServiceImpl implements UserProfileService {
     private UserProfile findUserById(Long id) {
         return userProfileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User profile not found with ID: " + id));
+    }
+
+    private UserProfileResponse saveUserProfile(
+            String keycloakId,
+            String fullName,
+            String email,
+            com.cgi.intranet.authuser.enums.Role role,
+            boolean active,
+            boolean updateActive
+    ) {
+        UserProfile userProfile = userProfileRepository.findByKeycloakId(keycloakId)
+                .orElseGet(() -> userProfileRepository.findByEmail(email)
+                        .orElseGet(() -> new UserProfile(keycloakId, fullName, email, role)));
+
+        userProfile.setKeycloakId(keycloakId);
+        userProfile.setFullName(fullName);
+        userProfile.setEmail(email);
+        userProfile.setRole(role);
+        if (updateActive) {
+            userProfile.setActive(active);
+        }
+
+        return toUserProfileResponse(userProfileRepository.save(userProfile));
     }
 
     private UserProfileResponse toUserProfileResponse(UserProfile userProfile) {

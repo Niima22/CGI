@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Sparkles, FileText, Wand2, CheckCircle2, AlertCircle, BookOpen, BarChart3, Eye, Copy, ChevronDown } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
@@ -14,24 +14,15 @@ export const Route = createFileRoute("/quality-lab")({
       },
     ],
   }),
-  beforeLoad: () => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("cgi-auth");
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (!parsed?.isAuthenticated) throw redirect({ to: "/" });
-    } catch (e) {
-      if ((e as { isRedirect?: boolean })?.isRedirect) throw e;
-    }
-  },
   component: QualityLabPage,
 });
 
 type Tab = "form" | "supervision" | "metrics";
 
 function QualityLabPage() {
-  const { role } = useAuth();
-  const isSup = role === "Superviseur";
+  const { roles, hasRole } = useAuth();
+  const role = roles.join(", ");
+  const isSup = hasRole("ADMIN") || hasRole("MANAGER");
   const [tab, setTab] = useState<Tab>("form");
 
   return (
