@@ -110,7 +110,7 @@ class AuthEndpointSecurityTest {
                   "fullName": "New User",
                   "email": "new.user@test.com",
                   "role": "EMPLOYEE",
-                  "temporaryPassword": "Test1234",
+                  "temporaryPassword": "TestPassword!1",
                   "active": true
                 }
                 """;
@@ -138,11 +138,30 @@ class AuthEndpointSecurityTest {
                                   "fullName": "New User",
                                   "email": "new.user@test.com",
                                   "role": "EMPLOYEE",
-                                  "temporaryPassword": "Test1234",
+                                  "temporaryPassword": "TestPassword!1",
                                   "active": true
                                 }
                                 """))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void adminReceivesClearValidationErrorForWeakPassword() throws Exception {
+        mockMvc.perform(post("/api/auth/users")
+                        .with(jwt().authorities(() -> "ROLE_ADMIN"))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "fullName": "New User",
+                                  "email": "new.user@test.com",
+                                  "role": "EMPLOYEE",
+                                  "temporaryPassword": "Test1234",
+                                  "active": true
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors.temporaryPassword").exists());
     }
 
     @Test

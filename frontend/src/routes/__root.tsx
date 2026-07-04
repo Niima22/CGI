@@ -125,6 +125,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { AuthProvider } from "@/lib/auth-store";
+import { SidebarStateProvider } from "@/lib/sidebar-store";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -132,8 +133,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <SidebarStateProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </SidebarStateProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

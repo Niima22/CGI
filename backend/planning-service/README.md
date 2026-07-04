@@ -4,13 +4,15 @@
 
 Manages schedules, shifts, availability, assignments, and resource planning.
 
-## Planned Features
+## Implemented Features
 
-- Shift planning.
-- Employee availability tracking.
-- Assignment calendar.
-- Planning conflict detection.
-- Team capacity views.
+- Deterministic weekly generation for exactly 12 active agents.
+- Exact Monday-Saturday coverage for the seven standard shifts.
+- Sunday coverage with three 05:00 shifts and fixed + rotating SCO assignments.
+- 40-hour weeks, two OFF days, five-day consecutive limit, and ten-hour rest validation.
+- Rolling eight-week shift, weekend, opening, closing, and SCO fairness tracking.
+- Locked/manual supervisor assignments with validation before save or publish.
+- Structured validation conflicts and ADMIN/MANAGER write permissions.
 
 ## Planned Entities
 
@@ -20,14 +22,14 @@ Manages schedules, shifts, availability, assignments, and resource planning.
 - PlanningAssignment
 - PlanningException
 
-## Planned Endpoints
+## Main Endpoints
 
-- `GET /planning/schedules`
-- `POST /planning/schedules`
-- `GET /planning/shifts`
-- `POST /planning/shifts`
-- `GET /planning/availability`
-- `PATCH /planning/assignments/{id}`
+- `GET /api/plannings/week/{weekStartDate}`
+- `POST /api/plannings/weeks/generate`
+- `POST /api/plannings/weeks`
+- `POST /api/plannings/validate`
+- `POST /api/plannings/{id}/publish`
+- `POST /api/plannings/agents/fixed-sco`
 
 ## Dependencies
 

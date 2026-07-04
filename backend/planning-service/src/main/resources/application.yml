@@ -1,0 +1,36 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: planning-service
+  datasource:
+    url: ${PLANNING_DATABASE_URL:jdbc:postgresql://localhost:15432/cgi_flow_auth}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    table: planning_flyway_schema_history
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-migration-naming: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/cgi-flow}
+
+security:
+  dev-admin-bypass: ${SECURITY_DEV_ADMIN_BYPASS:true}
+  jwt:
+    audience: ${KEYCLOAK_AUDIENCE:cgi-flow-api}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka

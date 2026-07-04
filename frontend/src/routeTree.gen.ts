@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as TransportRouteImport } from './routes/transport'
 import { Route as QualityLabRouteImport } from './routes/quality-lab'
+import { Route as PlanningViewRouteImport } from './routes/planning-view'
+import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -19,9 +22,24 @@ const UsersRoute = UsersRouteImport.update({
   path: '/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransportRoute = TransportRouteImport.update({
+  id: '/transport',
+  path: '/transport',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QualityLabRoute = QualityLabRouteImport.update({
   id: '/quality-lab',
   path: '/quality-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningViewRoute = PlanningViewRouteImport.update({
+  id: '/planning-view',
+  path: '/planning-view',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -38,34 +56,68 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
+  '/transport': typeof TransportRoute
   '/users': typeof UsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
+  '/transport': typeof TransportRoute
   '/users': typeof UsersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
+  '/transport': typeof TransportRoute
   '/users': typeof UsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/quality-lab' | '/users'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/planning'
+    | '/planning-view'
+    | '/quality-lab'
+    | '/transport'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/quality-lab' | '/users'
-  id: '__root__' | '/' | '/dashboard' | '/quality-lab' | '/users'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/planning'
+    | '/planning-view'
+    | '/quality-lab'
+    | '/transport'
+    | '/users'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/planning'
+    | '/planning-view'
+    | '/quality-lab'
+    | '/transport'
+    | '/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  PlanningRoute: typeof PlanningRoute
+  PlanningViewRoute: typeof PlanningViewRoute
   QualityLabRoute: typeof QualityLabRoute
+  TransportRoute: typeof TransportRoute
   UsersRoute: typeof UsersRoute
 }
 
@@ -78,11 +130,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/transport': {
+      id: '/transport'
+      path: '/transport'
+      fullPath: '/transport'
+      preLoaderRoute: typeof TransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/quality-lab': {
       id: '/quality-lab'
       path: '/quality-lab'
       fullPath: '/quality-lab'
       preLoaderRoute: typeof QualityLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning-view': {
+      id: '/planning-view'
+      path: '/planning-view'
+      fullPath: '/planning-view'
+      preLoaderRoute: typeof PlanningViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -105,7 +178,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  PlanningRoute: PlanningRoute,
+  PlanningViewRoute: PlanningViewRoute,
   QualityLabRoute: QualityLabRoute,
+  TransportRoute: TransportRoute,
   UsersRoute: UsersRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8082}
 
 spring:
   application:
@@ -8,19 +8,28 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8085/realms/cgi-flow
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/cgi-flow}
   datasource:
-    url: jdbc:postgresql://localhost:5432/cgi_flow_auth
-    username: postgres
-    password: ${POSTGRES_PASSWORD:}
+    url: ${AUTH_DATABASE_URL:jdbc:postgresql://localhost:15432/cgi_flow_auth}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-migration-naming: true
+
+security:
+  dev-admin-bypass: ${SECURITY_DEV_ADMIN_BYPASS:true}
+  jwt:
+    audience: ${KEYCLOAK_AUDIENCE:cgi-flow-api}
 
 eureka:
   client:
@@ -33,4 +42,4 @@ keycloak:
   admin-realm: ${KEYCLOAK_ADMIN_REALM:master}
   admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
   admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
-  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD}

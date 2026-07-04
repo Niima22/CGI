@@ -41,12 +41,48 @@ type Kpi = {
 };
 
 const kpis: Kpi[] = [
-  { label: "Tickets ouverts", value: "24", hint: "+3 depuis hier", icon: Ticket, tone: "text-cgi-pink bg-pink-50" },
-  { label: "SLA à risque", value: "6", hint: "à surveiller", icon: AlertTriangle, tone: "text-amber-600 bg-amber-50" },
-  { label: "SLA dépassés", value: "2", hint: "action requise", icon: ShieldCheck, tone: "text-[color:var(--cgi-red)] bg-red-50" },
-  { label: "Trames IA générées", value: "18", hint: "aujourd'hui", icon: Sparkles, tone: "text-[color:var(--cgi-purple)] bg-purple-50" },
-  { label: "Employés disponibles", value: "12", hint: "sur 17 actifs", icon: Users, tone: "text-emerald-600 bg-emerald-50" },
-  { label: "Temps moyen résolution", value: "34 min", hint: "−4 min vs semaine", icon: Timer, tone: "text-sky-600 bg-sky-50" },
+  {
+    label: "Tickets ouverts",
+    value: "24",
+    hint: "+3 depuis hier",
+    icon: Ticket,
+    tone: "text-cgi-pink bg-pink-50",
+  },
+  {
+    label: "SLA à risque",
+    value: "6",
+    hint: "à surveiller",
+    icon: AlertTriangle,
+    tone: "text-amber-600 bg-amber-50",
+  },
+  {
+    label: "SLA dépassés",
+    value: "2",
+    hint: "action requise",
+    icon: ShieldCheck,
+    tone: "text-[color:var(--cgi-red)] bg-red-50",
+  },
+  {
+    label: "Trames IA générées",
+    value: "18",
+    hint: "aujourd'hui",
+    icon: Sparkles,
+    tone: "text-[color:var(--cgi-purple)] bg-purple-50",
+  },
+  {
+    label: "Employés disponibles",
+    value: "12",
+    hint: "sur 17 actifs",
+    icon: Users,
+    tone: "text-emerald-600 bg-emerald-50",
+  },
+  {
+    label: "Temps moyen résolution",
+    value: "34 min",
+    hint: "−4 min vs semaine",
+    icon: Timer,
+    tone: "text-sky-600 bg-sky-50",
+  },
 ];
 
 function DashboardPage() {
@@ -74,7 +110,9 @@ function DashboardPage() {
                   <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${k.tone}`}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <div className="mt-3 text-2xl font-bold text-foreground leading-tight">{k.value}</div>
+                  <div className="mt-3 text-2xl font-bold text-foreground leading-tight">
+                    {k.value}
+                  </div>
                   <div className="text-xs font-medium text-foreground/80 mt-1">{k.label}</div>
                   <div className="text-[11px] text-muted-foreground mt-1">{k.hint}</div>
                 </div>
@@ -182,7 +220,10 @@ function IncidentsCard() {
         </div>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
           {segments.map((s) => (
-            <div key={s.label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div
+              key={s.label}
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+            >
               <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
               {s.label}
             </div>
@@ -196,9 +237,24 @@ function IncidentsCard() {
 /* ---------- SLA ---------- */
 function SLACard() {
   const urgent = [
-    { id: "INC-1024", level: "Haute", time: "18 min", tone: "bg-amber-50 text-amber-700 border-amber-200" },
-    { id: "INC-1027", level: "Critique", time: "6 min", tone: "bg-red-50 text-[color:var(--cgi-red)] border-red-200" },
-    { id: "INC-1031", level: "Moyenne", time: "42 min", tone: "bg-sky-50 text-sky-700 border-sky-200" },
+    {
+      id: "INC-1024",
+      level: "Haute",
+      time: "18 min",
+      tone: "bg-amber-50 text-amber-700 border-amber-200",
+    },
+    {
+      id: "INC-1027",
+      level: "Critique",
+      time: "6 min",
+      tone: "bg-red-50 text-[color:var(--cgi-red)] border-red-200",
+    },
+    {
+      id: "INC-1031",
+      level: "Moyenne",
+      time: "42 min",
+      tone: "bg-sky-50 text-sky-700 border-sky-200",
+    },
   ];
   return (
     <SectionCard title="SLA" icon={Clock} badge="Live">
@@ -224,7 +280,9 @@ function SLACard() {
               className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-3 py-2"
             >
               <span className="text-xs font-mono font-semibold text-foreground">{u.id}</span>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${u.tone}`}>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${u.tone}`}
+              >
                 {u.level}
               </span>
               <span className="text-xs text-muted-foreground tabular-nums">{u.time}</span>
@@ -275,10 +333,7 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
         <span className="tabular-nums font-medium text-foreground">{value}%</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full bg-cgi-gradient"
-          style={{ width: `${value}%` }}
-        />
+        <div className="h-full bg-cgi-gradient" style={{ width: `${value}%` }} />
       </div>
     </div>
   );
@@ -326,11 +381,16 @@ function KnowledgeCard() {
 
 /* ---------- Quick actions ---------- */
 function QuickActionsCard() {
-  const actions: { label: string; icon: LucideIcon; active: boolean; to?: "/quality-lab" }[] = [
+  const actions: {
+    label: string;
+    icon: LucideIcon;
+    active: boolean;
+    to?: "/quality-lab" | "/planning-view";
+  }[] = [
     { label: "Créer un ticket", icon: Plus, active: false },
     { label: "Ouvrir Quality Lab", icon: Sparkles, active: true, to: "/quality-lab" },
     { label: "Voir SLA à risque", icon: Activity, active: false },
-    { label: "Consulter planning", icon: Calendar, active: false },
+    { label: "Consulter planning", icon: Calendar, active: true, to: "/planning-view" },
   ];
 
   return (

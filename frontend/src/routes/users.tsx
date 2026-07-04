@@ -137,6 +137,11 @@ function UsersPage() {
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const passwordError = validateTemporaryPassword(form.temporaryPassword);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     setNotice(null);
@@ -147,16 +152,14 @@ function UsersPage() {
         body: JSON.stringify(form),
       });
       if (!response.ok) {
-        throw new Error(createUserError(response.status));
+        throw new Error(await createUserError(response));
       }
       setCreateOpen(false);
       setForm(emptyForm);
       setNotice("Compte Keycloak et profil applicatif crees avec succes.");
       await loadUsers();
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "La creation de l'utilisateur a echoue.",
-      );
+      setError(caught instanceof Error ? caught.message : "La creation de l'utilisateur a echoue.");
     } finally {
       setSubmitting(false);
     }
@@ -355,16 +358,14 @@ function UsersPage() {
               <Field label="Mot de passe temporaire">
                 <Input
                   required
-                  minLength={8}
+                  minLength={12}
                   type="password"
                   autoComplete="new-password"
                   value={form.temporaryPassword}
-                  onChange={(event) =>
-                    setForm({ ...form, temporaryPassword: event.target.value })
-                  }
+                  onChange={(event) => setForm({ ...form, temporaryPassword: event.target.value })}
                 />
                 <span className="text-xs text-muted-foreground">
-                  Minimum 8 caracteres. Le mot de passe n'est jamais affiche ni journalise.
+                  12 caracteres minimum, avec majuscule, minuscule, chiffre et caractere special.
                 </span>
               </Field>
               <div className="grid gap-2">
@@ -430,14 +431,34 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function createUserError(status: number) {
-  if (status === 400) {
+function validateTemporaryPassword(password: string) {
+  if (password.length < 12) {
+    return "Le mot de passe doit contenir au moins 12 caracteres.";
+  }
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
+    return "Le mot de passe doit contenir une majuscule et une minuscule.";
+  }
+  if (!/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    return "Le mot de passe doit contenir un chiffre et un caractere special.";
+  }
+  return null;
+}
+
+async function createUserError(response: Response) {
+  try {
+    const body = (await response.json()) as { message?: string };
+    if (body.message) return body.message;
+  } catch {
+    // Fall back to the status-specific message below.
+  }
+
+  if (response.status === 400) {
     return "Les informations saisies sont invalides. Verifiez les champs du formulaire.";
   }
-  if (status === 401 || status === 403) {
+  if (response.status === 401 || response.status === 403) {
     return "Votre session ne permet pas de creer des utilisateurs.";
   }
-  if (status === 409) {
+  if (response.status === 409) {
     return "Un utilisateur utilise deja cette adresse email.";
   }
   return "La creation Keycloak ou la synchronisation du profil a echoue.";

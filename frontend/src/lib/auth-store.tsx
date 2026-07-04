@@ -42,22 +42,47 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 let keycloak: Keycloak | null = null;
 let keycloakInit: Promise<boolean> | null = null;
+const authBypassEnabled = import.meta.env.VITE_AUTH_BYPASS === "true";
+
+const developmentAdmin: CurrentUser = {
+  keycloakId: "dev-admin",
+  email: "admin@cgi-flow.local",
+  fullName: "Development Admin",
+  roles: ["ADMIN", "MANAGER", "EMPLOYEE"],
+  localProfile: {
+    id: 0,
+    keycloakId: "dev-admin",
+    fullName: "Development Admin",
+    email: "admin@cgi-flow.local",
+    role: "ADMIN",
+    active: true,
+  },
+};
 
 function getKeycloak() {
   keycloak ??= new Keycloak({
-    url: "http://localhost:8085",
-    realm: "cgi-flow",
-    clientId: "cgi-flow-web",
+    url: import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085",
+    realm: import.meta.env.VITE_KEYCLOAK_REALM ?? "cgi-flow",
+    clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "cgi-flow-web",
   });
   return keycloak;
 }
 
 function initializeKeycloak(client: Keycloak) {
-  keycloakInit ??= client.init({
-    onLoad: "check-sso",
-    pkceMethod: "S256",
-    checkLoginIframe: false,
-  });
+  keycloakInit ??= Promise.race([
+    client.init({
+      onLoad: "check-sso",
+      pkceMethod: "S256",
+      checkLoginIframe: false,
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    }),
+    new Promise<boolean>((_, reject) => {
+      window.setTimeout(
+        () => reject(new Error("Authentication initialization timed out")),
+        10_000,
+      );
+    }),
+  ]);
   return keycloakInit;
 }
 
@@ -74,11 +99,15 @@ async function loadCurrentUser(client: Keycloak): Promise<CurrentUser> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isReady, setIsReady] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [isReady, setIsReady] = useState(authBypassEnabled);
+  const [isAuthenticated, setIsAuthenticated] = useState(authBypassEnabled);
+  const [user, setUser] = useState<CurrentUser | null>(
+    authBypassEnabled ? developmentAdmin : null,
+  );
 
   useEffect(() => {
+    if (authBypassEnabled) return;
+
     let active = true;
     const client = getKeycloak();
 
@@ -111,12 +140,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async () => {
+    if (authBypassEnabled) {
+      window.location.assign("/dashboard");
+      return;
+    }
+
     await getKeycloak().login({
       redirectUri: `${window.location.origin}/dashboard`,
     });
   }, []);
 
   const logout = useCallback(async () => {
+    if (authBypassEnabled) {
+      window.location.assign("/dashboard");
+      return;
+    }
+
     const client = getKeycloak();
     const logoutUrl = client.createLogoutUrl({ redirectUri: window.location.origin });
     setUser(null);
@@ -126,6 +165,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const authenticatedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (authBypassEnabled) {
+      const headers = new Headers(init?.headers);
+      headers.set("X-CGI-Dev-Admin", "true");
+      return fetch(input, { ...init, headers });
+    }
+
     const client = getKeycloak();
     await client.updateToken(30);
     if (!client.token) {
