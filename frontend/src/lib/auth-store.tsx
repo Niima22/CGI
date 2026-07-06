@@ -10,20 +10,40 @@ import {
 } from "react";
 
 export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
+export type AccountStatus = "ACTIVE" | "INACTIVE";
+
+const roleLabels: Record<Role, string> = {
+  ADMIN: "Pilote",
+  MANAGER: "Superviseur",
+  EMPLOYEE: "Agent",
+};
+
+export function getBusinessRoleLabel(role: string) {
+  return role in roleLabels ? roleLabels[role as Role] : role;
+}
+
+export interface LocalUserProfile {
+  id: number;
+  keycloakId: string;
+  fullName: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  accountStatus: AccountStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface CurrentUser {
   keycloakId: string;
   email: string;
   fullName: string;
-  roles: string[];
-  localProfile: {
-    id: number;
-    keycloakId: string;
-    fullName: string;
-    email: string;
-    role: Role;
-    active: boolean;
-  } | null;
+  roles: Role[];
+  primaryRole: Role | null;
+  accountStatus: AccountStatus;
+  localProfileLinked: boolean;
+  warnings: string[];
+  localProfile: LocalUserProfile | null;
 }
 
 interface AuthState {
@@ -32,7 +52,7 @@ interface AuthState {
   user: CurrentUser | null;
   email: string | null;
   fullName: string | null;
-  roles: string[];
+  roles: Role[];
   hasRole: (role: Role) => boolean;
   authenticatedFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   login: () => Promise<void>;
@@ -42,6 +62,21 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 let keycloak: Keycloak | null = null;
 let keycloakInit: Promise<boolean> | null = null;
+
+function getPreferredLocalOrigin() {
+  if (typeof window === "undefined") {
+    return "http://localhost:5173";
+  }
+
+  const { hostname, port, protocol, origin } = window.location;
+  const isLoopback = hostname === "127.0.0.1" || hostname === "localhost";
+  if (!isLoopback) {
+    return origin;
+  }
+
+  const preferredPort = port || "5173";
+  return `${protocol}//localhost:${preferredPort}`;
+}
 
 function getKeycloak() {
   keycloak ??= new Keycloak({
@@ -112,13 +147,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async () => {
     await getKeycloak().login({
-      redirectUri: `${window.location.origin}/dashboard`,
+      redirectUri: `${getPreferredLocalOrigin()}/dashboard`,
     });
   }, []);
 
   const logout = useCallback(async () => {
     const client = getKeycloak();
-    const logoutUrl = client.createLogoutUrl({ redirectUri: window.location.origin });
+    const logoutUrl = client.createLogoutUrl({ redirectUri: getPreferredLocalOrigin() });
     setUser(null);
     setIsAuthenticated(false);
     client.clearToken();
@@ -137,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return fetch(input, { ...init, headers });
   }, []);
 
-  const roles = useMemo(() => user?.roles ?? [], [user]);
+  const roles = useMemo<Role[]>(() => user?.roles ?? [], [user]);
   const value = useMemo<AuthState>(
     () => ({
       isReady,

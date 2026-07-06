@@ -17,6 +17,10 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, Long> 
 
     List<UserProfile> findByActiveTrue();
 
+    List<UserProfile> findByActiveTrueOrderByFullNameAsc();
+
+    Optional<UserProfile> findByIdAndActiveTrue(Long id);
+
     boolean existsByKeycloakId(String keycloakId);
 
     boolean existsByEmail(String email);

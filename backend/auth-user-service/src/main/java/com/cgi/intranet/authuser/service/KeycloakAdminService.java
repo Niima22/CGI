@@ -8,4 +8,8 @@ public interface KeycloakAdminService {
     String createUser(CreateUserRequest request);
 
     void assignRealmRole(String keycloakUserId, Role role);
+
+    void updateUserEnabled(String keycloakUserId, boolean enabled);
+
+    void resetTemporaryPassword(String keycloakUserId, String temporaryPassword);
 }

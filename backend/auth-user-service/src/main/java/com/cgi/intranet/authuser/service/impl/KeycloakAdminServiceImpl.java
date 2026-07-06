@@ -3,6 +3,7 @@ package com.cgi.intranet.authuser.service.impl;
 import com.cgi.intranet.authuser.config.KeycloakAdminProperties;
 import com.cgi.intranet.authuser.dto.request.CreateUserRequest;
 import com.cgi.intranet.authuser.enums.Role;
+import com.cgi.intranet.authuser.exception.KeycloakSyncException;
 import com.cgi.intranet.authuser.service.KeycloakAdminService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -15,9 +16,12 @@ import org.springframework.web.client.RestClient;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class KeycloakAdminServiceImpl implements KeycloakAdminService {
+
+    private static final Set<String> BUSINESS_ROLES = Set.of("ADMIN", "MANAGER", "EMPLOYEE");
 
     private final KeycloakAdminProperties properties;
     private final RestClient restClient;
@@ -34,6 +38,7 @@ public class KeycloakAdminServiceImpl implements KeycloakAdminService {
         if (!existingUsers.isEmpty()) {
             KeycloakUser existingUser = existingUsers.get(0);
             updateUser(existingUser.id(), request, accessToken);
+            resetTemporaryPassword(existingUser.id(), request.temporaryPassword(), accessToken);
             return existingUser.id();
         }
 
@@ -59,29 +64,77 @@ public class KeycloakAdminServiceImpl implements KeycloakAdminService {
 
     @Override
     public void assignRealmRole(String keycloakUserId, Role role) {
-        String accessToken = getAdminAccessToken();
-        Map<String, Object> roleRepresentation = restClient.get()
-                .uri("/admin/realms/{realm}/roles/{role}", properties.realm(), role.name())
-                .headers(headers -> setBearer(headers, accessToken))
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {
-                });
+        try {
+            String accessToken = getAdminAccessToken();
+            List<Map<String, Object>> assignedRoles = getAssignedRealmRoles(keycloakUserId, accessToken);
+            List<Map<String, Object>> businessRolesToRemove = assignedRoles.stream()
+                    .filter(roleRepresentation -> BUSINESS_ROLES.contains(roleRepresentation.get("name")))
+                    .toList();
 
-        if (roleRepresentation == null) {
-            throw new IllegalStateException("Keycloak realm role not found: " + role.name());
+            if (!businessRolesToRemove.isEmpty()) {
+                restClient.method(org.springframework.http.HttpMethod.DELETE)
+                        .uri(
+                                "/admin/realms/{realm}/users/{userId}/role-mappings/realm",
+                                properties.realm(),
+                                keycloakUserId
+                        )
+                        .headers(headers -> setBearer(headers, accessToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(businessRolesToRemove)
+                        .retrieve()
+                        .toBodilessEntity();
+            }
+
+            Map<String, Object> roleRepresentation = getRealmRoleRepresentation(role, accessToken);
+            restClient.post()
+                    .uri(
+                            "/admin/realms/{realm}/users/{userId}/role-mappings/realm",
+                            properties.realm(),
+                            keycloakUserId
+                    )
+                    .headers(headers -> setBearer(headers, accessToken))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(List.of(roleRepresentation))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception exception) {
+            throw new KeycloakSyncException(
+                    "Unable to synchronize business role with Keycloak for user " + keycloakUserId,
+                    exception
+            );
         }
+    }
 
-        restClient.post()
-                .uri(
-                        "/admin/realms/{realm}/users/{userId}/role-mappings/realm",
-                        properties.realm(),
-                        keycloakUserId
-                )
-                .headers(headers -> setBearer(headers, accessToken))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(List.of(roleRepresentation))
-                .retrieve()
-                .toBodilessEntity();
+    @Override
+    public void updateUserEnabled(String keycloakUserId, boolean enabled) {
+        try {
+            String accessToken = getAdminAccessToken();
+            restClient.put()
+                    .uri("/admin/realms/{realm}/users/{userId}", properties.realm(), keycloakUserId)
+                    .headers(headers -> setBearer(headers, accessToken))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("enabled", enabled))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception exception) {
+            throw new KeycloakSyncException(
+                    "Unable to synchronize enabled status with Keycloak for user " + keycloakUserId,
+                    exception
+            );
+        }
+    }
+
+    @Override
+    public void resetTemporaryPassword(String keycloakUserId, String temporaryPassword) {
+        try {
+            String accessToken = getAdminAccessToken();
+            resetTemporaryPassword(keycloakUserId, temporaryPassword, accessToken);
+        } catch (Exception exception) {
+            throw new KeycloakSyncException(
+                    "Unable to reset temporary password in Keycloak for user " + keycloakUserId,
+                    exception
+            );
+        }
     }
 
     private String getAdminAccessToken() {
@@ -121,6 +174,34 @@ public class KeycloakAdminServiceImpl implements KeycloakAdminService {
         return users == null ? List.of() : users;
     }
 
+    private List<Map<String, Object>> getAssignedRealmRoles(String keycloakUserId, String accessToken) {
+        List<Map<String, Object>> roles = restClient.get()
+                .uri(
+                        "/admin/realms/{realm}/users/{userId}/role-mappings/realm",
+                        properties.realm(),
+                        keycloakUserId
+                )
+                .headers(headers -> setBearer(headers, accessToken))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+        return roles == null ? List.of() : roles;
+    }
+
+    private Map<String, Object> getRealmRoleRepresentation(Role role, String accessToken) {
+        Map<String, Object> roleRepresentation = restClient.get()
+                .uri("/admin/realms/{realm}/roles/{role}", properties.realm(), role.name())
+                .headers(headers -> setBearer(headers, accessToken))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        if (roleRepresentation == null) {
+            throw new KeycloakSyncException("Keycloak realm role not found: " + role.name());
+        }
+        return roleRepresentation;
+    }
+
     private void updateUser(String userId, CreateUserRequest request, String accessToken) {
         restClient.put()
                 .uri("/admin/realms/{realm}/users/{userId}", properties.realm(), userId)
@@ -147,10 +228,24 @@ public class KeycloakAdminServiceImpl implements KeycloakAdminService {
             user.put("credentials", List.of(Map.of(
                     "type", "password",
                     "value", request.temporaryPassword(),
-                    "temporary", false
+                    "temporary", true
             )));
         }
         return user;
+    }
+
+    private void resetTemporaryPassword(String userId, String temporaryPassword, String accessToken) {
+        restClient.put()
+                .uri("/admin/realms/{realm}/users/{userId}/reset-password", properties.realm(), userId)
+                .headers(headers -> setBearer(headers, accessToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "type", "password",
+                        "value", temporaryPassword,
+                        "temporary", true
+                ))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private NameParts splitName(String fullName) {

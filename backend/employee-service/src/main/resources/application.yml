@@ -4,8 +4,36 @@ server:
 spring:
   application:
     name: employee-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/cgi-flow}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:55432/cgi_flow_employee}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:postgres}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka}
+
+app:
+  uploads:
+    profile-photos:
+      directory: ${EMPLOYEE_PROFILE_UPLOAD_DIR:uploads/profiles}
+      max-file-size-bytes: ${EMPLOYEE_PROFILE_UPLOAD_MAX_BYTES:2097152}
+      public-base-url: ${EMPLOYEE_PUBLIC_BASE_URL:http://localhost:8082}

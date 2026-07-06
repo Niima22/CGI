@@ -17,14 +17,22 @@ spring:
               uri: lb://employee-service
               predicates:
                 - Path=/api/employees/**
+            - id: department-service
+              uri: lb://employee-service
+              predicates:
+                - Path=/api/departments,/api/departments/**
             - id: ticket-service
               uri: lb://ticket-service
               predicates:
-                - Path=/api/tickets/**
+                - Path=/api/tickets,/api/tickets/**
             - id: sla-service
-              uri: lb://sla-service
+              uri: lb://ticket-service
               predicates:
                 - Path=/api/sla/**
+            - id: kpi-service
+              uri: lb://ticket-service
+              predicates:
+                - Path=/api/kpi/**
             - id: planning-service
               uri: lb://planning-service
               predicates:
@@ -42,9 +50,13 @@ spring:
               predicates:
                 - Path=/api/messages/**
             - id: notification-service
-              uri: lb://notification-service
+              uri: lb://ticket-service
               predicates:
-                - Path=/api/notifications/**
+                - Path=/api/notifications,/api/notifications/**
+            - id: report-service
+              uri: lb://ticket-service
+              predicates:
+                - Path=/api/reports/**
             - id: transport-service
               uri: lb://transport-service
               predicates:

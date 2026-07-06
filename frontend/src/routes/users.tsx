@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   AlertCircle,
   CheckCircle2,
+  KeyRound,
   LoaderCircle,
   Plus,
   RefreshCw,
@@ -11,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
+import { RoleGuard } from "@/components/app/RoleGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageContainer, PageHeader, SectionSurface, StatCard } from "@/components/ui/page";
 import {
   Select,
   SelectContent,
@@ -39,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth, type Role } from "@/lib/auth-store";
+import { getBusinessRoleLabel, useAuth, type Role } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/users")({
   head: () => ({
@@ -61,6 +64,7 @@ interface UserProfile {
   email: string;
   role: Role;
   active: boolean;
+  accountStatus: "ACTIVE" | "INACTIVE";
   createdAt: string;
   updatedAt: string;
 }
@@ -73,12 +77,20 @@ interface CreateUserForm {
   active: boolean;
 }
 
+interface ResetPasswordForm {
+  temporaryPassword: string;
+}
+
 const emptyForm: CreateUserForm = {
   fullName: "",
   email: "",
   role: "EMPLOYEE",
   temporaryPassword: "",
   active: true,
+};
+
+const emptyResetForm: ResetPasswordForm = {
+  temporaryPassword: "",
 };
 
 function UsersPage() {
@@ -92,6 +104,10 @@ function UsersPage() {
   const [form, setForm] = useState<CreateUserForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTargetUser, setResetTargetUser] = useState<UserProfile | null>(null);
+  const [resetForm, setResetForm] = useState<ResetPasswordForm>(emptyResetForm);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const loadUsers = useCallback(async () => {
     if (!isAdmin) {
@@ -103,10 +119,16 @@ function UsersPage() {
     setError(null);
     try {
       const response = await authenticatedFetch("/api/auth/users");
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, getUsersError(response.status)),
+        );
+      }
       setUsers((await response.json()) as UserProfile[]);
-    } catch {
-      setError("Impossible de charger les profils utilisateurs.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Impossible de charger les profils utilisateurs.",
+      );
     } finally {
       setLoading(false);
     }
@@ -115,25 +137,6 @@ function UsersPage() {
   useEffect(() => {
     void loadUsers();
   }, [loadUsers]);
-
-  if (!isAdmin) {
-    return (
-      <AppShell>
-        <div className="mx-auto flex min-h-[60vh] max-w-xl items-center justify-center">
-          <div className="w-full rounded-lg border border-border bg-card p-8 text-center shadow-card">
-            <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-            <h1 className="mt-4 text-xl font-semibold">Acces refuse</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              La gestion des utilisateurs est reservee aux administrateurs.
-            </p>
-            <Button asChild className="mt-6">
-              <Link to="/dashboard">Retour au dashboard</Link>
-            </Button>
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,7 +150,7 @@ function UsersPage() {
         body: JSON.stringify(form),
       });
       if (!response.ok) {
-        throw new Error(createUserError(response.status));
+        throw new Error(await readApiError(response, createUserError(response.status)));
       }
       setCreateOpen(false);
       setForm(emptyForm);
@@ -165,19 +168,20 @@ function UsersPage() {
   async function updateRole(user: UserProfile, role: Role) {
     setPendingUserId(user.id);
     setError(null);
+    setNotice(null);
     try {
       const response = await authenticatedFetch(`/api/auth/users/${user.id}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      setUsers((current) =>
-        current.map((item) => (item.id === user.id ? { ...item, role } : item)),
+      if (!response.ok) throw new Error(await readApiError(response, "La mise a jour du role metier a echoue."));
+      await loadUsers();
+      setNotice(`Role metier de ${user.fullName} mis a jour.`);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "La mise a jour du role metier a echoue.",
       );
-      setNotice(`Role de ${user.fullName} mis a jour.`);
-    } catch {
-      setError("La mise a jour du role a echoue.");
     } finally {
       setPendingUserId(null);
     }
@@ -186,6 +190,7 @@ function UsersPage() {
   async function toggleStatus(user: UserProfile) {
     setPendingUserId(user.id);
     setError(null);
+    setNotice(null);
     try {
       const active = !user.active;
       const response = await authenticatedFetch(`/api/auth/users/${user.id}/status`, {
@@ -193,46 +198,98 @@ function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      setUsers((current) =>
-        current.map((item) => (item.id === user.id ? { ...item, active } : item)),
-      );
+      if (!response.ok) throw new Error(await readApiError(response, "La mise a jour du statut a echoue."));
+      await loadUsers();
       setNotice(`${user.fullName} est maintenant ${active ? "actif" : "inactif"}.`);
-    } catch {
-      setError("La mise a jour du statut a echoue.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "La mise a jour du statut a echoue.");
     } finally {
       setPendingUserId(null);
     }
   }
 
+  function openResetPassword(user: UserProfile) {
+    setResetTargetUser(user);
+    setResetForm(emptyResetForm);
+    setResetOpen(true);
+  }
+
+  async function resetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!resetTargetUser) return;
+
+    setResettingPassword(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await authenticatedFetch(`/api/auth/users/${resetTargetUser.id}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resetForm),
+      });
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, "La reinitialisation du mot de passe a echoue."),
+        );
+      }
+      setResetOpen(false);
+      setResetTargetUser(null);
+      setResetForm(emptyResetForm);
+      await loadUsers();
+      setNotice(
+        `Mot de passe temporaire reinitialise pour ${resetTargetUser.fullName}.`,
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "La reinitialisation du mot de passe a echoue.",
+      );
+    } finally {
+      setResettingPassword(false);
+    }
+  }
+
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-[1400px] space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <UserCog className="h-5 w-5 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">Gestion des utilisateurs</h1>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Profils applicatifs, roles et statut d'acces local.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
-              <RefreshCw className={loading ? "animate-spin" : ""} />
-              Actualiser
-            </Button>
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus />
-              Ajouter un utilisateur
-            </Button>
-          </div>
+      <RoleGuard
+        allowedRoles={["ADMIN"]}
+        message="La gestion des utilisateurs est réservée aux Pilotes."
+      >
+      <PageContainer>
+        <PageHeader
+          icon={<UserCog className="h-5 w-5" />}
+          title="Gestion des utilisateurs"
+          description="Profils applicatifs, roles et statut d'acces local."
+          actions={
+            <>
+              <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
+                <RefreshCw className={loading ? "animate-spin" : ""} />
+                Actualiser
+              </Button>
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus />
+                Ajouter un utilisateur
+              </Button>
+            </>
+          }
+        />
+
+        <div className="rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+          Depuis cette page, un Pilote cree le compte Keycloak, assigne son role technique et
+          synchronise le profil applicatif.
         </div>
 
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Depuis cette page, un ADMIN cree le compte Keycloak, assigne son role et synchronise le
-          profil applicatif.
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard label="Profils total" value={String(users.length)} />
+          <StatCard
+            label="Comptes actifs"
+            value={String(users.filter((user) => user.active).length)}
+          />
+          <StatCard
+            label="Comptes inactifs"
+            value={String(users.filter((user) => !user.active).length)}
+          />
         </div>
 
         {error && (
@@ -248,8 +305,8 @@ function UsersPage() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-md border border-border bg-card shadow-card">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <SectionSurface className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Profils</span>
@@ -269,11 +326,11 @@ function UsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="w-44">Role</TableHead>
+                  <TableHead>Utilisateur</TableHead>
+                  <TableHead className="w-44">Role metier</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Cree le</TableHead>
+                  <TableHead>Mis a jour</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -282,40 +339,64 @@ function UsersPage() {
                   const pending = pendingUserId === user.id;
                   return (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.fullName}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{user.fullName}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                          <div className="text-xs text-muted-foreground">
+                            ID #{user.id} • Keycloak {formatKeycloakId(user.keycloakId)}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Select
                           value={user.role}
                           disabled={pending}
                           onValueChange={(value) => void updateRole(user, value as Role)}
                         >
-                          <SelectTrigger aria-label={`Role de ${user.fullName}`}>
+                          <SelectTrigger aria-label={`Role metier de ${user.fullName}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="EMPLOYEE">EMPLOYEE</SelectItem>
-                            <SelectItem value="MANAGER">MANAGER</SelectItem>
-                            <SelectItem value="ADMIN">ADMIN</SelectItem>
+                            <SelectItem value="EMPLOYEE">{getBusinessRoleLabel("EMPLOYEE")}</SelectItem>
+                            <SelectItem value="MANAGER">{getBusinessRoleLabel("MANAGER")}</SelectItem>
+                            <SelectItem value="ADMIN">{getBusinessRoleLabel("ADMIN")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.active ? "secondary" : "outline"}>
-                          {user.active ? "Actif" : "Inactif"}
-                        </Badge>
+                        <div className="space-y-1">
+                          <Badge variant={user.active ? "secondary" : "outline"}>
+                            {getAccountStatusLabel(user)}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground">
+                            {user.accountStatus}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>{formatDate(user.createdAt)}</TableCell>
+                      <TableCell>{formatDate(user.updatedAt)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant={user.active ? "outline" : "secondary"}
-                          disabled={pending}
-                          onClick={() => void toggleStatus(user)}
-                        >
-                          {pending && <LoaderCircle className="animate-spin" />}
-                          {user.active ? "Desactiver" : "Activer"}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={pending}
+                            onClick={() => openResetPassword(user)}
+                          >
+                            <KeyRound />
+                            Reinit. mot de passe
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={user.active ? "outline" : "secondary"}
+                            disabled={pending}
+                            onClick={() => void toggleStatus(user)}
+                          >
+                            {pending && <LoaderCircle className="animate-spin" />}
+                            {user.active ? "Desactiver" : "Activer"}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -323,11 +404,11 @@ function UsersPage() {
               </TableBody>
             </Table>
           )}
-        </div>
-      </div>
+        </SectionSurface>
+      </PageContainer>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <form onSubmit={createUser}>
             <DialogHeader>
               <DialogTitle>Creer un utilisateur</DialogTitle>
@@ -336,7 +417,7 @@ function UsersPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-5">
+            <div className="grid gap-4 py-5 md:grid-cols-2">
               <Field label="Nom complet">
                 <Input
                   required
@@ -364,26 +445,26 @@ function UsersPage() {
                   }
                 />
                 <span className="text-xs text-muted-foreground">
-                  Minimum 8 caracteres. Le mot de passe n'est jamais affiche ni journalise.
+                  Minimum 8 caracteres. L'utilisateur devra le changer a la premiere connexion.
                 </span>
               </Field>
               <div className="grid gap-2">
-                <Label>Role</Label>
+                <Label>Role metier</Label>
                 <Select
                   value={form.role}
                   onValueChange={(value) => setForm({ ...form, role: value as Role })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EMPLOYEE">EMPLOYEE</SelectItem>
-                    <SelectItem value="MANAGER">MANAGER</SelectItem>
-                    <SelectItem value="ADMIN">ADMIN</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EMPLOYEE">{getBusinessRoleLabel("EMPLOYEE")}</SelectItem>
+                <SelectItem value="MANAGER">{getBusinessRoleLabel("MANAGER")}</SelectItem>
+                <SelectItem value="ADMIN">{getBusinessRoleLabel("ADMIN")}</SelectItem>
+              </SelectContent>
+            </Select>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-md border border-border px-3 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/30 px-4 py-3 md:col-span-2">
                 <div>
                   <Label htmlFor="new-user-active">Compte actif</Label>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -410,6 +491,67 @@ function UsersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={resetOpen}
+        onOpenChange={(open) => {
+          setResetOpen(open);
+          if (!open) {
+            setResetTargetUser(null);
+            setResetForm(emptyResetForm);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <form onSubmit={resetPassword}>
+            <DialogHeader>
+              <DialogTitle>Reinitialiser le mot de passe</DialogTitle>
+              <DialogDescription>
+                {resetTargetUser
+                  ? `Definissez un mot de passe temporaire pour ${resetTargetUser.fullName}.`
+                  : "Definissez un mot de passe temporaire."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-5">
+              <Field label="Mot de passe temporaire">
+                <Input
+                  required
+                  minLength={8}
+                  type="password"
+                  autoComplete="new-password"
+                  value={resetForm.temporaryPassword}
+                  onChange={(event) =>
+                    setResetForm({ temporaryPassword: event.target.value })
+                  }
+                />
+                <span className="text-xs text-muted-foreground">
+                  L&apos;utilisateur devra le modifier lors de sa prochaine connexion.
+                </span>
+              </Field>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setResetOpen(false);
+                  setResetTargetUser(null);
+                  setResetForm(emptyResetForm);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={resettingPassword}>
+                {resettingPassword && <LoaderCircle className="animate-spin" />}
+                Reinitialiser
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      </RoleGuard>
     </AppShell>
   );
 }
@@ -430,6 +572,33 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatKeycloakId(value: string) {
+  if (!value) {
+    return "non lie";
+  }
+  if (value.length <= 12) {
+    return value;
+  }
+  return `${value.slice(0, 8)}...${value.slice(-4)}`;
+}
+
+function getAccountStatusLabel(user: UserProfile) {
+  if (user.accountStatus === "INACTIVE" || !user.active) {
+    return "Inactif";
+  }
+  return "Actif";
+}
+
+function getUsersError(status: number) {
+  if (status === 401) {
+    return "Votre session a expire. Reconnectez-vous.";
+  }
+  if (status === 403) {
+    return "Votre session ne permet pas d'acceder a la gestion des utilisateurs.";
+  }
+  return "Impossible de charger les profils utilisateurs.";
+}
+
 function createUserError(status: number) {
   if (status === 400) {
     return "Les informations saisies sont invalides. Verifiez les champs du formulaire.";
@@ -440,5 +609,22 @@ function createUserError(status: number) {
   if (status === 409) {
     return "Un utilisateur utilise deja cette adresse email.";
   }
+  if (status === 404) {
+    return "Le profil cible n'existe plus.";
+  }
+  if (status === 502) {
+    return "La synchronisation avec Keycloak a echoue.";
+  }
   return "La creation Keycloak ou la synchronisation du profil a echoue.";
+}
+
+async function readApiError(response: Response, fallback: string) {
+  try {
+    const payload = (await response.json()) as { message?: string };
+    if (payload.message) {
+      return payload.message;
+    }
+  } catch {
+  }
+  return fallback;
 }

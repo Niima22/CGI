@@ -4,9 +4,11 @@ import com.cgi.intranet.authuser.dto.request.CreateUserRequest;
 import com.cgi.intranet.authuser.dto.request.SyncUserRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserRoleRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserStatusRequest;
-import com.cgi.intranet.authuser.dto.response.CurrentUserResponse;
 import com.cgi.intranet.authuser.dto.response.UserProfileResponse;
+import com.cgi.intranet.authuser.dto.response.MessagingDirectoryUserResponse;
 import com.cgi.intranet.authuser.entity.UserProfile;
+import com.cgi.intranet.authuser.enums.AccountStatus;
+import com.cgi.intranet.authuser.exception.UserNotFoundException;
 import com.cgi.intranet.authuser.repository.UserProfileRepository;
 import com.cgi.intranet.authuser.service.UserProfileService;
 import org.springframework.stereotype.Service;
@@ -26,14 +28,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    public CurrentUserResponse getCurrentUserByKeycloakId(String keycloakId) {
-        UserProfile userProfile = userProfileRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User profile not found for Keycloak ID: " + keycloakId));
-
-        return toCurrentUserResponse(userProfile);
-    }
-
-    @Override
     public Optional<UserProfileResponse> findUserProfile(String keycloakId, String email) {
         Optional<UserProfile> userProfile = userProfileRepository.findByKeycloakId(keycloakId);
         if (userProfile.isEmpty() && email != null && !email.isBlank()) {
@@ -47,6 +41,21 @@ public class UserProfileServiceImpl implements UserProfileService {
         return userProfileRepository.findAll().stream()
                 .map(this::toUserProfileResponse)
                 .toList();
+    }
+
+    @Override
+    public List<MessagingDirectoryUserResponse> getMessagingDirectoryUsers() {
+        return userProfileRepository.findByActiveTrueOrderByFullNameAsc().stream()
+                .map(this::toMessagingDirectoryUserResponse)
+                .toList();
+    }
+
+    @Override
+    public MessagingDirectoryUserResponse getActiveMessagingDirectoryUserById(Long id) {
+        return toMessagingDirectoryUserResponse(
+                userProfileRepository.findByIdAndActiveTrue(id)
+                        .orElseThrow(() -> new UserNotFoundException("Active user profile not found with ID: " + id))
+        );
     }
 
     @Override
@@ -101,7 +110,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private UserProfile findUserById(Long id) {
         return userProfileRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User profile not found with ID: " + id));
+                .orElseThrow(() -> new UserNotFoundException("User profile not found with ID: " + id));
     }
 
     private UserProfileResponse saveUserProfile(
@@ -135,19 +144,18 @@ public class UserProfileServiceImpl implements UserProfileService {
                 userProfile.getEmail(),
                 userProfile.getRole(),
                 userProfile.isActive(),
+                userProfile.isActive() ? AccountStatus.ACTIVE : AccountStatus.INACTIVE,
                 userProfile.getCreatedAt(),
                 userProfile.getUpdatedAt()
         );
     }
 
-    private CurrentUserResponse toCurrentUserResponse(UserProfile userProfile) {
-        return new CurrentUserResponse(
+    private MessagingDirectoryUserResponse toMessagingDirectoryUserResponse(UserProfile userProfile) {
+        return new MessagingDirectoryUserResponse(
                 userProfile.getId(),
-                userProfile.getKeycloakId(),
                 userProfile.getFullName(),
                 userProfile.getEmail(),
-                userProfile.getRole(),
-                userProfile.isActive()
+                userProfile.getRole()
         );
     }
 }

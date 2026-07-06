@@ -32,6 +32,6 @@ class SecurityConfigTest {
         assertThat(authentication).isNotNull();
         assertThat(authentication.getAuthorities())
                 .extracting("authority")
-                .contains("ROLE_ADMIN", "ROLE_offline_access");
+                .containsExactly("ROLE_ADMIN");
     }
 }

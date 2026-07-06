@@ -4,19 +4,21 @@ import com.cgi.intranet.authuser.dto.request.CreateUserRequest;
 import com.cgi.intranet.authuser.dto.request.SyncUserRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserRoleRequest;
 import com.cgi.intranet.authuser.dto.request.UpdateUserStatusRequest;
-import com.cgi.intranet.authuser.dto.response.CurrentUserResponse;
 import com.cgi.intranet.authuser.dto.response.UserProfileResponse;
+import com.cgi.intranet.authuser.dto.response.MessagingDirectoryUserResponse;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserProfileService {
 
-    CurrentUserResponse getCurrentUserByKeycloakId(String keycloakId);
-
     Optional<UserProfileResponse> findUserProfile(String keycloakId, String email);
 
     List<UserProfileResponse> getAllUsers();
+
+    List<MessagingDirectoryUserResponse> getMessagingDirectoryUsers();
+
+    MessagingDirectoryUserResponse getActiveMessagingDirectoryUserById(Long id);
 
     UserProfileResponse getUserById(Long id);
 

@@ -87,3 +87,6 @@ frontend/.vite/
 frontend/vite.*.log
 frontend-old/
 *.tsbuildinfo
+
+### Local development runtime files ###
+.run/

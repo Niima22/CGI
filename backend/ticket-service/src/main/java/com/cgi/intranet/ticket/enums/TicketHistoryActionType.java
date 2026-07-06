@@ -1,0 +1,22 @@
+package com.cgi.intranet.ticket.enums;
+
+public enum TicketHistoryActionType {
+    CREATED,
+    UPDATED,
+    STATUS_CHANGED,
+    ASSIGNED,
+    REASSIGNED,
+    PRIORITY_CHANGED,
+    CRITICALITY_CHANGED,
+    RESOLVED,
+    CLOSED,
+    REOPENED,
+    CANCELLED,
+    SLA_STARTED,
+    SLA_AT_RISK,
+    SLA_BREACHED,
+    SLA_ESCALATED_LEVEL_1,
+    SLA_ESCALATED_LEVEL_2,
+    SLA_RESPECTED,
+    SLA_NOT_APPLICABLE
+}

@@ -14,13 +14,13 @@ export function AppShell({
 }) {
   return (
     <AuthenticatedView>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="flex h-screen w-full overflow-hidden bg-soft-gradient">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar compact={compactTopbar} />
           <main
             className={`min-h-0 flex-1 ${
-              lockScroll ? "overflow-hidden px-4 py-3 md:px-8" : "overflow-auto px-3 py-4 md:px-5"
+              lockScroll ? "overflow-hidden px-4 py-4 md:px-6 md:py-5 xl:px-8" : "overflow-auto px-4 py-4 md:px-6 md:py-5 xl:px-8"
             }`}
           >
             {children}

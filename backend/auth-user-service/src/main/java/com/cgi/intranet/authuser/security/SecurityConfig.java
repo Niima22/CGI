@@ -15,9 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Configuration
 public class SecurityConfig {
+
+    private static final Set<String> BUSINESS_ROLES = Set.of("ADMIN", "MANAGER", "EMPLOYEE");
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -28,13 +31,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/api/auth/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/users").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/auth/users/sync").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/users/*/role").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/auth/users/*/status").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/auth/users", "/api/auth/users/*")
-                        .hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers("/api/auth/me/dev/**").denyAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/audit-logs").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/auth/directory", "/api/auth/directory/*")
+                        .hasAnyRole("ADMIN", "MANAGER", "EMPLOYEE")
+                        .requestMatchers("/api/auth/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me")
+                        .hasAnyRole("ADMIN", "MANAGER", "EMPLOYEE")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -60,6 +63,7 @@ public class SecurityConfig {
         return roles.stream()
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
+                .filter(BUSINESS_ROLES::contains)
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .map(GrantedAuthority.class::cast)
                 .toList();

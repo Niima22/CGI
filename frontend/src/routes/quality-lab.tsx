@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Sparkles, FileText, Wand2, CheckCircle2, AlertCircle, BookOpen, BarChart3, Eye, Copy, ChevronDown } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
-import { useAuth } from "@/lib/auth-store";
+import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/quality-lab")({
   head: () => ({
@@ -21,7 +21,7 @@ type Tab = "form" | "supervision" | "metrics";
 
 function QualityLabPage() {
   const { roles, hasRole } = useAuth();
-  const role = roles.join(", ");
+  const role = roles.map(getBusinessRoleLabel).join(", ");
   const isSup = hasRole("ADMIN") || hasRole("MANAGER");
   const [tab, setTab] = useState<Tab>("form");
 

@@ -40,10 +40,6 @@ function LoginPage() {
         </div>
 
         <div className="relative max-w-md space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-card">
-            <Sparkles className="h-3 w-3 text-cgi-pink" />
-            Plateforme intelligente
-          </span>
           <h1 className="text-4xl font-bold leading-tight text-foreground">
             Pilotez vos operations avec une{" "}
             <span className="text-cgi-gradient">intelligence augmentee</span>.
@@ -60,9 +56,7 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="relative text-xs text-muted-foreground">
-          Copyright {new Date().getFullYear()} CGI
-        </div>
+        <div className="relative text-xs text-muted-foreground">@CGI 2026</div>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-12">
