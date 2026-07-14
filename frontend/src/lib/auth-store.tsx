@@ -55,49 +55,106 @@ interface AuthState {
   roles: Role[];
   hasRole: (role: Role) => boolean;
   authenticatedFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-  login: () => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  loginRedirect: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 let keycloak: Keycloak | null = null;
 let keycloakInit: Promise<boolean> | null = null;
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "cgi-flow";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "cgi-flow-web";
+const tokenStorageKey = "cgi-flow.keycloak.tokens";
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface StoredTokens {
+  token: string;
+  refreshToken?: string;
+  idToken?: string;
+}
+
+interface TokenEndpointResponse {
+  access_token: string;
+  refresh_token?: string;
+  id_token?: string;
+}
 
 function getPreferredLocalOrigin() {
   if (typeof window === "undefined") {
     return "http://localhost:5173";
   }
 
-  const { hostname, port, protocol, origin } = window.location;
-  const isLoopback = hostname === "127.0.0.1" || hostname === "localhost";
-  if (!isLoopback) {
-    return origin;
-  }
-
-  const preferredPort = port || "5173";
-  return `${protocol}//localhost:${preferredPort}`;
+  return window.location.origin;
 }
 
 function getKeycloak() {
   keycloak ??= new Keycloak({
-    url: "http://localhost:8085",
-    realm: "cgi-flow",
-    clientId: "cgi-flow-web",
+    url: keycloakUrl,
+    realm: keycloakRealm,
+    clientId: keycloakClientId,
   });
   return keycloak;
 }
 
+function readStoredTokens(): StoredTokens | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(tokenStorageKey);
+    return raw ? (JSON.parse(raw) as StoredTokens) : null;
+  } catch {
+    window.localStorage.removeItem(tokenStorageKey);
+    return null;
+  }
+}
+
+function storeTokens(tokens: StoredTokens) {
+  window.localStorage.setItem(tokenStorageKey, JSON.stringify(tokens));
+}
+
+function clearTokens() {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(tokenStorageKey);
+  }
+}
+
 function initializeKeycloak(client: Keycloak) {
+  const storedTokens = readStoredTokens();
+  const origin = getPreferredLocalOrigin();
   keycloakInit ??= client.init({
     onLoad: "check-sso",
     pkceMethod: "S256",
     checkLoginIframe: false,
+    silentCheckSsoRedirectUri: `${origin}/silent-check-sso.html`,
+    silentCheckSsoFallback: false,
+    token: storedTokens?.token,
+    refreshToken: storedTokens?.refreshToken,
+    idToken: storedTokens?.idToken,
   });
   return keycloakInit;
 }
 
-async function loadCurrentUser(client: Keycloak): Promise<CurrentUser> {
+async function refreshClientToken(client: Keycloak) {
   await client.updateToken(30);
+  if (client.token) {
+    storeTokens({
+      token: client.token,
+      refreshToken: client.refreshToken,
+      idToken: client.idToken,
+    });
+  }
+}
+
+async function loadCurrentUser(client: Keycloak): Promise<CurrentUser> {
+  await refreshClientToken(client);
   const response = await fetch("/api/auth/me", {
     headers: { Authorization: `Bearer ${client.token}` },
   });
@@ -118,7 +175,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const client = getKeycloak();
 
     client.onTokenExpired = () => {
-      void client.updateToken(30).catch(() => client.login());
+      void refreshClientToken(client).catch(() => {
+        clearTokens();
+        setIsAuthenticated(false);
+        setUser(null);
+      });
     };
 
     void initializeKeycloak(client)
@@ -131,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(() => {
+        clearTokens();
         if (active) {
           setIsAuthenticated(false);
           setUser(null);
@@ -145,24 +207,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async () => {
-    await getKeycloak().login({
+  const login = useCallback(async ({ email, password }: LoginCredentials) => {
+    const response = await fetch(
+      `${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/token`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: keycloakClientId,
+          grant_type: "password",
+          username: email,
+          password,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Identifiants invalides ou compte non autorise.");
+    }
+
+    const payload = (await response.json()) as TokenEndpointResponse;
+    storeTokens({
+      token: payload.access_token,
+      refreshToken: payload.refresh_token,
+      idToken: payload.id_token,
+    });
+
+    keycloak = null;
+    keycloakInit = null;
+
+    const client = getKeycloak();
+    const authenticated = await initializeKeycloak(client);
+    if (!authenticated) {
+      clearTokens();
+      throw new Error("La session Keycloak n'a pas pu etre initialisee.");
+    }
+
+    const currentUser = await loadCurrentUser(client);
+    setUser(currentUser);
+    setIsAuthenticated(true);
+    setIsReady(true);
+  }, []);
+
+  const loginRedirect = useCallback(async () => {
+    const client = getKeycloak();
+    await client.login({
       redirectUri: `${getPreferredLocalOrigin()}/dashboard`,
     });
   }, []);
 
   const logout = useCallback(async () => {
     const client = getKeycloak();
-    const logoutUrl = client.createLogoutUrl({ redirectUri: getPreferredLocalOrigin() });
+    const refreshToken = client.refreshToken ?? readStoredTokens()?.refreshToken;
+
+    if (refreshToken) {
+      await fetch(`${keycloakUrl}/realms/${keycloakRealm}/protocol/openid-connect/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: keycloakClientId,
+          refresh_token: refreshToken,
+        }),
+      }).catch(() => undefined);
+    }
+
+    clearTokens();
     setUser(null);
     setIsAuthenticated(false);
     client.clearToken();
-    window.location.assign(logoutUrl);
+    window.location.assign(getPreferredLocalOrigin());
   }, []);
 
   const authenticatedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
     const client = getKeycloak();
-    await client.updateToken(30);
+    await refreshClientToken(client);
     if (!client.token) {
       throw new Error("No active Keycloak access token");
     }
@@ -184,9 +302,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasRole: (role) => roles.includes(role),
       authenticatedFetch,
       login,
+      loginRedirect,
       logout,
     }),
-    [isReady, isAuthenticated, user, roles, authenticatedFetch, login, logout],
+    [isReady, isAuthenticated, user, roles, authenticatedFetch, login, loginRedirect, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

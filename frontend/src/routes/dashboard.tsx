@@ -5,24 +5,40 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
+  Bell,
   BookOpen,
   Calendar,
+  CalendarClock,
+  ChevronDown,
+  ChevronRight,
   CheckCircle2,
   Clock,
+  ClipboardList,
   Download,
+  FileBarChart,
+  Gauge,
+  LifeBuoy,
+  LogOut,
+  Mail,
   Plus,
+  Search,
+  Settings,
   ShieldCheck,
   Sparkles,
   Ticket,
   Timer,
   TrendingUp,
+  UserCog,
+  UserRound,
   Users,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { AuthenticatedView } from "@/components/app/AuthenticatedView";
 import { AppShell } from "@/components/app/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageContainer, PageHeader, SectionSurface } from "@/components/ui/page";
+import { PageContainer, SectionSurface } from "@/components/ui/page";
 import {
   getEmployeeKpiSummary,
   getEmployeeProductivity,
@@ -32,11 +48,7 @@ import {
   type EmployeeWorkloadKpiResponse,
   type KpiEmployeeSummaryResponse,
 } from "@/lib/api/kpi";
-import {
-  downloadKpiSlaPdfReport,
-  downloadSlaPdfReport,
-  ReportsApiError,
-} from "@/lib/api/reports";
+import { downloadKpiSlaPdfReport, downloadSlaPdfReport, ReportsApiError } from "@/lib/api/reports";
 import {
   getSlaDashboardSummary,
   getSlaUrgentTickets,
@@ -54,7 +66,7 @@ import {
   type TicketPriorityDistributionResponse,
   type TicketStatusDistributionResponse,
 } from "@/lib/api/tickets";
-import { useAuth } from "@/lib/auth-store";
+import { getBusinessRoleLabel, useAuth, type Role } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -79,7 +91,7 @@ type Kpi = {
 };
 
 function DashboardPage() {
-  const { authenticatedFetch, hasRole } = useAuth();
+  const { authenticatedFetch, hasRole, logout, fullName, email, roles } = useAuth();
   const canReadSlaDashboard = hasRole("ADMIN") || hasRole("MANAGER");
   const canReadTicketDashboard = hasRole("ADMIN") || hasRole("MANAGER");
   const canReadEmployeeKpis = hasRole("ADMIN") || hasRole("MANAGER");
@@ -90,18 +102,28 @@ function DashboardPage() {
   const [slaError, setSlaError] = useState<string | null>(null);
 
   const [ticketSummary, setTicketSummary] = useState<TicketDashboardSummaryResponse | null>(null);
-  const [statusDistribution, setStatusDistribution] = useState<TicketStatusDistributionResponse[]>([]);
-  const [priorityDistribution, setPriorityDistribution] = useState<TicketPriorityDistributionResponse[]>([]);
+  const [statusDistribution, setStatusDistribution] = useState<TicketStatusDistributionResponse[]>(
+    [],
+  );
+  const [priorityDistribution, setPriorityDistribution] = useState<
+    TicketPriorityDistributionResponse[]
+  >([]);
   const [loadingTickets, setLoadingTickets] = useState(canReadTicketDashboard);
   const [ticketError, setTicketError] = useState<string | null>(null);
 
-  const [employeeKpiSummary, setEmployeeKpiSummary] = useState<KpiEmployeeSummaryResponse | null>(null);
+  const [employeeKpiSummary, setEmployeeKpiSummary] = useState<KpiEmployeeSummaryResponse | null>(
+    null,
+  );
   const [employeeWorkload, setEmployeeWorkload] = useState<EmployeeWorkloadKpiResponse[]>([]);
-  const [employeeProductivity, setEmployeeProductivity] = useState<EmployeeProductivityKpiResponse[]>([]);
+  const [employeeProductivity, setEmployeeProductivity] = useState<
+    EmployeeProductivityKpiResponse[]
+  >([]);
   const [loadingEmployeeKpis, setLoadingEmployeeKpis] = useState(canReadEmployeeKpis);
   const [employeeKpiError, setEmployeeKpiError] = useState<string | null>(null);
   const [downloadingReport, setDownloadingReport] = useState<"kpi-sla" | "sla" | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [availability, setAvailability] = useState<"available" | "busy" | "away">("available");
 
   const loadSlaDashboard = useCallback(async () => {
     if (!canReadSlaDashboard) {
@@ -229,7 +251,9 @@ function DashboardPage() {
     {
       label: "Taux de respect SLA",
       value: formatPercent(slaSummary?.slaComplianceRate),
-      hint: slaSummary ? `${formatNumber(slaSummary.respectedTickets)} tickets respectés` : "Suivi global SLA",
+      hint: slaSummary
+        ? `${formatNumber(slaSummary.respectedTickets)} tickets respectés`
+        : "Suivi global SLA",
       icon: ShieldCheck,
       tone: "text-emerald-600 bg-emerald-50",
     },
@@ -311,140 +335,1421 @@ function DashboardPage() {
     [employeeKpiSummary],
   );
 
+  const statusSegments = [
+    {
+      label: "À faire",
+      value: ticketSummary?.todoTickets ?? 0,
+      color: "bg-[oklch(0.7_0.2_22)]",
+    },
+    {
+      label: "En cours",
+      value: ticketSummary?.inProgressTickets ?? 0,
+      color: "bg-[oklch(0.65_0.22_350)]",
+    },
+    {
+      label: "En attente",
+      value: ticketSummary?.waitingTickets ?? 0,
+      color: "bg-[oklch(0.6_0.22_300)]",
+    },
+    {
+      label: "Assignés",
+      value: ticketSummary?.assignedTickets ?? 0,
+      color: "bg-[oklch(0.55_0.2_285)]",
+    },
+  ];
+  const statusTotal = statusSegments.reduce((total, segment) => total + segment.value, 0);
+  const moduleCards: {
+    icon: LucideIcon;
+    title: string;
+    desc: string;
+    value: string;
+    sub: string;
+    to: "/tickets" | "/sla/policies" | "/planning" | "/quality-lab" | "/employees" | "/messages";
+    visible?: boolean;
+  }[] = [
+    {
+      icon: LifeBuoy,
+      title: "Tickets",
+      desc: "Suivi et traitement des incidents actifs.",
+      value: loadingTickets ? "..." : formatNumber(ticketSummary?.openTickets),
+      sub: "ouverts",
+      to: "/tickets",
+    },
+    {
+      icon: Gauge,
+      title: "SLA",
+      desc: "Conformité et échéances contractuelles.",
+      value: loadingSla ? "..." : formatNumber(slaSummary?.atRiskTickets),
+      sub: "en risque",
+      to: "/sla/policies",
+      visible: canReadSlaDashboard,
+    },
+    {
+      icon: Calendar,
+      title: "Planning",
+      desc: "Prochaines interventions programmées.",
+      value: "-",
+      sub: "cette semaine",
+      to: "/planning",
+      visible: canReadSlaDashboard,
+    },
+    {
+      icon: Sparkles,
+      title: "Quality Lab IA",
+      desc: "Suggestions et cas similaires.",
+      value: "-",
+      sub: "recommandations",
+      to: "/quality-lab",
+    },
+    {
+      icon: Users,
+      title: "Employés",
+      desc: "État des équipiers en poste.",
+      value: loadingEmployeeKpis ? "..." : formatNumber(employeeKpiSummary?.totalAgentsWithTickets),
+      sub: "actifs",
+      to: "/employees",
+      visible: canReadEmployeeKpis,
+    },
+    {
+      icon: Bell,
+      title: "Notifications",
+      desc: "Alertes et messages récents.",
+      value: "-",
+      sub: "non lues",
+      to: "/messages",
+    },
+  ];
+
+  const availabilityMap = {
+    available: { label: "Disponible", dot: "bg-emerald-500" },
+    busy: { label: "Occupé", dot: "bg-amber-500" },
+    away: { label: "Indisponible", dot: "bg-rose-500" },
+  };
+  const currentRole = (roles.find((role): role is Role =>
+    ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role),
+  ) ?? "EMPLOYEE") as Role;
+  const currentUserName = fullName ?? email ?? "Utilisateur CGI";
+  const currentUserInitials = getInitials(currentUserName);
+  const currentRoleLabel = roles
+    .filter((role): role is Role => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
+    .map(getBusinessRoleLabel)
+    .join(", ");
+  const navGroups: {
+    title: string;
+    items: {
+      label: string;
+      icon: LucideIcon;
+      to?:
+        | "/dashboard"
+        | "/tickets"
+        | "/sla/policies"
+        | "/planning"
+        | "/employees"
+        | "/messages"
+        | "/quality-lab"
+        | "/users"
+        | "/departments"
+        | "/my-profile";
+      roles?: Role[];
+      action?: "logout";
+    }[];
+  }[] = [
+    {
+      title: "Pilotage",
+      items: [{ label: "Centre de contrôle", icon: Gauge, to: "/dashboard" }],
+    },
+    {
+      title: "Opérations",
+      items: [
+        { label: "Tickets", icon: LifeBuoy, to: "/tickets" },
+        { label: "SLA", icon: Gauge, to: "/sla/policies", roles: ["ADMIN", "MANAGER"] },
+        { label: "Planning", icon: Calendar, to: "/planning", roles: ["ADMIN", "MANAGER"] },
+        {
+          label: "Disponibilité équipe",
+          icon: Users,
+          to: "/employees",
+          roles: ["ADMIN", "MANAGER"],
+        },
+        { label: "Profil", icon: UserRound, to: "/my-profile", roles: ["EMPLOYEE"] },
+      ],
+    },
+    {
+      title: "Collaboration",
+      items: [
+        { label: "Notifications", icon: Bell, to: "/messages" },
+        { label: "Messagerie", icon: Mail, to: "/messages" },
+        { label: "Quality Lab IA", icon: Sparkles, to: "/quality-lab" },
+      ],
+    },
+    {
+      title: "Administration",
+      items: [
+        { label: "Utilisateurs", icon: UserCog, to: "/users", roles: ["ADMIN"] },
+        { label: "Employés", icon: UserRound, to: "/employees", roles: ["ADMIN", "MANAGER"] },
+        { label: "Départements", icon: Users, to: "/departments", roles: ["ADMIN"] },
+        {
+          label: "Politiques SLA",
+          icon: ShieldCheck,
+          to: "/sla/policies",
+          roles: ["ADMIN", "MANAGER"],
+        },
+      ],
+    },
+    {
+      title: "Compte",
+      items: [
+        { label: "Mon profil", icon: Settings, to: "/my-profile" },
+        { label: "Déconnexion", icon: LogOut, action: "logout" },
+      ],
+    },
+  ];
+  const fronthQuickActions = [
+    { label: "Nouveau ticket", icon: Plus, to: "/tickets" as const, primary: true },
+    { label: "Mes tickets", icon: ClipboardList, to: "/tickets" as const },
+    {
+      label: "Planning",
+      icon: Calendar,
+      to: "/planning" as const,
+      roles: ["ADMIN", "MANAGER"] as Role[],
+    },
+    {
+      label: "SLA",
+      icon: Gauge,
+      to: "/sla/policies" as const,
+      roles: ["ADMIN", "MANAGER"] as Role[],
+    },
+    { label: "Quality Lab IA", icon: Sparkles, to: "/quality-lab" as const },
+    {
+      label: "Équipe",
+      icon: Users,
+      to: "/employees" as const,
+      roles: ["ADMIN", "MANAGER"] as Role[],
+    },
+    { label: "Notifications", icon: Bell, to: "/messages" as const },
+    {
+      label: "Rapports",
+      icon: FileBarChart,
+      to: "/dashboard" as const,
+      roles: ["ADMIN", "MANAGER"] as Role[],
+    },
+  ].filter((action) => !action.roles || action.roles.includes(currentRole));
+
+  return (
+    <AuthenticatedView>
+      <div className="min-h-dvh bg-[oklch(0.985_0.003_260)] text-foreground">
+        <div className="mx-auto flex min-h-dvh max-w-[1600px]">
+          <aside className="hidden w-72 shrink-0 flex-col border-r border-border/60 bg-white lg:flex">
+            <div className="flex h-16 items-center gap-2.5 border-b border-border/60 px-5">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-cgi text-white shadow-soft">
+                <Workflow className="h-4 w-4" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-tight">CGI-FLOW</div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  Intranet opérations
+                </div>
+              </div>
+            </div>
+
+            <div className="border-b border-border/60 p-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-cgi text-sm font-semibold text-white">
+                    {currentUserInitials}
+                  </div>
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white ${availabilityMap[availability].dot}`}
+                    aria-label={availabilityMap[availability].label}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{currentUserName}</div>
+                  <div className="truncate text-[11px] text-muted-foreground">
+                    {currentRoleLabel || "Compte CGI"}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-muted/60 p-1">
+                {(Object.keys(availabilityMap) as (keyof typeof availabilityMap)[]).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setAvailability(key)}
+                    className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition ${
+                      availability === key
+                        ? "bg-white text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span
+                      className={`mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle ${availabilityMap[key].dot}`}
+                    />
+                    {availabilityMap[key].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-3 py-4">
+              {navGroups.map((group) => {
+                const items = group.items.filter(
+                  (item) => !item.roles || item.roles.includes(currentRole),
+                );
+                if (items.length === 0) return null;
+                return (
+                  <div key={group.title} className="mb-5">
+                    <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {group.title}
+                    </div>
+                    <ul className="space-y-0.5">
+                      {items.map((item) => {
+                        const active = item.to === "/dashboard";
+                        const Icon = item.icon;
+                        const cls = `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition ${
+                          active
+                            ? "bg-gradient-cgi-soft text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`;
+                        const content = (
+                          <>
+                            <Icon
+                              className={`h-4 w-4 shrink-0 ${active ? "text-[oklch(0.5_0.22_300)]" : ""}`}
+                            />
+                            <span className="truncate">{item.label}</span>
+                            {active ? (
+                              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-gradient-cgi" />
+                            ) : null}
+                          </>
+                        );
+                        return (
+                          <li key={item.label}>
+                            {item.action === "logout" ? (
+                              <button
+                                type="button"
+                                onClick={() => void logout()}
+                                className={`${cls} w-full text-left`}
+                              >
+                                {content}
+                              </button>
+                            ) : item.to ? (
+                              <Link to={item.to} className={cls}>
+                                {content}
+                              </Link>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-white/90 px-4 backdrop-blur sm:px-6">
+              <div className="relative max-w-2xl flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="search"
+                  placeholder="Rechercher un ticket, un employé, un département..."
+                  className="h-10 w-full rounded-xl border border-border/70 bg-muted/40 pl-9 pr-3 text-sm outline-none transition focus:border-[oklch(0.6_0.2_300)] focus:bg-white focus:ring-2 focus:ring-[oklch(0.6_0.2_300)]/20"
+                />
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="hidden items-center gap-2 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-xs sm:flex">
+                  <span className={`h-2 w-2 rounded-full ${availabilityMap[availability].dot}`} />
+                  <select
+                    value={availability}
+                    onChange={(event) =>
+                      setAvailability(event.target.value as keyof typeof availabilityMap)
+                    }
+                    className="bg-transparent text-xs font-medium outline-none"
+                    aria-label="Statut de disponibilité"
+                  >
+                    {(Object.keys(availabilityMap) as (keyof typeof availabilityMap)[]).map(
+                      (key) => (
+                        <option key={key} value={key}>
+                          {availabilityMap[key].label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+                <Link
+                  to="/messages"
+                  aria-label="Notifications"
+                  className="relative grid h-10 w-10 place-items-center rounded-lg border border-border/70 bg-white text-muted-foreground transition hover:text-foreground"
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[oklch(0.65_0.24_22)]" />
+                </Link>
+                <button
+                  type="button"
+                  aria-label="Menu utilisateur"
+                  className="flex items-center gap-2 rounded-lg border border-border/70 bg-white px-1.5 py-1 pr-2.5 text-sm transition hover:bg-muted/50"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-cgi text-[11px] font-semibold text-white">
+                    {currentUserInitials}
+                  </span>
+                  <span className="hidden text-xs font-medium sm:inline">
+                    {currentUserName.split(" ")[0]}
+                  </span>
+                  <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:inline" />
+                </button>
+              </div>
+            </header>
+
+            <main className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Pilotage</span>
+                    <ChevronRight className="h-3 w-3" />
+                    <span>Centre de contrôle</span>
+                  </div>
+                  <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                    Centre de contrôle
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Vue opérationnelle de la plateforme CGI-FLOW.
+                  </p>
+                </div>
+                {canReadSlaDashboard ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setExportOpen((value) => !value)}
+                      className="inline-flex h-10 items-center gap-2 rounded-lg border border-border/70 bg-white px-3.5 text-sm font-medium shadow-sm transition hover:bg-muted/50"
+                    >
+                      <Download className="h-4 w-4" />
+                      Exporter
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                    {exportOpen && (
+                      <div className="absolute right-0 z-20 mt-1.5 w-52 overflow-hidden rounded-lg border border-border/70 bg-white shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExportOpen(false);
+                            void handleDownloadKpiSlaReport();
+                          }}
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-muted/60"
+                        >
+                          Rapport KPI & SLA
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExportOpen(false);
+                            void handleDownloadSlaReport();
+                          }}
+                          className="block w-full px-3 py-2 text-left text-sm hover:bg-muted/60"
+                        >
+                          Rapport SLA
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
+              {reportError ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
+                  {reportError}
+                </div>
+              ) : null}
+
+              <section aria-labelledby="quick-access">
+                <h2
+                  id="quick-access"
+                  className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Accès rapide
+                </h2>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {fronthQuickActions.map(({ label, icon: Icon, primary, to }) => (
+                    <Link
+                      key={label}
+                      to={to}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition ${
+                        primary
+                          ? "border-transparent bg-gradient-cgi text-white shadow-soft hover:brightness-110"
+                          : "border-border/70 bg-white text-foreground hover:bg-muted/60"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
+              <section aria-labelledby="kpis">
+                <h2 id="kpis" className="sr-only">
+                  Indicateurs
+                </h2>
+                <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-white p-2 sm:grid-cols-3 lg:grid-cols-6">
+                  {[
+                    {
+                      icon: ShieldCheck,
+                      label: "Respect SLA",
+                      value: loadingSla ? "..." : formatPercent(slaSummary?.slaComplianceRate),
+                    },
+                    {
+                      icon: AlertTriangle,
+                      label: "En risque",
+                      value: loadingSla ? "..." : formatNumber(slaSummary?.atRiskTickets),
+                    },
+                    {
+                      icon: Timer,
+                      label: "Dépassés",
+                      value: loadingSla ? "..." : formatNumber(slaSummary?.breachedTickets),
+                    },
+                    {
+                      icon: AlertTriangle,
+                      label: "Critiques dépassés",
+                      value: loadingSla ? "..." : formatNumber(slaSummary?.criticalBreachedTickets),
+                    },
+                    {
+                      icon: Gauge,
+                      label: "Temps moyen résolution",
+                      value: loadingSla
+                        ? "..."
+                        : formatDurationMinutes(slaSummary?.averageResolutionMinutes),
+                    },
+                    {
+                      icon: Activity,
+                      label: "Temps moyen prise en charge",
+                      value: loadingSla
+                        ? "..."
+                        : formatDurationMinutes(slaSummary?.averageResponseMinutes),
+                    },
+                  ].map(({ icon: Icon, label, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2.5 rounded-xl p-2.5 hover:bg-muted/40"
+                    >
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[11px] text-muted-foreground">{label}</div>
+                        <div className="truncate text-base font-semibold tabular-nums">{value}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="space-y-6">
+                  <article className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-gradient-cgi-soft/40 px-5 py-3.5">
+                      <div>
+                        <h2 className="text-base font-semibold tracking-tight">
+                          Situation opérationnelle du jour
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                          Aperçu en temps réel des tickets et incidents.
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white px-2 py-0.5 text-[11px] text-muted-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Mise à jour continue
+                      </span>
+                    </div>
+                    <div className="p-5">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="col-span-1 rounded-xl border border-border/60 bg-gradient-cgi p-4 text-white sm:col-span-2">
+                          <div className="flex items-center gap-2 text-xs opacity-90">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Incidents ouverts
+                          </div>
+                          <div className="mt-1 text-4xl font-semibold tabular-nums">
+                            {loadingTickets ? "..." : formatNumber(ticketSummary?.openTickets)}
+                          </div>
+                          <p className="mt-1 text-xs opacity-80">
+                            Nécessitent une prise en charge coordonnée.
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-border/60 bg-[oklch(0.98_0.02_300)] p-4">
+                          <div className="text-xs text-muted-foreground">Résolus aujourd'hui</div>
+                          <div className="mt-1 text-3xl font-semibold text-[oklch(0.45_0.2_300)] tabular-nums">
+                            {loadingTickets ? "..." : formatNumber(ticketSummary?.resolvedToday)}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Clôturés par l'équipe.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5">
+                        <div className="mb-2 flex items-center justify-between">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Répartition par statut
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Total:{" "}
+                            {loadingTickets ? "..." : formatNumber(ticketSummary?.totalTickets)}
+                          </div>
+                        </div>
+                        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                          {statusSegments.map((segment) => (
+                            <div
+                              key={segment.label}
+                              className={`h-full ${segment.color}`}
+                              style={{
+                                width:
+                                  statusTotal > 0
+                                    ? `${Math.max(4, (segment.value / statusTotal) * 100)}%`
+                                    : "25%",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {statusSegments.map((segment) => (
+                            <li
+                              key={segment.label}
+                              className="flex items-center gap-2 rounded-lg border border-border/60 px-2.5 py-2"
+                            >
+                              <span className={`h-2 w-2 rounded-full ${segment.color}`} />
+                              <span className="flex-1 truncate text-xs text-muted-foreground">
+                                {segment.label}
+                              </span>
+                              <span className="text-sm font-semibold tabular-nums">
+                                {loadingTickets ? "..." : formatNumber(segment.value)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-5 flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Timer className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Temps moyen de traitement</span>
+                        </div>
+                        <span className="text-sm font-semibold tabular-nums">
+                          {loadingTickets
+                            ? "..."
+                            : formatDurationMinutes(ticketSummary?.averageTreatmentMinutes)}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+
+                  <section aria-labelledby="modules">
+                    <div className="mb-3 flex items-end justify-between">
+                      <h2 id="modules" className="text-base font-semibold tracking-tight">
+                        Mes modules opérationnels
+                      </h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {moduleCards
+                        .filter((module) => module.visible !== false)
+                        .map((module) => {
+                          const Icon = module.icon;
+                          return (
+                            <article
+                              key={module.title}
+                              className="group rounded-2xl border border-border/60 bg-white p-4 transition hover:border-[oklch(0.7_0.15_300)]/40 hover:shadow-sm"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+                                  <Icon className="h-4 w-4" />
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xl font-semibold tabular-nums">
+                                    {module.value}
+                                  </div>
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    {module.sub}
+                                  </div>
+                                </div>
+                              </div>
+                              <h3 className="mt-3 text-sm font-semibold">{module.title}</h3>
+                              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                                {module.desc}
+                              </p>
+                              <Link
+                                to={module.to}
+                                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[oklch(0.5_0.22_300)] transition group-hover:gap-1.5"
+                              >
+                                Ouvrir <ArrowRight className="h-3 w-3" />
+                              </Link>
+                            </article>
+                          );
+                        })}
+                    </div>
+                  </section>
+                </div>
+
+                <aside className="space-y-5">
+                  <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-[oklch(0.96_0.06_22)] text-[oklch(0.55_0.22_22)]">
+                        <AlertTriangle className="h-4 w-4" />
+                      </span>
+                      <h3 className="text-sm font-semibold">Priorité du jour</h3>
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {urgentTickets[0]
+                        ? `${urgentTickets[0].ticketReference} - ${urgentTickets[0].ticketTitle}`
+                        : "Aucune priorité critique détectée pour le moment. Les tickets proches de leur échéance apparaîtront ici."}
+                    </p>
+                    <Link
+                      to="/tickets"
+                      className="mt-3 inline-flex text-xs font-medium text-[oklch(0.5_0.22_300)]"
+                    >
+                      Voir les tickets en risque →
+                    </Link>
+                  </div>
+
+                  <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Disponibilité de l'équipe</h3>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex -space-x-2">
+                      {(employeeWorkload.length > 0 ? employeeWorkload.slice(0, 5) : []).map(
+                        (employee, index) => (
+                          <span
+                            key={`${employee.assignedUserId ?? "agent"}-${index}`}
+                            className={`grid h-8 w-8 place-items-center rounded-full border-2 border-white text-[10px] font-semibold ${
+                              index % 3 === 0
+                                ? "bg-emerald-100 text-emerald-700"
+                                : index % 3 === 1
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {getInitials(employee.assignedUserLabel)}
+                          </span>
+                        ),
+                      )}
+                      <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-muted text-[10px] font-semibold text-muted-foreground">
+                        +
+                      </span>
+                    </div>
+                    <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg border border-border/60 py-2">
+                        <dt className="text-xs text-emerald-600">Agents</dt>
+                        <dd className="text-base font-semibold tabular-nums">
+                          {loadingEmployeeKpis
+                            ? "..."
+                            : formatNumber(employeeKpiSummary?.totalAgentsWithTickets)}
+                        </dd>
+                      </div>
+                      <div className="rounded-lg border border-border/60 py-2">
+                        <dt className="text-xs text-amber-600">Assignés</dt>
+                        <dd className="text-base font-semibold tabular-nums">
+                          {loadingEmployeeKpis
+                            ? "..."
+                            : formatNumber(employeeKpiSummary?.totalActiveAssignedTickets)}
+                        </dd>
+                      </div>
+                      <div className="rounded-lg border border-border/60 py-2">
+                        <dt className="text-xs text-rose-600">Charge</dt>
+                        <dd className="text-base font-semibold tabular-nums">
+                          {loadingEmployeeKpis
+                            ? "..."
+                            : formatDecimal(employeeKpiSummary?.averageWorkloadScore)}
+                        </dd>
+                      </div>
+                    </dl>
+                    <Link
+                      to="/employees"
+                      className="mt-3 inline-flex w-full justify-center rounded-lg border border-border/70 bg-white px-3 py-1.5 text-xs font-medium hover:bg-muted/50"
+                    >
+                      Voir toute l'équipe
+                    </Link>
+                  </div>
+
+                  <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+                    <h3 className="mb-3 text-sm font-semibold">Actions</h3>
+                    <Link
+                      to="/tickets"
+                      className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-cgi px-3 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:brightness-110"
+                    >
+                      <Plus className="h-4 w-4" /> Créer un ticket
+                    </Link>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {[
+                        { label: "Quality Lab IA", icon: Sparkles, to: "/quality-lab" as const },
+                        {
+                          label: "Planning",
+                          icon: Calendar,
+                          to: "/planning" as const,
+                          visible: canReadSlaDashboard,
+                        },
+                        {
+                          label: "SLA",
+                          icon: Gauge,
+                          to: "/sla/policies" as const,
+                          visible: canReadSlaDashboard,
+                        },
+                      ]
+                        .filter((action) => action.visible !== false)
+                        .map((action) => {
+                          const Icon = action.icon;
+                          return (
+                            <Link
+                              key={action.label}
+                              to={action.to}
+                              className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-white px-3 py-2 text-sm hover:bg-muted/50"
+                            >
+                              <Icon className="h-4 w-4 text-muted-foreground" />
+                              {action.label}
+                            </Link>
+                          );
+                        })}
+                    </div>
+                  </div>
+
+                  {slaError && canReadSlaDashboard ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-amber-900">
+                            Indicateurs SLA
+                          </div>
+                          <p className="mt-0.5 text-xs text-amber-800">
+                            Indicateurs temporairement indisponibles.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void loadSlaDashboard()}
+                            className="mt-2 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                          >
+                            Réessayer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Prochaines activités</h3>
+                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <ul className="space-y-2">
+                      {(urgentTickets.length > 0
+                        ? urgentTickets.slice(0, 3)
+                        : [null, null, null]
+                      ).map((ticket, index) => (
+                        <li
+                          key={ticket?.ticketId ?? index}
+                          className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                        >
+                          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+                            <span className="text-[10px] font-semibold">
+                              {ticket?.resolutionDeadline
+                                ? new Intl.DateTimeFormat("fr-FR", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }).format(new Date(ticket.resolutionDeadline))
+                                : "--:--"}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium">
+                              {ticket?.ticketTitle ?? "Activité à planifier"}
+                            </div>
+                            <div className="truncate text-[11px] text-muted-foreground">
+                              {ticket?.ticketReference ?? "Aucune donnée disponible"}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      to="/planning"
+                      className="mt-3 inline-flex w-full justify-center rounded-lg border border-border/70 px-3 py-1.5 text-xs font-medium hover:bg-muted/50"
+                    >
+                      Voir le planning complet
+                    </Link>
+                  </div>
+
+                  <div className="rounded-2xl border border-border/60 bg-white p-4 text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        Plateforme opérationnelle
+                      </div>
+                      <span>Actualisation en direct</span>
+                    </div>
+                  </div>
+                </aside>
+              </section>
+            </main>
+          </div>
+        </div>
+      </div>
+    </AuthenticatedView>
+  );
+
   return (
     <AppShell>
-      <PageContainer>
-        <PageHeader
-          title="Centre de contrôle"
-          description="Snapshot opérationnel en temps réel de la plateforme CGI Intranet."
-          actions={
-            canReadSlaDashboard ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleDownloadKpiSlaReport()}
-                  disabled={downloadingReport !== null}
-                  className="justify-center"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {downloadingReport === "kpi-sla" ? "Export du rapport..." : "Exporter rapport KPI & SLA"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleDownloadSlaReport()}
-                  disabled={downloadingReport !== null}
-                  className="justify-center"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {downloadingReport === "sla" ? "Export du rapport..." : "Exporter rapport SLA"}
-                </Button>
-              </>
-            ) : null
-          }
-        />
+      <PageContainer className="max-w-none">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Pilotage</span>
+              <ChevronRight className="h-3 w-3" />
+              <span>Centre de contrôle</span>
+            </div>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
+              Centre de contrôle
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Vue opérationnelle de la plateforme CGI-FLOW.
+            </p>
+          </div>
+          {canReadSlaDashboard ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setExportOpen((current) => !current)}
+                disabled={downloadingReport !== null}
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-border/70 bg-white px-3.5 text-sm font-medium shadow-sm transition hover:bg-muted/50 disabled:cursor-wait disabled:opacity-70"
+              >
+                <Download className="h-4 w-4" />
+                {downloadingReport ? "Export..." : "Exporter"}
+                <ChevronRight className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
+              </button>
+              {exportOpen && (
+                <div className="absolute right-0 z-20 mt-1.5 w-56 overflow-hidden rounded-lg border border-border/70 bg-white shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportOpen(false);
+                      void handleDownloadKpiSlaReport();
+                    }}
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-muted/60"
+                  >
+                    Rapport KPI & SLA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExportOpen(false);
+                      void handleDownloadSlaReport();
+                    }}
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-muted/60"
+                  >
+                    Rapport SLA
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
 
         {reportError && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />
             {reportError}
           </div>
         )}
 
         {canReadSlaDashboard && slaError && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
             <AlertCircle className="h-4 w-4" />
-            Impossible de charger les indicateurs SLA.
+            Indicateurs SLA temporairement indisponibles.
           </div>
         )}
 
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1fr_320px]">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {slaKpis.map((kpi) => {
+        <QuickAccessLauncher canReadSlaDashboard={canReadSlaDashboard} />
+
+        <section aria-labelledby="kpis">
+          <h2 id="kpis" className="sr-only">
+            Indicateurs KPI
+          </h2>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-white p-2 sm:grid-cols-3 lg:grid-cols-6">
+            {slaKpis.map((kpi, index) => {
               const Icon = kpi.icon;
+              const labels = [
+                "Respect SLA",
+                "En risque",
+                "Dépassés",
+                "Critiques dépassés",
+                "Temps moyen résolution",
+                "Temps moyen prise en charge",
+              ];
               return (
-                <SectionSurface key={kpi.label} className="p-4 transition-shadow hover:shadow-glow">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.tone}`}>
+                <div
+                  key={kpi.label}
+                  className="flex min-w-0 items-center gap-2.5 rounded-xl p-2.5 hover:bg-muted/40"
+                >
+                  <div
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${kpi.tone}`}
+                  >
                     <Icon className="h-4 w-4" />
                   </div>
-                  <div className="mt-3 text-2xl font-bold leading-tight text-foreground">
-                    {loadingSla && canReadSlaDashboard ? "..." : kpi.value}
+                  <div className="min-w-0">
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {labels[index] ?? kpi.label}
+                    </div>
+                    <div className="truncate text-base font-semibold tabular-nums text-foreground">
+                      {loadingSla && canReadSlaDashboard ? "..." : kpi.value}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs font-medium text-foreground/80">{kpi.label}</div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">{kpi.hint}</div>
-                </SectionSurface>
+                </div>
               );
             })}
           </div>
+        </section>
 
-          <QuickActionsCard />
-        </div>
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-6">
+            <article className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-gradient-cgi-soft/40 px-5 py-3.5">
+                <div>
+                  <h2 className="text-base font-semibold tracking-normal">
+                    Situation opérationnelle du jour
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Aperçu en temps réel des tickets et incidents.
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white px-2 py-0.5 text-[11px] text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Mise à jour continue
+                </span>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="col-span-1 rounded-xl border border-border/60 bg-gradient-cgi p-4 text-white sm:col-span-2">
+                    <div className="flex items-center gap-2 text-xs opacity-90">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Incidents ouverts
+                    </div>
+                    <div className="mt-1 text-4xl font-semibold tabular-nums">
+                      {loadingTickets ? "..." : formatNumber(ticketSummary?.openTickets)}
+                    </div>
+                    <p className="mt-1 text-xs opacity-80">
+                      Nécessitent une prise en charge coordonnée.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-[oklch(0.98_0.02_300)] p-4">
+                    <div className="text-xs text-muted-foreground">Résolus aujourd'hui</div>
+                    <div className="mt-1 text-3xl font-semibold text-[oklch(0.45_0.2_300)] tabular-nums">
+                      {loadingTickets ? "..." : formatNumber(ticketSummary?.resolvedToday)}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">Clôturés par l'équipe.</p>
+                  </div>
+                </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <IncidentsCard
-            summary={ticketSummary}
-            loading={loadingTickets}
-            error={ticketError}
-            canRead={canReadTicketDashboard}
-          />
-          <SLACard summary={slaSummary} loading={loadingSla} />
-        </div>
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Répartition par statut
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Total: {loadingTickets ? "..." : formatNumber(ticketSummary?.totalTickets)}
+                    </div>
+                  </div>
+                  <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                    {statusSegments.map((segment) => (
+                      <div
+                        key={segment.label}
+                        className={`h-full ${segment.color}`}
+                        style={{
+                          width:
+                            statusTotal > 0
+                              ? `${Math.max(4, (segment.value / statusTotal) * 100)}%`
+                              : "25%",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {statusSegments.map((segment) => (
+                      <li
+                        key={segment.label}
+                        className="flex items-center gap-2 rounded-lg border border-border/60 px-2.5 py-2"
+                      >
+                        <span className={`h-2 w-2 rounded-full ${segment.color}`} />
+                        <span className="flex-1 truncate text-xs text-muted-foreground">
+                          {segment.label}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums">
+                          {loadingTickets ? "..." : formatNumber(segment.value)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <TicketStatusDistributionCard
-            data={statusDistribution}
-            loading={loadingTickets}
-            error={ticketError}
-            canRead={canReadTicketDashboard}
-          />
-          <TicketPriorityDistributionCard
-            data={priorityDistribution}
-            loading={loadingTickets}
-            error={ticketError}
-            canRead={canReadTicketDashboard}
-          />
-        </div>
+                <div className="mt-5 flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Temps moyen de traitement</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {loadingTickets
+                      ? "..."
+                      : formatDurationMinutes(ticketSummary?.averageTreatmentMinutes)}
+                  </span>
+                </div>
+              </div>
+            </article>
 
-        <UrgentSlaTicketsCard
-          tickets={urgentTickets}
-          loading={loadingSla}
-          error={canReadSlaDashboard ? slaError : null}
-        />
+            <section aria-labelledby="modules">
+              <div className="mb-3 flex items-end justify-between">
+                <h2 id="modules" className="text-base font-semibold tracking-normal">
+                  Mes modules opérationnels
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {moduleCards
+                  .filter((module) => module.visible !== false)
+                  .map((module) => {
+                    const Icon = module.icon;
+                    return (
+                      <article
+                        key={module.title}
+                        className="group rounded-2xl border border-border/60 bg-white p-4 transition hover:border-[oklch(0.7_0.15_300)]/40 hover:shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xl font-semibold tabular-nums">{module.value}</div>
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              {module.sub}
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="mt-3 text-sm font-semibold">{module.title}</h3>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                          {module.desc}
+                        </p>
+                        <Link
+                          to={module.to}
+                          className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[oklch(0.5_0.22_300)] transition group-hover:gap-1.5"
+                        >
+                          Ouvrir <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </article>
+                    );
+                  })}
+              </div>
+            </section>
 
-        <EmployeeKpiSummaryCard
-          kpis={employeeSummaryKpis}
-          summary={employeeKpiSummary}
-          loading={loadingEmployeeKpis}
-          error={employeeKpiError}
-          canRead={canReadEmployeeKpis}
-        />
+            <section className="space-y-4 pt-2" aria-labelledby="details">
+              <h2 id="details" className="text-base font-semibold tracking-normal">
+                Détails opérationnels
+              </h2>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <TicketStatusDistributionCard
+                  data={statusDistribution}
+                  loading={loadingTickets}
+                  error={ticketError}
+                  canRead={canReadTicketDashboard}
+                />
+                <TicketPriorityDistributionCard
+                  data={priorityDistribution}
+                  loading={loadingTickets}
+                  error={ticketError}
+                  canRead={canReadTicketDashboard}
+                />
+              </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <EmployeeWorkloadCard
-            data={employeeWorkload}
-            loading={loadingEmployeeKpis}
-            error={employeeKpiError}
-            canRead={canReadEmployeeKpis}
-          />
-          <EmployeeProductivityCard
-            data={employeeProductivity}
-            loading={loadingEmployeeKpis}
-            error={employeeKpiError}
-            canRead={canReadEmployeeKpis}
-          />
-        </div>
+              <UrgentSlaTicketsCard
+                tickets={urgentTickets}
+                loading={loadingSla}
+                error={canReadSlaDashboard ? slaError : null}
+              />
 
-        <div className="grid grid-cols-1 gap-4">
-          <QualityLabCard />
-        </div>
+              <EmployeeKpiSummaryCard
+                kpis={employeeSummaryKpis}
+                summary={employeeKpiSummary}
+                loading={loadingEmployeeKpis}
+                error={employeeKpiError}
+                canRead={canReadEmployeeKpis}
+              />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <EmployeesCard />
-          <KnowledgeCard />
-        </div>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <EmployeeWorkloadCard
+                  data={employeeWorkload}
+                  loading={loadingEmployeeKpis}
+                  error={employeeKpiError}
+                  canRead={canReadEmployeeKpis}
+                />
+                <EmployeeProductivityCard
+                  data={employeeProductivity}
+                  loading={loadingEmployeeKpis}
+                  error={employeeKpiError}
+                  canRead={canReadEmployeeKpis}
+                />
+              </div>
+
+              <QualityLabCard />
+            </section>
+          </div>
+
+          <aside className="space-y-5">
+            <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-[oklch(0.96_0.06_22)] text-[oklch(0.55_0.22_22)]">
+                  <AlertTriangle className="h-4 w-4" />
+                </span>
+                <h3 className="text-sm font-semibold">Priorité du jour</h3>
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {urgentTickets[0]
+                  ? `${urgentTickets[0].ticketReference} - ${urgentTickets[0].ticketTitle}`
+                  : "Aucune priorité critique détectée pour le moment. Les tickets proches de leur échéance apparaîtront ici."}
+              </p>
+              <Link
+                to="/tickets"
+                className="mt-3 inline-flex text-xs font-medium text-[oklch(0.5_0.22_300)]"
+              >
+                Voir les tickets en risque →
+              </Link>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Disponibilité de l'équipe</h3>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="flex -space-x-2">
+                {employeeWorkload.slice(0, 5).map((employee, index) => (
+                  <span
+                    key={`${employee.assignedUserId ?? "agent"}-${index}`}
+                    className={`grid h-8 w-8 place-items-center rounded-full border-2 border-white text-[10px] font-semibold ${
+                      index % 3 === 0
+                        ? "bg-emerald-100 text-emerald-700"
+                        : index % 3 === 1
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    {getInitials(employee.assignedUserLabel)}
+                  </span>
+                ))}
+                <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-muted text-[10px] font-semibold text-muted-foreground">
+                  +
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg border border-border/60 py-2">
+                  <dt className="text-xs text-emerald-600">Agents</dt>
+                  <dd className="text-base font-semibold tabular-nums">
+                    {loadingEmployeeKpis
+                      ? "..."
+                      : formatNumber(employeeKpiSummary?.totalAgentsWithTickets)}
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-border/60 py-2">
+                  <dt className="text-xs text-amber-600">Assignés</dt>
+                  <dd className="text-base font-semibold tabular-nums">
+                    {loadingEmployeeKpis
+                      ? "..."
+                      : formatNumber(employeeKpiSummary?.totalActiveAssignedTickets)}
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-border/60 py-2">
+                  <dt className="text-xs text-rose-600">Charge</dt>
+                  <dd className="text-base font-semibold tabular-nums">
+                    {loadingEmployeeKpis
+                      ? "..."
+                      : formatDecimal(employeeKpiSummary?.averageWorkloadScore)}
+                  </dd>
+                </div>
+              </dl>
+              <Link
+                to="/employees"
+                className="mt-3 inline-flex w-full justify-center rounded-lg border border-border/70 bg-white px-3 py-1.5 text-xs font-medium hover:bg-muted/50"
+              >
+                Voir toute l'équipe
+              </Link>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold">Actions</h3>
+              <Link
+                to="/tickets"
+                className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-cgi px-3 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:brightness-110"
+              >
+                <Plus className="h-4 w-4" /> Créer un ticket
+              </Link>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  { label: "Quality Lab IA", icon: Sparkles, to: "/quality-lab" as const },
+                  {
+                    label: "Planning",
+                    icon: Calendar,
+                    to: "/planning" as const,
+                    visible: canReadSlaDashboard,
+                  },
+                  {
+                    label: "SLA",
+                    icon: Gauge,
+                    to: "/sla/policies" as const,
+                    visible: canReadSlaDashboard,
+                  },
+                ]
+                  .filter((action) => action.visible !== false)
+                  .map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link
+                        key={action.label}
+                        to={action.to}
+                        className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-white px-3 py-2 text-sm hover:bg-muted/50"
+                      >
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        {action.label}
+                      </Link>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {slaError && canReadSlaDashboard ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-amber-900">Indicateurs SLA</div>
+                    <p className="mt-0.5 text-xs text-amber-800">
+                      Indicateurs temporairement indisponibles.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void loadSlaDashboard()}
+                      className="mt-2 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Prochaines activités</h3>
+                <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <ul className="space-y-2">
+                {(urgentTickets.length > 0 ? urgentTickets.slice(0, 3) : [null, null, null]).map(
+                  (ticket, index) => (
+                    <li
+                      key={ticket?.ticketId ?? index}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 p-2.5"
+                    >
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+                        <span className="text-[10px] font-semibold">
+                          {ticket?.resolutionDeadline
+                            ? new Intl.DateTimeFormat("fr-FR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }).format(new Date(ticket.resolutionDeadline))
+                            : "--:--"}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium">
+                          {ticket?.ticketTitle ?? "Activité à planifier"}
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {ticket?.ticketReference ?? "Aucune donnée disponible"}
+                        </div>
+                      </div>
+                    </li>
+                  ),
+                )}
+              </ul>
+              <Link
+                to="/planning"
+                className="mt-3 inline-flex w-full justify-center rounded-lg border border-border/70 px-3 py-1.5 text-xs font-medium hover:bg-muted/50"
+              >
+                Voir le planning complet
+              </Link>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-white p-4 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Plateforme opérationnelle
+                </div>
+                <span>Actualisation en direct</span>
+              </div>
+            </div>
+          </aside>
+        </section>
       </PageContainer>
     </AppShell>
+  );
+}
+
+function QuickAccessLauncher({ canReadSlaDashboard }: { canReadSlaDashboard: boolean }) {
+  const actions: {
+    label: string;
+    icon: LucideIcon;
+    to?: "/tickets" | "/sla/policies" | "/planning" | "/quality-lab" | "/employees" | "/messages";
+    primary?: boolean;
+    visible?: boolean;
+  }[] = [
+    { label: "Nouveau ticket", icon: Plus, to: "/tickets", primary: true },
+    { label: "Mes tickets", icon: ClipboardList, to: "/tickets" },
+    { label: "Planning", icon: Calendar, to: "/planning", visible: canReadSlaDashboard },
+    { label: "SLA", icon: Gauge, to: "/sla/policies", visible: canReadSlaDashboard },
+    { label: "Quality Lab IA", icon: Sparkles, to: "/quality-lab" },
+    { label: "Équipe", icon: Users, to: "/employees", visible: canReadSlaDashboard },
+    { label: "Notifications", icon: Bell },
+    { label: "Rapports", icon: FileBarChart },
+  ];
+
+  return (
+    <section aria-labelledby="quick-access">
+      <h2
+        id="quick-access"
+        className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
+        Accès rapide
+      </h2>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {actions
+          .filter((action) => action.visible !== false)
+          .map(({ label, icon: Icon, to, primary }) =>
+            to ? (
+              <Link
+                key={label}
+                to={to}
+                className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition ${
+                  primary
+                    ? "border-transparent bg-gradient-cgi text-white shadow-soft hover:brightness-110"
+                    : "border-border/70 bg-white text-foreground hover:bg-muted/60"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            ) : (
+              <button
+                key={label}
+                type="button"
+                disabled
+                className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-sm font-medium text-muted-foreground"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ),
+          )}
+      </div>
+    </section>
   );
 }
 
@@ -460,16 +1765,16 @@ function SectionCard({
   badge?: string;
 }) {
   return (
-    <SectionSurface className="h-full p-5">
+    <SectionSurface className="h-full overflow-hidden rounded-2xl border-border/60 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cgi-gradient shadow-glow">
-            <Icon className="h-4 w-4 text-white" />
+          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-cgi-soft text-[oklch(0.45_0.22_300)]">
+            <Icon className="h-4 w-4" />
           </div>
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         </div>
         {badge && (
-          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="rounded-full border border-border/70 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             {badge}
           </span>
         )}
@@ -481,7 +1786,7 @@ function SectionCard({
 
 function MiniStat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+    <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2.5">
       <div className={`text-lg font-bold ${tone ?? "text-foreground"}`}>{value}</div>
       <div className="mt-0.5 text-[11px] text-muted-foreground">{label}</div>
     </div>
@@ -529,7 +1834,9 @@ function EmployeeKpiSummaryCard({
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.tone}`}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <div className="mt-3 text-2xl font-bold leading-tight text-foreground">{kpi.value}</div>
+                <div className="mt-3 text-2xl font-bold leading-tight text-foreground">
+                  {kpi.value}
+                </div>
                 <div className="mt-1 text-xs font-medium text-foreground/80">{kpi.label}</div>
                 <div className="mt-1 text-[11px] text-muted-foreground">{kpi.hint}</div>
               </div>
@@ -583,11 +1890,21 @@ function EmployeeWorkloadCard({
             <tbody className="divide-y divide-border bg-background">
               {data.map((item) => (
                 <tr key={item.assignedUserId ?? item.assignedUserLabel} className="align-middle">
-                  <td className="px-4 py-3 font-medium text-foreground">{item.assignedUserLabel}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.totalAssignedTickets)}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.todoTickets)}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.inProgressTickets)}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.waitingTickets)}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {item.assignedUserLabel}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.totalAssignedTickets)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.todoTickets)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.inProgressTickets)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.waitingTickets)}
+                  </td>
                   <td
                     className={`px-4 py-3 text-right font-semibold ${
                       item.atRiskTickets > 0 ? "text-amber-700" : "text-foreground"
@@ -602,7 +1919,9 @@ function EmployeeWorkloadCard({
                   >
                     {formatNumber(item.breachedTickets)}
                   </td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.criticalTickets)}</td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.criticalTickets)}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <span
                       className={`inline-flex min-w-14 justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -667,10 +1986,18 @@ function EmployeeProductivityCard({
             <tbody className="divide-y divide-border bg-background">
               {data.map((item) => (
                 <tr key={item.assignedUserId ?? item.assignedUserLabel} className="align-middle">
-                  <td className="px-4 py-3 font-medium text-foreground">{item.assignedUserLabel}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.processedTickets)}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.resolvedTickets)}</td>
-                  <td className="px-4 py-3 text-right text-foreground">{formatNumber(item.closedTickets)}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {item.assignedUserLabel}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.processedTickets)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.resolvedTickets)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground">
+                    {formatNumber(item.closedTickets)}
+                  </td>
                   <td className="px-4 py-3 text-right text-foreground">
                     {formatDurationMinutes(item.averageTreatmentMinutes)}
                   </td>
@@ -679,7 +2006,9 @@ function EmployeeProductivityCard({
                   </td>
                   <td
                     className={`px-4 py-3 text-right font-semibold ${
-                      item.slaBreachedTickets > 0 ? "text-[color:var(--cgi-red)]" : "text-foreground"
+                      item.slaBreachedTickets > 0
+                        ? "text-[color:var(--cgi-red)]"
+                        : "text-foreground"
                     }`}
                   >
                     {formatNumber(item.slaBreachedTickets)}
@@ -729,8 +2058,16 @@ function IncidentsCard({
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <MiniStat label="Incidents ouverts" value={formatNumber(summary.openTickets)} tone="text-cgi-pink" />
-            <MiniStat label="Tickets à faire" value={formatNumber(summary.todoTickets)} tone="text-sky-700" />
+            <MiniStat
+              label="Incidents ouverts"
+              value={formatNumber(summary.openTickets)}
+              tone="text-cgi-pink"
+            />
+            <MiniStat
+              label="Tickets à faire"
+              value={formatNumber(summary.todoTickets)}
+              tone="text-sky-700"
+            />
             <MiniStat
               label="Tickets en cours"
               value={formatNumber(summary.inProgressTickets)}
@@ -776,7 +2113,10 @@ function IncidentsCard({
                   {segments.map((segment) => (
                     <div
                       key={segment.label}
-                      style={{ width: `${(segment.value / total) * 100}%`, background: segment.color }}
+                      style={{
+                        width: `${(segment.value / total) * 100}%`,
+                        background: segment.color,
+                      }}
                       title={`${segment.label}: ${segment.value}`}
                     />
                   ))}
@@ -787,7 +2127,10 @@ function IncidentsCard({
                       key={segment.label}
                       className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
                     >
-                      <span className="h-2 w-2 rounded-full" style={{ background: segment.color }} />
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ background: segment.color }}
+                      />
                       {segment.label}
                     </div>
                   ))}
@@ -841,7 +2184,9 @@ function TicketStatusDistributionCard({
               className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-3 py-2.5"
             >
               <span className="text-sm text-foreground">{item.statusLabel}</span>
-              <span className="text-sm font-semibold text-foreground">{formatNumber(item.count)}</span>
+              <span className="text-sm font-semibold text-foreground">
+                {formatNumber(item.count)}
+              </span>
             </div>
           ))}
         </div>
@@ -879,7 +2224,9 @@ function TicketPriorityDistributionCard({
               className="rounded-xl border border-border bg-background/60 px-3 py-3"
             >
               <div className="text-xs text-muted-foreground">{item.priorityLabel}</div>
-              <div className="mt-1 text-2xl font-semibold text-foreground">{formatNumber(item.count)}</div>
+              <div className="mt-1 text-2xl font-semibold text-foreground">
+                {formatNumber(item.count)}
+              </div>
             </div>
           ))}
         </div>
@@ -899,7 +2246,9 @@ function SLACard({
     <SectionCard title="SLA" icon={Clock} badge="Live">
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-3 rounded-xl bg-cgi-gradient p-4 text-white shadow-glow sm:col-span-1">
-          <div className="text-2xl font-bold">{loading ? "..." : formatPercent(summary?.slaComplianceRate)}</div>
+          <div className="text-2xl font-bold">
+            {loading ? "..." : formatPercent(summary?.slaComplianceRate)}
+          </div>
           <div className="mt-1 text-xs opacity-90">Taux de respect SLA</div>
         </div>
         <MiniStat
@@ -933,7 +2282,9 @@ function SLACard({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-3 py-2">
             <span className="text-xs text-muted-foreground">Tickets suivis</span>
-            <span className="text-sm font-semibold text-foreground">{formatNumber(summary?.totalTrackedTickets)}</span>
+            <span className="text-sm font-semibold text-foreground">
+              {formatNumber(summary?.totalTrackedTickets)}
+            </span>
           </div>
           <div className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-3 py-2">
             <span className="text-xs text-muted-foreground">Tickets critiques dépassés</span>
@@ -992,7 +2343,9 @@ function UrgentSlaTicketsCard({
               key={ticket.ticketId}
               className="grid grid-cols-[120px_minmax(0,1.6fr)_140px_120px_120px_120px_130px_160px_90px] items-center gap-0 border-b border-border bg-background px-4 py-3 text-sm last:border-b-0"
             >
-              <span className="font-mono text-xs font-semibold text-foreground">{ticket.ticketReference}</span>
+              <span className="font-mono text-xs font-semibold text-foreground">
+                {ticket.ticketReference}
+              </span>
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{ticket.ticketTitle}</div>
               </div>
@@ -1000,14 +2353,21 @@ function UrgentSlaTicketsCard({
               <Badge variant="outline" className="w-fit border-sky-200 bg-sky-50 text-sky-700">
                 {ticket.priorityLabel}
               </Badge>
-              <Badge variant="outline" className="w-fit border-violet-200 bg-violet-50 text-violet-700">
+              <Badge
+                variant="outline"
+                className="w-fit border-violet-200 bg-violet-50 text-violet-700"
+              >
                 {ticket.criticalityLabel}
               </Badge>
               <Badge variant="outline" className={`w-fit ${getSlaBadgeClass(ticket.globalStatus)}`}>
                 {ticket.globalStatusLabel}
               </Badge>
-              <span className="text-muted-foreground">{formatRemainingTime(ticket.remainingMinutes)}</span>
-              <span className="text-muted-foreground">{formatDateTime(ticket.resolutionDeadline)}</span>
+              <span className="text-muted-foreground">
+                {formatRemainingTime(ticket.remainingMinutes)}
+              </span>
+              <span className="text-muted-foreground">
+                {formatDateTime(ticket.resolutionDeadline)}
+              </span>
               <Button asChild size="sm" variant="outline">
                 <Link reloadDocument to="/tickets/$id" params={{ id: String(ticket.ticketId) }}>
                   Voir
@@ -1229,6 +2589,15 @@ function formatNumber(value: number | null | undefined) {
     return "0";
   }
   return new Intl.NumberFormat("fr-FR").format(value);
+}
+
+function getInitials(value: string | null | undefined) {
+  const source = (value?.trim() || "U").replace(/\s+/g, " ");
+  const parts = source.split(" ").filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? "U"}${parts[1][0] ?? ""}`.toUpperCase();
+  }
+  return source.slice(0, 2).toUpperCase();
 }
 
 function formatRemainingTime(value: number | null | undefined) {

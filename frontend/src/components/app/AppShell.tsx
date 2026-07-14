@@ -14,17 +14,19 @@ export function AppShell({
 }) {
   return (
     <AuthenticatedView>
-      <div className="flex h-screen w-full overflow-hidden bg-soft-gradient">
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Topbar compact={compactTopbar} />
-          <main
-            className={`min-h-0 flex-1 ${
-              lockScroll ? "overflow-hidden px-4 py-4 md:px-6 md:py-5 xl:px-8" : "overflow-auto px-4 py-4 md:px-6 md:py-5 xl:px-8"
-            }`}
-          >
-            {children}
-          </main>
+      <div className="h-screen w-full overflow-hidden bg-[oklch(0.985_0.003_260)] text-foreground">
+        <div className="mx-auto flex h-full max-w-[1600px] overflow-hidden">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Topbar compact={compactTopbar} />
+            <main
+              className={`min-h-0 flex-1 ${
+                lockScroll ? "overflow-hidden p-4 sm:p-6 lg:p-8" : "overflow-auto p-4 sm:p-6 lg:p-8"
+              }`}
+            >
+              {children}
+            </main>
+          </div>
         </div>
       </div>
     </AuthenticatedView>

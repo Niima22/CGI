@@ -4,7 +4,8 @@ Professional intranet architecture skeleton for CGI internal workflows.
 
 ## Structure
 
-- `frontend/` - React + Vite frontend.
+- `FRONTCODED/` - React + Vite frontend used by local launch.
+- `frontend/` - Previous integrated React + Vite frontend.
 - `backend/` - Spring Boot microservice skeletons.
 - `ai_service/` - Existing FastAPI AI service. Keep this service working and isolated.
 - `ai-engine/` - Future ML and training experiments.
@@ -88,7 +89,7 @@ Then start:
 cd ai_service
 .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 
-cd ..\frontend
+cd ..\FRONTCODED
 npm.cmd run dev -- --host 127.0.0.1 --port 5173
 ```
 

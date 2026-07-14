@@ -90,3 +90,6 @@ frontend-old/
 
 ### Local development runtime files ###
 .run/
+
+### External source inspection ###
+external-sources/

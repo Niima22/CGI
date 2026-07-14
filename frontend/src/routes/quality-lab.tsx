@@ -137,7 +137,7 @@ Correctif appliqué avec succès. Ticket clôturé après validation utilisateur
   } as unknown as MockResult;
 }
 
-const QUALITY_LAB_ENDPOINT = "/generate-resolution-frame";
+const QUALITY_LAB_ENDPOINT = "/api/ai/generate-resolution-frame";
 
 function splitList(value: string) {
   return value

@@ -217,7 +217,7 @@ Wait-Port 8080 "api-gateway"
 Start-LoggedProcess "ai-service" (Join-Path $repoRoot "ai_service\.venv\Scripts\python.exe") @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8001") (Join-Path $repoRoot "ai_service") 8001
 Wait-Port 8001 "ai-service"
 
-Start-LoggedProcess "frontend" "npm.cmd" @("run", "dev", "--", "--host", "127.0.0.1", "--port", "5173") (Join-Path $repoRoot "frontend") 5173
+Start-LoggedProcess "frontend" "npm.cmd" @("run", "dev", "--", "--host", "127.0.0.1", "--port", "5173") (Join-Path $repoRoot "FRONTCODED") 5173
 Wait-Port 5173 "frontend"
 
 Write-Host ""

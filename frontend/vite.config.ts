@@ -6,16 +6,14 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080";
+
 export default defineConfig({
   vite: {
     server: {
       proxy: {
         "/api": {
-          target: "http://127.0.0.1:8080",
-          changeOrigin: true,
-        },
-        "/generate-resolution-frame": {
-          target: "http://127.0.0.1:8001",
+          target: apiProxyTarget,
           changeOrigin: true,
         },
       },

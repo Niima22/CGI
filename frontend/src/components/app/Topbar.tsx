@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { AvailabilityStatusSelector } from "@/components/app/AvailabilityStatusSelector";
 import { CurrentUserAvatar } from "@/components/app/CurrentUserAvatar";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -9,27 +9,23 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
 
   return (
     <header
-      className={`sticky top-0 z-20 border-b border-border/70 bg-background/85 px-4 backdrop-blur md:grid md:grid-cols-[minmax(0,1fr)_minmax(320px,560px)_auto] md:items-center md:gap-5 md:px-6 xl:px-8 ${
+      className={`sticky top-0 z-30 flex items-center gap-3 border-b border-border/60 bg-white/90 px-4 backdrop-blur sm:px-6 ${
         compact ? "min-h-12 py-1.5" : "min-h-16 py-2.5"
       }`}
     >
-      <div className="hidden md:block" />
-
-      <div className="flex w-full justify-center">
-        <div className="relative w-full max-w-xl md:max-w-none">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Rechercher un module..."
-            className={`w-full rounded-xl border border-transparent bg-muted/85 pl-10 pr-4 text-sm outline-none transition-all focus:border-ring/40 focus:bg-card ${
-              compact ? "py-2" : "py-2.5"
-            }`}
-          />
-        </div>
+      <div className="relative max-w-2xl flex-1">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Rechercher un ticket, un employé, un département..."
+          className={`w-full rounded-xl border border-border/70 bg-muted/40 pl-10 pr-4 text-sm outline-none transition-all focus:border-[oklch(0.6_0.2_300)] focus:bg-white focus:ring-2 focus:ring-[oklch(0.6_0.2_300)]/20 ${
+            compact ? "py-2" : "py-2.5"
+          }`}
+        />
       </div>
 
-      <div className="mt-2 flex w-full flex-wrap items-center justify-end gap-2.5 md:mt-0 md:w-auto md:flex-nowrap md:justify-self-end">
-        <div className="min-w-[170px] md:min-w-[188px]">
+      <div className="ml-auto flex items-center gap-2">
+        <div className="hidden min-w-[188px] sm:block">
           <AvailabilityStatusSelector compact={compact} />
         </div>
 
@@ -39,13 +35,20 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
           <div className="truncate text-sm font-medium text-foreground">{fullName}</div>
           <div className="truncate text-xs text-muted-foreground">{email}</div>
         </div>
-        <span className="hidden shrink-0 sm:inline-flex rounded-full border border-border/70 bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground">
+        <span className="hidden shrink-0 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
           {roles
             .filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
             .map(getBusinessRoleLabel)
             .join(", ")}
         </span>
-        <CurrentUserAvatar compact={compact} />
+        <button
+          type="button"
+          aria-label="Menu utilisateur"
+          className="flex items-center gap-2 rounded-lg border border-border/70 bg-white px-1.5 py-1 pr-2.5 text-sm transition hover:bg-muted/50"
+        >
+          <CurrentUserAvatar compact={compact} />
+          <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:inline" />
+        </button>
       </div>
     </header>
   );
