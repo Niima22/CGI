@@ -9,12 +9,70 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsersRouteImport } from './routes/users'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as QualityLabRouteImport } from './routes/quality-lab'
+import { Route as PlanningRouteImport } from './routes/planning'
+import { Route as MyProfileRouteImport } from './routes/my-profile'
+import { Route as MessagesRouteImport } from './routes/messages'
+import { Route as EmployeesRouteImport } from './routes/employees'
+import { Route as DepartmentsRouteImport } from './routes/departments'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TicketsIdRouteImport } from './routes/tickets.$id'
+import { Route as SlaPoliciesRouteImport } from './routes/sla.policies'
+import { Route as EmployeesImportRouteImport } from './routes/employees.import'
+import { Route as EmployeesIdRouteImport } from './routes/employees.$id'
 
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QualityLabRoute = QualityLabRouteImport.update({
+  id: '/quality-lab',
+  path: '/quality-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyProfileRoute = MyProfileRouteImport.update({
+  id: '/my-profile',
+  path: '/my-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepartmentsRoute = DepartmentsRouteImport.update({
+  id: '/departments',
+  path: '/departments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessDeniedRoute = AccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,40 +80,218 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TicketsIdRoute = TicketsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TicketsRoute,
+} as any)
+const SlaPoliciesRoute = SlaPoliciesRouteImport.update({
+  id: '/sla/policies',
+  path: '/sla/policies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesImportRoute = EmployeesImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => EmployeesRoute,
+} as any)
+const EmployeesIdRoute = EmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EmployeesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/messages': typeof MessagesRoute
+  '/my-profile': typeof MyProfileRoute
+  '/planning': typeof PlanningRoute
+  '/quality-lab': typeof QualityLabRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/users': typeof UsersRoute
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/sla/policies': typeof SlaPoliciesRoute
+  '/tickets/$id': typeof TicketsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/messages': typeof MessagesRoute
+  '/my-profile': typeof MyProfileRoute
+  '/planning': typeof PlanningRoute
+  '/quality-lab': typeof QualityLabRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/users': typeof UsersRoute
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/sla/policies': typeof SlaPoliciesRoute
+  '/tickets/$id': typeof TicketsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/dashboard': typeof DashboardRoute
+  '/departments': typeof DepartmentsRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/messages': typeof MessagesRoute
+  '/my-profile': typeof MyProfileRoute
+  '/planning': typeof PlanningRoute
+  '/quality-lab': typeof QualityLabRoute
+  '/tickets': typeof TicketsRouteWithChildren
+  '/users': typeof UsersRoute
+  '/employees/$id': typeof EmployeesIdRoute
+  '/employees/import': typeof EmployeesImportRoute
+  '/sla/policies': typeof SlaPoliciesRoute
+  '/tickets/$id': typeof TicketsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/access-denied'
+    | '/dashboard'
+    | '/departments'
+    | '/employees'
+    | '/messages'
+    | '/my-profile'
+    | '/planning'
+    | '/quality-lab'
+    | '/tickets'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/sla/policies'
+    | '/tickets/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard'
-  id: '__root__' | '/' | '/dashboard'
+  to:
+    | '/'
+    | '/access-denied'
+    | '/dashboard'
+    | '/departments'
+    | '/employees'
+    | '/messages'
+    | '/my-profile'
+    | '/planning'
+    | '/quality-lab'
+    | '/tickets'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/sla/policies'
+    | '/tickets/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/access-denied'
+    | '/dashboard'
+    | '/departments'
+    | '/employees'
+    | '/messages'
+    | '/my-profile'
+    | '/planning'
+    | '/quality-lab'
+    | '/tickets'
+    | '/users'
+    | '/employees/$id'
+    | '/employees/import'
+    | '/sla/policies'
+    | '/tickets/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessDeniedRoute: typeof AccessDeniedRoute
   DashboardRoute: typeof DashboardRoute
+  DepartmentsRoute: typeof DepartmentsRoute
+  EmployeesRoute: typeof EmployeesRouteWithChildren
+  MessagesRoute: typeof MessagesRoute
+  MyProfileRoute: typeof MyProfileRoute
+  PlanningRoute: typeof PlanningRoute
+  QualityLabRoute: typeof QualityLabRoute
+  TicketsRoute: typeof TicketsRouteWithChildren
+  UsersRoute: typeof UsersRoute
+  SlaPoliciesRoute: typeof SlaPoliciesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quality-lab': {
+      id: '/quality-lab'
+      path: '/quality-lab'
+      fullPath: '/quality-lab'
+      preLoaderRoute: typeof QualityLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-profile': {
+      id: '/my-profile'
+      path: '/my-profile'
+      fullPath: '/my-profile'
+      preLoaderRoute: typeof MyProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/departments': {
+      id: '/departments'
+      path: '/departments'
+      fullPath: '/departments'
+      preLoaderRoute: typeof DepartmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access-denied': {
+      id: '/access-denied'
+      path: '/access-denied'
+      fullPath: '/access-denied'
+      preLoaderRoute: typeof AccessDeniedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -65,13 +301,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tickets/$id': {
+      id: '/tickets/$id'
+      path: '/$id'
+      fullPath: '/tickets/$id'
+      preLoaderRoute: typeof TicketsIdRouteImport
+      parentRoute: typeof TicketsRoute
+    }
+    '/sla/policies': {
+      id: '/sla/policies'
+      path: '/sla/policies'
+      fullPath: '/sla/policies'
+      preLoaderRoute: typeof SlaPoliciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees/import': {
+      id: '/employees/import'
+      path: '/import'
+      fullPath: '/employees/import'
+      preLoaderRoute: typeof EmployeesImportRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
+    '/employees/$id': {
+      id: '/employees/$id'
+      path: '/$id'
+      fullPath: '/employees/$id'
+      preLoaderRoute: typeof EmployeesIdRouteImport
+      parentRoute: typeof EmployeesRoute
+    }
   }
 }
 
+interface EmployeesRouteChildren {
+  EmployeesIdRoute: typeof EmployeesIdRoute
+  EmployeesImportRoute: typeof EmployeesImportRoute
+}
+
+const EmployeesRouteChildren: EmployeesRouteChildren = {
+  EmployeesIdRoute: EmployeesIdRoute,
+  EmployeesImportRoute: EmployeesImportRoute,
+}
+
+const EmployeesRouteWithChildren = EmployeesRoute._addFileChildren(
+  EmployeesRouteChildren,
+)
+
+interface TicketsRouteChildren {
+  TicketsIdRoute: typeof TicketsIdRoute
+}
+
+const TicketsRouteChildren: TicketsRouteChildren = {
+  TicketsIdRoute: TicketsIdRoute,
+}
+
+const TicketsRouteWithChildren =
+  TicketsRoute._addFileChildren(TicketsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessDeniedRoute: AccessDeniedRoute,
   DashboardRoute: DashboardRoute,
+  DepartmentsRoute: DepartmentsRoute,
+  EmployeesRoute: EmployeesRouteWithChildren,
+  MessagesRoute: MessagesRoute,
+  MyProfileRoute: MyProfileRoute,
+  PlanningRoute: PlanningRoute,
+  QualityLabRoute: QualityLabRoute,
+  TicketsRoute: TicketsRouteWithChildren,
+  UsersRoute: UsersRoute,
+  SlaPoliciesRoute: SlaPoliciesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

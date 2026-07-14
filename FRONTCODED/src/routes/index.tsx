@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-store";
 import cgiLogo from "../../Images/logo.png";
 import {
   ShieldCheck,
@@ -17,38 +18,6 @@ import {
   Loader2,
   Workflow,
 } from "lucide-react";
-
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "cgi-flow";
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "cgi-flow-web";
-const tokenStorageKey = "cgi-flow.keycloak.tokens";
-
-interface TokenEndpointResponse {
-  access_token: string;
-  refresh_token?: string;
-  id_token?: string;
-}
-
-function getKeycloakUrl() {
-  const configuredUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085";
-  if (typeof window === "undefined") return configuredUrl;
-
-  if (configuredUrl.includes("host.docker.internal")) {
-    return `${window.location.protocol}//${window.location.hostname}:8085`;
-  }
-
-  return configuredUrl;
-}
-
-function storeTokens(payload: TokenEndpointResponse) {
-  window.localStorage.setItem(
-    tokenStorageKey,
-    JSON.stringify({
-      token: payload.access_token,
-      refreshToken: payload.refresh_token,
-      idToken: payload.id_token,
-    }),
-  );
-}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -74,6 +43,7 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -87,25 +57,7 @@ function LoginPage() {
     setErrorMessage(null);
     setLoading(true);
     try {
-      const response = await fetch(
-        `${getKeycloakUrl()}/realms/${keycloakRealm}/protocol/openid-connect/token`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: keycloakClientId,
-            grant_type: "password",
-            username: email.trim(),
-            password,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Identifiants invalides ou compte non autorisé.");
-      }
-
-      storeTokens((await response.json()) as TokenEndpointResponse);
+      await login({ email: email.trim(), password });
       await navigate({ to: "/dashboard" });
     } catch (error) {
       setErrorMessage(
