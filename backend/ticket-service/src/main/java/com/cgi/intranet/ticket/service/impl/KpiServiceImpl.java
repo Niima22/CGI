@@ -10,6 +10,7 @@ import com.cgi.intranet.ticket.enums.TicketCriticality;
 import com.cgi.intranet.ticket.enums.TicketStatus;
 import com.cgi.intranet.ticket.repository.TicketRepository;
 import com.cgi.intranet.ticket.repository.TicketSlaRepository;
+import com.cgi.intranet.ticket.repository.AuthUserDirectoryRepository;
 import com.cgi.intranet.ticket.service.CurrentUserService;
 import com.cgi.intranet.ticket.service.KpiService;
 import com.cgi.intranet.ticket.service.SlaService;
@@ -46,17 +47,20 @@ public class KpiServiceImpl implements KpiService {
 
     private final TicketRepository ticketRepository;
     private final TicketSlaRepository ticketSlaRepository;
+    private final AuthUserDirectoryRepository authUserDirectoryRepository;
     private final CurrentUserService currentUserService;
     private final SlaService slaService;
 
     public KpiServiceImpl(
             TicketRepository ticketRepository,
             TicketSlaRepository ticketSlaRepository,
+            AuthUserDirectoryRepository authUserDirectoryRepository,
             CurrentUserService currentUserService,
             SlaService slaService
     ) {
         this.ticketRepository = ticketRepository;
         this.ticketSlaRepository = ticketSlaRepository;
+        this.authUserDirectoryRepository = authUserDirectoryRepository;
         this.currentUserService = currentUserService;
         this.slaService = slaService;
     }
@@ -68,7 +72,7 @@ public class KpiServiceImpl implements KpiService {
         KpiSnapshot snapshot = buildSnapshot();
 
         List<EmployeeWorkloadKpiResponse> rows = snapshot.ticketsByAgent().entrySet().stream()
-                .map(entry -> buildWorkloadRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId()))
+                .map(entry -> buildWorkloadRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId(), snapshot.userLabelsById()))
                 .sorted(workloadComparator(sort))
                 .toList();
 
@@ -82,7 +86,7 @@ public class KpiServiceImpl implements KpiService {
         KpiSnapshot snapshot = buildSnapshot();
 
         List<EmployeeProductivityKpiResponse> rows = snapshot.ticketsByAgent().entrySet().stream()
-                .map(entry -> buildProductivityRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId()))
+                .map(entry -> buildProductivityRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId(), snapshot.userLabelsById()))
                 .sorted(productivityComparator(sort))
                 .toList();
 
@@ -96,10 +100,10 @@ public class KpiServiceImpl implements KpiService {
         KpiSnapshot snapshot = buildSnapshot();
 
         List<EmployeeWorkloadKpiResponse> workloads = snapshot.ticketsByAgent().entrySet().stream()
-                .map(entry -> buildWorkloadRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId()))
+                .map(entry -> buildWorkloadRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId(), snapshot.userLabelsById()))
                 .toList();
         List<EmployeeProductivityKpiResponse> productivity = snapshot.ticketsByAgent().entrySet().stream()
-                .map(entry -> buildProductivityRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId()))
+                .map(entry -> buildProductivityRow(entry.getKey(), entry.getValue(), snapshot.slaByTicketId(), snapshot.userLabelsById()))
                 .toList();
 
         long totalAgentsWithTickets = snapshot.ticketsByAgent().size();
@@ -148,19 +152,21 @@ public class KpiServiceImpl implements KpiService {
 
         Map<Long, List<Ticket>> ticketsByAgent = assignedTickets.stream()
                 .collect(Collectors.groupingBy(Ticket::getAssignedUserId, LinkedHashMap::new, Collectors.toList()));
+        Map<Long, String> userLabelsById = authUserDirectoryRepository.findUserLabelsByIds(ticketsByAgent.keySet());
 
         Map<Long, TicketSla> slaByTicketId = ticketSlaRepository.findAllByTicketIdIn(
                         assignedTickets.stream().map(Ticket::getId).toList()
                 ).stream()
                 .collect(Collectors.toMap(TicketSla::getTicketId, Function.identity()));
 
-        return new KpiSnapshot(ticketsByAgent, slaByTicketId);
+        return new KpiSnapshot(ticketsByAgent, slaByTicketId, userLabelsById);
     }
 
     private EmployeeWorkloadKpiResponse buildWorkloadRow(
             Long assignedUserId,
             List<Ticket> tickets,
-            Map<Long, TicketSla> slaByTicketId
+            Map<Long, TicketSla> slaByTicketId,
+            Map<Long, String> userLabelsById
     ) {
         List<Ticket> activeTickets = tickets.stream()
                 .filter(ticket -> ACTIVE_STATUSES.contains(ticket.getStatus()))
@@ -199,7 +205,7 @@ public class KpiServiceImpl implements KpiService {
 
         return new EmployeeWorkloadKpiResponse(
                 assignedUserId,
-                buildAssignedUserLabel(assignedUserId),
+                buildAssignedUserLabel(assignedUserId, userLabelsById),
                 totalAssignedTickets,
                 todoTickets,
                 assignedTickets,
@@ -215,7 +221,8 @@ public class KpiServiceImpl implements KpiService {
     private EmployeeProductivityKpiResponse buildProductivityRow(
             Long assignedUserId,
             List<Ticket> tickets,
-            Map<Long, TicketSla> slaByTicketId
+            Map<Long, TicketSla> slaByTicketId,
+            Map<Long, String> userLabelsById
     ) {
         long resolvedTickets = tickets.stream()
                 .filter(ticket -> ticket.getStatus() == TicketStatus.RESOLVED)
@@ -256,7 +263,7 @@ public class KpiServiceImpl implements KpiService {
 
         return new EmployeeProductivityKpiResponse(
                 assignedUserId,
-                buildAssignedUserLabel(assignedUserId),
+                buildAssignedUserLabel(assignedUserId, userLabelsById),
                 resolvedTickets,
                 closedTickets,
                 processedTickets,
@@ -279,8 +286,11 @@ public class KpiServiceImpl implements KpiService {
         return ticketSla != null && ticketSla.getGlobalStatus() == status;
     }
 
-    private String buildAssignedUserLabel(Long assignedUserId) {
-        return assignedUserId == null ? null : "Agent #" + assignedUserId;
+    private String buildAssignedUserLabel(Long assignedUserId, Map<Long, String> userLabelsById) {
+        if (assignedUserId == null) {
+            return null;
+        }
+        return userLabelsById.getOrDefault(assignedUserId, "Utilisateur " + assignedUserId);
     }
 
     private Comparator<EmployeeWorkloadKpiResponse> workloadComparator(String sort) {
@@ -343,7 +353,8 @@ public class KpiServiceImpl implements KpiService {
 
     private record KpiSnapshot(
             Map<Long, List<Ticket>> ticketsByAgent,
-            Map<Long, TicketSla> slaByTicketId
+            Map<Long, TicketSla> slaByTicketId,
+            Map<Long, String> userLabelsById
     ) {
     }
 }
