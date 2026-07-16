@@ -216,6 +216,35 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  planning-service:
+    build:
+      context: ./backend/planning-service
+      dockerfile: Dockerfile
+    container_name: cgi-flow-planning-service
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    environment:
+      PLANNING_DATABASE_URL: jdbc:postgresql://auth-postgres:5432/cgi_flow_planning
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-postgres}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_PUBLIC_URL:-http://host.docker.internal:8085}/realms/cgi-flow
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+      SECURITY_DEV_ADMIN_BYPASS: "false"
+    ports:
+      - "8087:8087"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8087/api/plannings/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
   quality-lab-ai:
     build:
       context: ./ai_service
@@ -254,6 +283,8 @@ services:
         condition: service_healthy
       messaging-service:
         condition: service_healthy
+      planning-service:
+        condition: service_healthy
       quality-lab-ai:
         condition: service_healthy
     environment:
@@ -284,6 +315,7 @@ services:
       VITE_KEYCLOAK_URL: ${KEYCLOAK_PUBLIC_URL:-http://host.docker.internal:8085}
       VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-cgi-flow}
       VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-cgi-flow-web}
+      VITE_PLANNING_DEV_ADMIN_BYPASS: ${VITE_PLANNING_DEV_ADMIN_BYPASS:-false}
     ports:
       - "5173:5173"
     healthcheck:

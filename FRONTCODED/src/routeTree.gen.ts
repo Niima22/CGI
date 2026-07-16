@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as QualityLabRouteImport } from './routes/quality-lab'
+import { Route as PlanningViewRouteImport } from './routes/planning-view'
 import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MessagesRouteImport } from './routes/messages'
@@ -38,6 +39,11 @@ const TicketsRoute = TicketsRouteImport.update({
 const QualityLabRoute = QualityLabRouteImport.update({
   id: '/quality-lab',
   path: '/quality-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningViewRoute = PlanningViewRouteImport.update({
+  id: '/planning-view',
+  path: '/planning-view',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanningRoute = PlanningRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
   '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/users': typeof UsersRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
   '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/users': typeof UsersRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
   '/planning': typeof PlanningRoute
+  '/planning-view': typeof PlanningViewRoute
   '/quality-lab': typeof QualityLabRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/users': typeof UsersRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/my-profile'
     | '/planning'
+    | '/planning-view'
     | '/quality-lab'
     | '/tickets'
     | '/users'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/my-profile'
     | '/planning'
+    | '/planning-view'
     | '/quality-lab'
     | '/tickets'
     | '/users'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/my-profile'
     | '/planning'
+    | '/planning-view'
     | '/quality-lab'
     | '/tickets'
     | '/users'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   MyProfileRoute: typeof MyProfileRoute
   PlanningRoute: typeof PlanningRoute
+  PlanningViewRoute: typeof PlanningViewRoute
   QualityLabRoute: typeof QualityLabRoute
   TicketsRoute: typeof TicketsRouteWithChildren
   UsersRoute: typeof UsersRoute
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/quality-lab'
       fullPath: '/quality-lab'
       preLoaderRoute: typeof QualityLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning-view': {
+      id: '/planning-view'
+      path: '/planning-view'
+      fullPath: '/planning-view'
+      preLoaderRoute: typeof PlanningViewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planning': {
@@ -366,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   MyProfileRoute: MyProfileRoute,
   PlanningRoute: PlanningRoute,
+  PlanningViewRoute: PlanningViewRoute,
   QualityLabRoute: QualityLabRoute,
   TicketsRoute: TicketsRouteWithChildren,
   UsersRoute: UsersRoute,

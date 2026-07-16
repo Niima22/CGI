@@ -30,6 +30,7 @@ type MenuItem = {
     | "/quality-lab"
     | "/employees"
     | "/planning"
+    | "/planning-view"
     | "/messages"
     | "/my-profile"
     | "/departments"
@@ -67,14 +68,16 @@ export function Sidebar() {
   const filteredBaseMenu = baseMenu
     .filter((item) => {
       if (item.to === "/sla/policies" || item.to === "/planning") {
-        return canManageEmployees;
+        return canManageEmployees || isEmployee;
       }
       return item.enabled || item.label === "Notifications" || item.label === "Indicateurs KPI";
     })
     .map((item) =>
       item.to === "/employees" && isEmployee
         ? { ...item, to: "/my-profile" as const, label: "Profil", icon: UserRound }
-        : item,
+        : item.to === "/planning" && isEmployee
+          ? { ...item, to: "/planning-view" as const }
+          : item,
     );
 
   const menuGroups: MenuGroup[] = [
@@ -87,7 +90,7 @@ export function Sidebar() {
     {
       title: "Opérations",
       items: filteredBaseMenu.filter((item) =>
-        ["/tickets", "/sla/policies", "/planning", "/employees", "/my-profile"].includes(item.to),
+        ["/tickets", "/sla/policies", "/planning", "/planning-view", "/employees", "/my-profile"].includes(item.to),
       ),
     },
     {

@@ -11,6 +11,7 @@ $managedServices = @(
     @{ Name = "ticket-service"; Port = 8083 },
     @{ Name = "sla-service"; Port = 8084 },
     @{ Name = "messaging-service"; Port = 8086 },
+    @{ Name = "planning-service"; Port = 8087 },
     @{ Name = "api-gateway"; Port = 8080 },
     @{ Name = "ai-service"; Port = 8001 },
     @{ Name = "frontend"; Port = 5173 }
@@ -181,16 +182,30 @@ if (-not $env:MESSAGING_DB_PORT) {
 if (-not $env:MESSAGING_DB_NAME) {
     $env:MESSAGING_DB_NAME = "cgi_flow_messaging"
 }
+if (-not $env:PLANNING_DB_HOST) {
+    $env:PLANNING_DB_HOST = "127.0.0.1"
+}
+if (-not $env:PLANNING_DB_PORT) {
+    $env:PLANNING_DB_PORT = "55432"
+}
+if (-not $env:PLANNING_DB_NAME) {
+    $env:PLANNING_DB_NAME = "cgi_flow_planning"
+}
+if (-not $env:SECURITY_DEV_ADMIN_BYPASS) {
+    $env:SECURITY_DEV_ADMIN_BYPASS = "false"
+}
 
 $ticketDbJdbcUrl = "jdbc:postgresql://$($env:TICKET_DB_HOST):$($env:TICKET_DB_PORT)/$($env:TICKET_DB_NAME)"
 $authDbJdbcUrl = "jdbc:postgresql://$($env:AUTH_DB_HOST):$($env:AUTH_DB_PORT)/$($env:AUTH_DB_NAME)"
 $messagingDbJdbcUrl = "jdbc:postgresql://$($env:MESSAGING_DB_HOST):$($env:MESSAGING_DB_PORT)/$($env:MESSAGING_DB_NAME)"
+$planningDbJdbcUrl = "jdbc:postgresql://$($env:PLANNING_DB_HOST):$($env:PLANNING_DB_PORT)/$($env:PLANNING_DB_NAME)"
 
 Assert-DockerReady
 docker compose -f (Join-Path $repoRoot "docker-compose.yml") up -d
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:TICKET_DB_NAME $env:SPRING_DATASOURCE_USERNAME
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" "cgi_flow_employee" $env:SPRING_DATASOURCE_USERNAME
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:MESSAGING_DB_NAME $env:SPRING_DATASOURCE_USERNAME
+Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:PLANNING_DB_NAME $env:SPRING_DATASOURCE_USERNAME
 
 foreach ($service in $managedServices) {
     Stop-ManagedListener -Name $service.Name -Port $service.Port
@@ -204,12 +219,14 @@ Start-LoggedProcess "employee-service" "java" @("-jar", "target\employee-service
 Start-LoggedProcess "ticket-service" "java" @("-jar", "target\ticket-service-0.0.1-SNAPSHOT.jar", "--spring.datasource.url=$ticketDbJdbcUrl") (Join-Path $repoRoot "backend\ticket-service") 8083
 Start-LoggedProcess "sla-service" "java" @("-jar", "target\sla-service-0.0.1-SNAPSHOT.jar") (Join-Path $repoRoot "backend\sla-service") 8084
 Start-LoggedProcess "messaging-service" "java" @("-jar", "target\messaging-service-0.0.1-SNAPSHOT.jar", "--spring.datasource.url=$messagingDbJdbcUrl") (Join-Path $repoRoot "backend\messaging-service") 8086
+Start-LoggedProcess "planning-service" "java" @("-jar", "target\planning-service-0.0.1-SNAPSHOT.jar", "--spring.datasource.url=$planningDbJdbcUrl", "--security.dev-admin-bypass=$($env:SECURITY_DEV_ADMIN_BYPASS)") (Join-Path $repoRoot "backend\planning-service") 8087
 
 Wait-Port 8081 "auth-user-service"
 Wait-Port 8082 "employee-service"
 Wait-Port 8083 "ticket-service"
 Wait-Port 8084 "sla-service"
 Wait-Port 8086 "messaging-service"
+Wait-Port 8087 "planning-service"
 
 Start-LoggedProcess "api-gateway" "java" @("-jar", "target\api-gateway-0.0.1-SNAPSHOT.jar") (Join-Path $repoRoot "backend\api-gateway") 8080
 Wait-Port 8080 "api-gateway"
@@ -225,5 +242,6 @@ Write-Host "CGI-FLOW is running:"
 Write-Host "  Frontend: http://127.0.0.1:5173/"
 Write-Host "  Keycloak: http://127.0.0.1:8085/"
 Write-Host "  Eureka:   http://127.0.0.1:8761/"
+Write-Host "  Planning: http://127.0.0.1:8087/api/plannings/health"
 Write-Host "  AI:       http://127.0.0.1:8001/health"
 Write-Host "Logs: $logRoot"

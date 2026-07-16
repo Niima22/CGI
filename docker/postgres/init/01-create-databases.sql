@@ -13,6 +13,11 @@ WHERE NOT EXISTS (
     SELECT FROM pg_database WHERE datname = 'cgi_flow_messaging'
 )\gexec
 
+SELECT 'CREATE DATABASE cgi_flow_planning'
+WHERE NOT EXISTS (
+    SELECT FROM pg_database WHERE datname = 'cgi_flow_planning'
+)\gexec
+
 SELECT 'CREATE DATABASE quality_lab'
 WHERE NOT EXISTS (
     SELECT FROM pg_database WHERE datname = 'quality_lab'

@@ -18,6 +18,7 @@ $servicePorts = @{
     "employee-service" = 8082
     "ticket-service" = 8083
     "sla-service" = 8084
+    "planning-service" = 8087
 }
 
 function Stop-ManagedListener {
@@ -48,7 +49,8 @@ $services = @(
     "discovery-service",
     "api-gateway",
     "ticket-service",
-    "sla-service"
+    "sla-service",
+    "planning-service"
 )
 
 foreach ($service in $services) {

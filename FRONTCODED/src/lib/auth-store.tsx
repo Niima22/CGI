@@ -66,6 +66,7 @@ let keycloakInit: Promise<boolean> | null = null;
 const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085";
 const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "cgi-flow";
 const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "cgi-flow-web";
+const planningDevAdminBypass = import.meta.env.VITE_PLANNING_DEV_ADMIN_BYPASS === "true";
 const tokenStorageKey = "cgi-flow.keycloak.tokens";
 
 interface LoginCredentials {
@@ -291,6 +292,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const authenticatedFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const isPlanningApi = String(input).startsWith("/api/plannings");
+    if (isPlanningApi && planningDevAdminBypass) {
+      const headers = new Headers(init?.headers);
+      headers.set("X-CGI-Dev-Admin", "true");
+      return fetch(input, { ...init, headers });
+    }
+
     const client = getKeycloak();
     await refreshClientToken(client);
     if (!client.token) {

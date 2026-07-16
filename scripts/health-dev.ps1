@@ -7,7 +7,8 @@ $checks = @(
     @{ Name = "auth-user-service"; Url = "http://127.0.0.1:8081/api/auth/health" },
     @{ Name = "employee-service"; Url = "http://127.0.0.1:8082/api/employees/health" },
     @{ Name = "ticket-service"; Url = "http://127.0.0.1:8083/api/tickets/health" },
-    @{ Name = "sla-service"; Url = "http://127.0.0.1:8084/api/sla/health" }
+    @{ Name = "sla-service"; Url = "http://127.0.0.1:8084/api/sla/health" },
+    @{ Name = "planning-service"; Url = "http://127.0.0.1:8087/api/plannings/health" }
 )
 
 function Test-ExpectedStatus {
