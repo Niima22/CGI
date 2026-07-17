@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 
 // Auth
@@ -27,26 +28,98 @@ import MyKpiPage from './pages/agent/MyKpiPage';
 import MyNpsPage from './pages/agent/MyNpsPage';
 import MyCoachingPage from './pages/agent/MyCoachingPage';
 
+const autoLoginEnabled = import.meta.env.VITE_KPI_AUTO_LOGIN !== 'false';
+const autoLoginUsername = import.meta.env.VITE_KPI_AUTO_LOGIN_USERNAME || 'malika';
+const autoLoginPassword = import.meta.env.VITE_KPI_AUTO_LOGIN_PASSWORD || 'admin123';
+
+function dashboardPathForRole(role) {
+  if (role === 'SUPERVISOR') return '/supervisor/dashboard';
+  if (role === 'AGENT') return '/agent/dashboard';
+  return '/';
+}
+
+function AutoLoginRedirect({ force = false }) {
+  const { isAuthenticated, user, login } = useAuthStore();
+  const [started, setStarted] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!autoLoginEnabled || started || (isAuthenticated && !force)) {
+      return;
+    }
+
+    setStarted(true);
+    login({ username: autoLoginUsername, password: autoLoginPassword }).then((result) => {
+      if (!result.success) {
+        setError(result.error || 'Connexion automatique indisponible.');
+      }
+      setAttempted(true);
+    });
+  }, [started, isAuthenticated, login, force]);
+
+  if (isAuthenticated && (!force || attempted)) {
+    return <Navigate to={dashboardPathForRole(user?.role)} replace />;
+  }
+
+  if (!autoLoginEnabled) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        background: 'var(--bg-base)',
+        color: 'var(--text-primary)',
+        padding: 24,
+        textAlign: 'center',
+      }}>
+        <div>
+          <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Module KPI indisponible</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'grid',
+      placeItems: 'center',
+      background: 'var(--bg-base)',
+      color: 'var(--text-secondary)',
+      fontSize: 14,
+    }}>
+      Chargement du tableau de bord KPI...
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, requiredRole }) {
   const { isAuthenticated, user } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (requiredRole && user?.role !== requiredRole) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <AutoLoginRedirect />;
+  if (requiredRole && user?.role !== requiredRole) return <AutoLoginRedirect />;
   return children;
 }
 
 function RoleRedirect() {
   const { isAuthenticated, user } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (autoLoginEnabled) return <AutoLoginRedirect force />;
+  if (!isAuthenticated) return <AutoLoginRedirect />;
   if (user?.role === 'SUPERVISOR') return <Navigate to="/supervisor/dashboard" replace />;
   if (user?.role === 'AGENT') return <Navigate to="/agent/dashboard" replace />;
-  return <Navigate to="/login" replace />;
+  return <AutoLoginRedirect />;
 }
 
 export default function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={autoLoginEnabled ? <AutoLoginRedirect force /> : <LoginPage />} />
       <Route path="/" element={<RoleRedirect />} />
 
       {/* Supervisor routes */}

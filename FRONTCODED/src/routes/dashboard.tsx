@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   ArrowUpRight,
+  BarChart3,
   Bell,
   Building2,
   CalendarDays,
@@ -77,7 +78,7 @@ export const Route = createFileRoute("/dashboard")({
 type NavItem = {
   icon: LucideIcon;
   label: string;
-  to?: "/dashboard" | "/tickets" | "/planning" | "/sla/policies" | "/employees" | "/users" | "/departments" | "/quality-lab" | "/messages" | "/my-profile";
+  to?: "/dashboard" | "/tickets" | "/planning" | "/sla/policies" | "/employees" | "/users" | "/departments" | "/quality-lab" | "/messages" | "/my-profile" | "/kpi";
   badge?: string;
   active?: boolean;
   action?: "logout";
@@ -261,6 +262,7 @@ function Sidebar({
       label: "PILOTAGE",
       items: [
         { icon: LayoutGrid, label: "Centre de contrôle", to: "/dashboard", active: true },
+        { icon: BarChart3, label: "Indicateurs KPI", to: "/kpi" },
         { icon: Ticket, label: "Tickets", to: "/tickets", badge: formatCompact(openTickets) },
         { icon: CalendarDays, label: "Planning", to: canManage ? "/planning" : "/planning-view" },
         { icon: GaugeCircle, label: "SLA", to: "/sla/policies" },
