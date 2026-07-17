@@ -33,6 +33,78 @@ spring:
               uri: lb://ticket-service
               predicates:
                 - Path=/api/kpi/**
+            - id: kpi-platform-health
+              uri: lb://kpi-platform-auth-service
+              predicates:
+                - Path=/api/kpi-platform/health
+              filters:
+                - RewritePath=/api/kpi-platform/health, /actuator/health
+            - id: kpi-platform-auth-service
+              uri: lb://kpi-platform-auth-service
+              predicates:
+                - Path=/api/kpi-platform/auth/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/auth/(?<segment>.*), /api/auth/${segment}'
+            - id: kpi-platform-agent-service
+              uri: lb://kpi-platform-agent-service
+              predicates:
+                - Path=/api/kpi-platform/agents/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/agents/(?<segment>.*), /api/agents/${segment}'
+            - id: kpi-platform-action-plans
+              uri: lb://kpi-platform-agent-service
+              predicates:
+                - Path=/api/kpi-platform/action-plans/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/action-plans/(?<segment>.*), /api/action-plans/${segment}'
+            - id: kpi-platform-kpis
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/kpis/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/kpis/(?<segment>.*), /api/kpi/${segment}'
+            - id: kpi-platform-tickets
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/tickets/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/tickets/(?<segment>.*), /api/tickets/${segment}'
+            - id: kpi-platform-alerts
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/alerts/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/alerts/(?<segment>.*), /api/alertes/${segment}'
+            - id: kpi-platform-nps
+              uri: lb://kpi-platform-nps-service
+              predicates:
+                - Path=/api/kpi-platform/nps/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/nps/(?<segment>.*), /api/nps/${segment}'
+            - id: kpi-platform-import
+              uri: lb://kpi-platform-import-service
+              predicates:
+                - Path=/api/kpi-platform/import/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/import/(?<segment>.*), /api/import/${segment}'
+            - id: kpi-platform-scoring
+              uri: lb://kpi-platform-scoring-service
+              predicates:
+                - Path=/api/kpi-platform/scoring/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/scoring/(?<segment>.*), /api/scoring/${segment}'
+            - id: kpi-platform-reports
+              uri: lb://kpi-platform-report-service
+              predicates:
+                - Path=/api/kpi-platform/reports/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/reports/(?<segment>.*), /api/reports/${segment}'
+            - id: kpi-platform-notifications
+              uri: lb://kpi-platform-notification-service
+              predicates:
+                - Path=/api/kpi-platform/notifications/**
+              filters:
+                - 'RewritePath=/api/kpi-platform/notifications/(?<segment>.*), /api/notifications/${segment}'
             - id: planning-service
               uri: lb://planning-service
               predicates:
