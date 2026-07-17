@@ -195,9 +195,9 @@ function PiloteDashboard() {
 
   return (
     <AuthenticatedView>
-      <div className="min-h-screen w-full bg-background p-3 md:p-6" style={dashboardTheme}>
+      <div className="h-[100dvh] w-full overflow-hidden bg-background p-2 md:p-3" style={dashboardTheme}>
         <div
-          className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[1500px] overflow-hidden rounded-3xl bg-white"
+          className="mx-auto flex h-full min-h-0 max-w-[1500px] overflow-hidden rounded-3xl bg-white"
           style={{ boxShadow: "var(--cgi-shadow-shell)" }}
         >
           <Sidebar
@@ -205,9 +205,9 @@ function PiloteDashboard() {
             openTickets={ticketSummary?.openTickets}
             canManage={canReadOperations}
           />
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <TopHeader displayName={displayName} email={email} />
-            <main className="flex-1 px-4 pb-6 md:px-8 md:pb-8">
+            <main className="min-h-0 flex-1 overflow-hidden px-3 pb-3 md:px-5 md:pb-4">
               <PageTitle
                 canExport={canReadOperations}
                 downloading={downloading}
@@ -297,13 +297,13 @@ function Sidebar({
   ] satisfies { label: string; items: NavItem[] }[];
 
   return (
-    <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border/60 bg-white px-4 py-5 lg:flex">
+    <aside className="hidden w-[232px] shrink-0 flex-col border-r border-border/60 bg-white px-3 py-4 lg:flex">
       <div className="flex items-center gap-2 px-2">
         <img src={cgiLogo} alt="CGI" className="h-9 w-9 rounded-lg object-contain" />
         <span className="text-lg font-semibold tracking-tight">CGI-Intranet</span>
       </div>
 
-      <nav className="mt-6 flex-1 space-y-6 overflow-y-auto pr-1">
+      <nav className="mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
         {nav.map((section) => (
           <div key={section.label}>
             <div className="px-2 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
@@ -322,7 +322,7 @@ function Sidebar({
                     <button
                       type="button"
                       onClick={() => void logout()}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground/75 transition-colors hover:bg-muted hover:text-foreground"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-sm text-foreground/75 transition-colors hover:bg-muted hover:text-foreground"
                     >
                       <it.icon className="h-[18px] w-[18px] shrink-0" />
                       <span className="flex-1 truncate text-left">{it.label}</span>
@@ -331,7 +331,7 @@ function Sidebar({
                     <Link
                       to={it.to ?? "/dashboard"}
                       className={
-                        "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors " +
+                        "flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-sm transition-colors " +
                         (it.active
                           ? "text-white"
                           : "text-foreground/75 hover:bg-muted hover:text-foreground")
@@ -368,8 +368,8 @@ function Sidebar({
 
 function TopHeader({ displayName, email }: { displayName: string; email?: string | null }) {
   return (
-    <header className="flex items-center gap-3 px-4 py-4 md:px-8 md:py-5">
-      <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-white px-4 py-2.5 shadow-sm">
+    <header className="flex items-center gap-3 px-3 py-3 md:px-5 md:py-3">
+      <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-white px-3 py-2 shadow-sm">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -378,14 +378,14 @@ function TopHeader({ displayName, email }: { displayName: string; email?: string
       </div>
       <Link
         to="/messages"
-        className="grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm"
+        className="grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm"
         aria-label="Messagerie"
       >
         <MessageSquare className="h-4 w-4" />
       </Link>
       <Link
         to="/messages"
-        className="relative grid h-10 w-10 place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm"
+        className="relative grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm"
         aria-label="Notifications"
       >
         <Bell className="h-4 w-4" />
@@ -414,10 +414,10 @@ function PageTitle({
   onExport: () => void;
 }) {
   return (
-    <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-[28px]">Centre de contrôle</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-xl font-semibold tracking-tight md:text-[24px]">Centre de contrôle</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Supervisez les incidents, les engagements SLA et l'activité des équipes.
         </p>
         {downloadError ? <p className="mt-1 text-xs text-[color:var(--cgi-red)]">{downloadError}</p> : null}
@@ -425,7 +425,7 @@ function PageTitle({
       <div className="flex items-center gap-2">
         <Link
           to="/users"
-          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold text-white shadow-sm"
           style={{ background: "var(--cgi-gradient)" }}
         >
           <Plus className="h-4 w-4" /> Créer un utilisateur
@@ -434,7 +434,7 @@ function PageTitle({
           type="button"
           onClick={onExport}
           disabled={!canExport || downloading}
-          className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground/80 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white px-3 py-2 text-xs font-semibold text-foreground/80 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Download className="h-4 w-4" /> {downloading ? "Export..." : "Exporter"}
         </button>
@@ -462,7 +462,7 @@ function KpiRow({
     employees.length === 0 ? "Aucune donnée" : `${availableEmployees} / ${activeEmployees || employees.length}`;
 
   return (
-    <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <KpiCard
         highlight
         title="Tickets ouverts"
@@ -502,20 +502,20 @@ function KpiCard({
   return (
     <div
       className={
-        "relative overflow-hidden rounded-2xl border p-5 " +
+        "relative overflow-hidden rounded-2xl border p-3.5 " +
         (highlight ? "border-transparent text-white" : "border-border/60 bg-white")
       }
       style={{
         background: highlight ? "var(--cgi-gradient)" : undefined,
         boxShadow: highlight
-          ? "0 12px 30px -14px rgba(226,21,67,0.45)"
+          ? "0 10px 24px -14px rgba(226,21,67,0.45)"
           : "var(--cgi-shadow-card)",
       }}
     >
       <div className="flex items-start justify-between">
-        <div className="text-sm font-medium opacity-90">{title}</div>
+        <div className="text-xs font-medium opacity-90">{title}</div>
         <span
-          className="grid h-7 w-7 place-items-center rounded-full"
+          className="grid h-6 w-6 place-items-center rounded-full"
           style={{
             background: highlight ? "rgba(255,255,255,0.18)" : "rgba(82,54,152,0.08)",
             color: highlight ? "#fff" : "var(--cgi-purple)",
@@ -524,10 +524,10 @@ function KpiCard({
           <ArrowUpRight className="h-3.5 w-3.5" />
         </span>
       </div>
-      <div className="mt-4 text-4xl font-bold tracking-tight">{value}</div>
+      <div className="mt-2 text-2xl font-bold tracking-tight md:text-[28px]">{value}</div>
       <div
         className={
-          "mt-3 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium " +
+          "mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-medium " +
           (highlight ? "bg-white/15" : "")
         }
         style={!highlight ? { background: "rgba(82,54,152,0.08)", color: "var(--cgi-purple)" } : undefined}
@@ -552,8 +552,8 @@ function MiddleRow({
   loading: boolean;
 }) {
   return (
-    <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <div className="rounded-2xl border border-border/60 bg-white p-5 lg:col-span-6" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
+    <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-12">
+      <div className="rounded-2xl border border-border/60 bg-white p-3.5 lg:col-span-6" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
         <div className="flex items-center justify-between">
           <div className="text-[15px] font-semibold">Activité des tickets</div>
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -562,7 +562,7 @@ function MiddleRow({
             <Legend color="var(--cgi-lavender)" label="En attente" />
           </div>
         </div>
-        <div className="mt-4 h-[210px]">
+        <div className="mt-2 h-[145px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={activityData} barCategoryGap={18}>
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8a83a3" }} />
@@ -577,17 +577,17 @@ function MiddleRow({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-white p-5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
+      <div className="rounded-2xl border border-border/60 bg-white p-3.5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
         <div className="text-[15px] font-semibold">Actions requises</div>
-        <div className="mt-3 flex items-start gap-3">
+        <div className="mt-2 flex items-start gap-2.5">
           <span
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl"
             style={{ background: "rgba(226,21,67,0.1)", color: "var(--cgi-red)" }}
           >
             <AlertTriangle className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <div className="text-[15px] font-semibold leading-snug">
+            <div className="text-sm font-semibold leading-snug">
               {loading
                 ? "Chargement..."
                 : actionCount > 0
@@ -601,31 +601,31 @@ function MiddleRow({
         </div>
         <Link
           to="/tickets"
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold text-white"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-semibold text-white"
           style={{ background: "var(--cgi-gradient)" }}
         >
           Consulter <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-white p-5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
+      <div className="rounded-2xl border border-border/60 bg-white p-3.5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
         <div className="flex items-center justify-between">
           <div className="text-[15px] font-semibold">Tickets prioritaires</div>
           <Link to="/tickets" className="rounded-full border border-border/70 px-2.5 py-1 text-[11px] font-medium text-foreground/70">
             Voir tout
           </Link>
         </div>
-        <ul className="mt-3 space-y-3">
+        <ul className="mt-2 space-y-2">
           {urgentTickets.length === 0 ? (
             <li className="rounded-xl bg-muted px-3 py-3 text-xs text-muted-foreground">
               Aucun ticket prioritaire.
             </li>
           ) : (
-            urgentTickets.slice(0, 5).map((ticket) => (
-              <li key={ticket.ticketId} className="flex items-start gap-3">
+            urgentTickets.slice(0, 3).map((ticket) => (
+              <li key={ticket.ticketId} className="flex items-start gap-2.5">
                 <TicketBadge tone={ticket.globalStatus === "BREACHED" ? "red" : ticket.globalStatus === "AT_RISK" ? "purple" : "lavender"} />
                 <div className="min-w-0">
-                  <div className="text-[13px] font-semibold leading-tight">{ticket.ticketTitle}</div>
+                  <div className="truncate text-[12px] font-semibold leading-tight">{ticket.ticketTitle}</div>
                   <div className="text-[11px] text-muted-foreground">
                     <span className="font-medium text-foreground/70">{ticket.ticketReference}</span> · {ticket.priorityLabel} · {ticket.globalStatusLabel}
                   </div>
@@ -652,8 +652,8 @@ function BottomRow({
 }) {
   const slaGauge = [{ name: "sla", value: slaRate ?? 0, fill: "url(#slaGrad)" }];
   return (
-    <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <div className="rounded-2xl border border-border/60 bg-white p-5 lg:col-span-6" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
+    <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-12">
+      <div className="rounded-2xl border border-border/60 bg-white p-3.5 lg:col-span-6" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
         <div className="flex items-center justify-between">
           <div className="text-[15px] font-semibold">Charge des équipes</div>
           <Link
@@ -663,24 +663,24 @@ function BottomRow({
             <Plus className="h-3.5 w-3.5" /> Voir l'équipe
           </Link>
         </div>
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-2 space-y-2">
           {employeeWorkload.length === 0 ? (
             <li className="rounded-xl bg-muted px-3 py-3 text-xs text-muted-foreground">
               {loading ? "Chargement de la charge équipe..." : "Aucune charge équipe disponible."}
             </li>
           ) : (
-            employeeWorkload.slice(0, 4).map((member) => {
+            employeeWorkload.slice(0, 3).map((member) => {
               const workload = getWorkloadPresentation(member.workloadScore);
               return (
-                <li key={`${member.assignedUserId ?? "user"}-${member.assignedUserLabel}`} className="flex items-center gap-3">
+                <li key={`${member.assignedUserId ?? "user"}-${member.assignedUserLabel}`} className="flex items-center gap-2.5">
                   <span
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-xs font-semibold text-white"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold text-white"
                     style={{ background: "var(--cgi-gradient)" }}
                   >
                     {getInitials(member.assignedUserLabel)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{member.assignedUserLabel}</div>
+                    <div className="truncate text-[13px] font-semibold">{member.assignedUserLabel}</div>
                     <div className="truncate text-[11px] text-muted-foreground">
                       {member.criticalTickets} critiques · {member.totalAssignedTickets} tickets actifs
                     </div>
@@ -693,11 +693,11 @@ function BottomRow({
         </ul>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-white p-5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
+      <div className="rounded-2xl border border-border/60 bg-white p-3.5 lg:col-span-3" style={{ boxShadow: "var(--cgi-shadow-card)" }}>
         <div className="text-[15px] font-semibold">Respect des SLA</div>
-        <div className="relative mx-auto mt-2 h-[170px] w-full">
+        <div className="relative mx-auto mt-1 h-[120px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart cx="50%" cy="85%" innerRadius={70} outerRadius={100} startAngle={180} endAngle={0} data={slaGauge}>
+            <RadialBarChart cx="50%" cy="90%" innerRadius={48} outerRadius={76} startAngle={180} endAngle={0} data={slaGauge}>
               <defs>
                 <linearGradient id="slaGrad" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#E21543" />
@@ -709,8 +709,8 @@ function BottomRow({
               <RadialBar background={{ fill: "#efeaf6" }} dataKey="value" cornerRadius={20} />
             </RadialBarChart>
           </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 text-center">
-            <div className="text-3xl font-bold tracking-tight">{slaRate === null ? "Non calculé" : `${slaRate} %`}</div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center">
+            <div className="text-2xl font-bold tracking-tight">{slaRate === null ? "Non calculé" : `${slaRate} %`}</div>
             <div className="text-[11px] text-muted-foreground">SLA respectés</div>
           </div>
         </div>
@@ -722,17 +722,17 @@ function BottomRow({
       </div>
 
       <div
-        className="relative overflow-hidden rounded-2xl p-5 text-white lg:col-span-3"
+        className="relative overflow-hidden rounded-2xl p-3.5 text-white lg:col-span-3"
         style={{ background: "var(--cgi-gradient-dark)" }}
       >
         <div className="text-sm font-semibold opacity-90">Prochaine échéance SLA</div>
-        <div className="mt-4 text-4xl font-bold tracking-tight tabular-nums">
+        <div className="mt-3 text-2xl font-bold tracking-tight tabular-nums">
           {nextDeadline ? formatRemainingClock(nextDeadline.remainingMinutes) : "--:--"}
         </div>
         <div className="mt-1 text-[11px] opacity-80">
           {nextDeadline ? `${nextDeadline.ticketReference} · ${nextDeadline.priorityLabel}` : "Aucune échéance prioritaire"}
         </div>
-        <div className="mt-4 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <Link
             to="/tickets"
             className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-[color:var(--cgi-purple)]"
