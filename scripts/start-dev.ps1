@@ -206,6 +206,11 @@ Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:TICKET_DB_NAME $env:SPRING
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" "cgi_flow_employee" $env:SPRING_DATASOURCE_USERNAME
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:MESSAGING_DB_NAME $env:SPRING_DATASOURCE_USERNAME
 Ensure-PostgresDatabase "cgi-flow-auth-postgres" $env:PLANNING_DB_NAME $env:SPRING_DATASOURCE_USERNAME
+Wait-Port 8091 "kpi-platform-auth-service" 180
+Wait-Port 8092 "kpi-platform-agent-service" 180
+Wait-Port 8094 "kpi-platform-kpi-service" 180
+Wait-Port 8095 "kpi-platform-nps-service" 180
+Wait-Port 5180 "kpi-platform-frontend" 180
 
 foreach ($service in $managedServices) {
     Stop-ManagedListener -Name $service.Name -Port $service.Port
@@ -244,4 +249,6 @@ Write-Host "  Keycloak: http://127.0.0.1:8085/"
 Write-Host "  Eureka:   http://127.0.0.1:8761/"
 Write-Host "  Planning: http://127.0.0.1:8087/api/plannings/health"
 Write-Host "  AI:       http://127.0.0.1:8001/health"
+Write-Host "  KPI app:  http://127.0.0.1:5180/kpi-app/"
+Write-Host "  KPI API:  http://127.0.0.1:8080/api/kpi-platform/health"
 Write-Host "Logs: $logRoot"

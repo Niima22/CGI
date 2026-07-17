@@ -19,6 +19,26 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  kpi-postgres:
+    image: postgres:16-alpine
+    container_name: cgi-flow-kpi-postgres
+    environment:
+      POSTGRES_DB: ${KPI_PLATFORM_BOOTSTRAP_DB:-postgres}
+      POSTGRES_USER: ${KPI_PLATFORM_DB_USERNAME:-kpi_user}
+      POSTGRES_PASSWORD: ${KPI_PLATFORM_DB_PASSWORD:-kpi_password}
+    ports:
+      - "55433:5432"
+    volumes:
+      - kpi-postgres-data:/var/lib/postgresql/data
+      - ./backend/kpi-platform/db/init-db.sql:/docker-entrypoint-initdb.d/01-init-kpi-platform.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KPI_PLATFORM_DB_USERNAME:-kpi_user} -d ${KPI_PLATFORM_BOOTSTRAP_DB:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.3
     container_name: cgi-flow-keycloak
@@ -245,6 +265,148 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  kpi-platform-auth-service:
+    build:
+      context: ./backend/kpi-platform
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: auth-service
+    container_name: cgi-flow-kpi-platform-auth-service
+    depends_on:
+      kpi-postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    environment:
+      KPI_PLATFORM_AUTH_DB_URL: jdbc:postgresql://kpi-postgres:5432/auth_db
+      KPI_PLATFORM_DB_USERNAME: ${KPI_PLATFORM_DB_USERNAME:-kpi_user}
+      KPI_PLATFORM_DB_PASSWORD: ${KPI_PLATFORM_DB_PASSWORD:-kpi_password}
+      KPI_PLATFORM_SEED_DEMO_USERS: ${KPI_PLATFORM_SEED_DEMO_USERS:-true}
+      KPI_PLATFORM_JWT_SECRET: ${KPI_PLATFORM_JWT_SECRET:-kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+    ports:
+      - "8091:8091"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8091/actuator/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  kpi-platform-agent-service:
+    build:
+      context: ./backend/kpi-platform
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: agent-service
+    container_name: cgi-flow-kpi-platform-agent-service
+    depends_on:
+      kpi-postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      kpi-platform-auth-service:
+        condition: service_healthy
+    environment:
+      KPI_PLATFORM_AGENT_DB_URL: jdbc:postgresql://kpi-postgres:5432/agent_db
+      KPI_PLATFORM_DB_USERNAME: ${KPI_PLATFORM_DB_USERNAME:-kpi_user}
+      KPI_PLATFORM_DB_PASSWORD: ${KPI_PLATFORM_DB_PASSWORD:-kpi_password}
+      KPI_PLATFORM_JWT_SECRET: ${KPI_PLATFORM_JWT_SECRET:-kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+      KPI_PLATFORM_KAFKA_AUTO_STARTUP: "false"
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+    ports:
+      - "8092:8092"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8092/actuator/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  kpi-platform-kpi-service:
+    build:
+      context: ./backend/kpi-platform
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: kpi-service
+    container_name: cgi-flow-kpi-platform-kpi-service
+    depends_on:
+      kpi-postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      kpi-platform-agent-service:
+        condition: service_healthy
+    environment:
+      KPI_PLATFORM_KPI_DB_URL: jdbc:postgresql://kpi-postgres:5432/kpi_db
+      KPI_PLATFORM_DB_USERNAME: ${KPI_PLATFORM_DB_USERNAME:-kpi_user}
+      KPI_PLATFORM_DB_PASSWORD: ${KPI_PLATFORM_DB_PASSWORD:-kpi_password}
+      KPI_PLATFORM_AGENT_BASE_URL: http://kpi-platform-agent-service:8092
+      KPI_PLATFORM_JWT_SECRET: ${KPI_PLATFORM_JWT_SECRET:-kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+      KPI_PLATFORM_KAFKA_AUTO_STARTUP: "false"
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+    ports:
+      - "8094:8094"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8094/actuator/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  kpi-platform-nps-service:
+    build:
+      context: ./backend/kpi-platform
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: nps-service
+    container_name: cgi-flow-kpi-platform-nps-service
+    depends_on:
+      kpi-postgres:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      kpi-platform-agent-service:
+        condition: service_healthy
+    environment:
+      KPI_PLATFORM_NPS_DB_URL: jdbc:postgresql://kpi-postgres:5432/nps_db
+      KPI_PLATFORM_DB_USERNAME: ${KPI_PLATFORM_DB_USERNAME:-kpi_user}
+      KPI_PLATFORM_DB_PASSWORD: ${KPI_PLATFORM_DB_PASSWORD:-kpi_password}
+      KPI_PLATFORM_AGENT_BASE_URL: http://kpi-platform-agent-service:8092
+      KPI_PLATFORM_JWT_SECRET: ${KPI_PLATFORM_JWT_SECRET:-kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+      KPI_PLATFORM_KAFKA_AUTO_STARTUP: "false"
+      EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
+    ports:
+      - "8095:8095"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8095/actuator/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  kpi-platform-frontend:
+    build:
+      context: ./KPI-FRONTEND
+      dockerfile: Dockerfile
+    container_name: cgi-flow-kpi-platform-frontend
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    ports:
+      - "5180:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
   quality-lab-ai:
     build:
       context: ./ai_service
@@ -285,6 +447,14 @@ services:
         condition: service_healthy
       planning-service:
         condition: service_healthy
+      kpi-platform-auth-service:
+        condition: service_healthy
+      kpi-platform-agent-service:
+        condition: service_healthy
+      kpi-platform-kpi-service:
+        condition: service_healthy
+      kpi-platform-nps-service:
+        condition: service_healthy
       quality-lab-ai:
         condition: service_healthy
     environment:
@@ -316,6 +486,7 @@ services:
       VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-cgi-flow}
       VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-cgi-flow-web}
       VITE_PLANNING_DEV_ADMIN_BYPASS: ${VITE_PLANNING_DEV_ADMIN_BYPASS:-false}
+      VITE_KPI_MODULE_URL: ${VITE_KPI_MODULE_URL:-http://localhost:5180/kpi-app/}
     ports:
       - "5173:5173"
     healthcheck:
@@ -328,5 +499,6 @@ services:
 
 volumes:
   auth-postgres-data:
+  kpi-postgres-data:
   employee-profile-uploads:
   keycloak-data:
