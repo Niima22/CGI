@@ -47,8 +47,8 @@ import { useAuth } from "@/lib/auth-store";
 export const Route = createFileRoute("/departments")({
   head: () => ({
     meta: [
-      { title: "DÃ©partements - CGI-FLOW" },
-      { name: "description", content: "Gestion des dÃ©partements." },
+      { title: "Départements - CGI-Intranet" },
+      { name: "description", content: "Gestion des départements." },
     ],
   }),
   component: DepartmentsPage,
@@ -77,7 +77,7 @@ function DepartmentsPage() {
     try {
       setDepartments(await fetchDepartments(authenticatedFetch, true));
     } catch (caught) {
-      setError(readDepartmentError(caught, "Impossible de charger les dÃ©partements."));
+      setError(readDepartmentError(caught, "Impossible de charger les départements."));
     } finally {
       setLoading(false);
     }
@@ -112,15 +112,15 @@ function DepartmentsPage() {
       const payload = cleanDepartmentPayload(form);
       if (editingDepartment) {
         await updateDepartment(authenticatedFetch, editingDepartment.id, payload);
-        setNotice("DÃ©partement mis Ã  jour.");
+        setNotice("Département mis à jour.");
       } else {
         await createDepartment(authenticatedFetch, payload);
-        setNotice("DÃ©partement crÃ©Ã©.");
+        setNotice("Département créé.");
       }
       setDialogOpen(false);
       await loadDepartments();
     } catch (caught) {
-      setError(readDepartmentError(caught, "La sauvegarde du dÃ©partement a Ã©chouÃ©."));
+      setError(readDepartmentError(caught, "La sauvegarde du département a échoué."));
     } finally {
       setSubmitting(false);
     }
@@ -131,10 +131,10 @@ function DepartmentsPage() {
     setNotice(null);
     try {
       await updateDepartmentStatus(authenticatedFetch, department.id, !department.active);
-      setNotice(department.active ? "DÃ©partement dÃ©sactivÃ©." : "DÃ©partement activÃ©.");
+      setNotice(department.active ? "Département désactivé." : "Département activé.");
       await loadDepartments();
     } catch (caught) {
-      setError(readDepartmentError(caught, "La mise Ã  jour du statut a Ã©chouÃ©."));
+      setError(readDepartmentError(caught, "La mise à jour du statut a échoué."));
     }
   }
 
@@ -142,13 +142,13 @@ function DepartmentsPage() {
     <AppShell>
       <RoleGuard
         allowedRoles={["ADMIN"]}
-        message="La gestion des dÃ©partements est rÃ©servÃ©e aux Pilotes."
+        message="La gestion des départements est réservée aux Pilotes."
       >
         <PageContainer maxWidth="6xl">
           <PageHeader
             icon={<Building2 className="h-5 w-5" />}
-            title="DÃ©partements"
-            description="RÃ©fÃ©rentiel administratif des unitÃ©s d&apos;organisation."
+            title="Départements"
+            description="Référentiel administratif des unités d'organisation."
             actions={
               <>
                 <Button variant="outline" onClick={() => void loadDepartments()} disabled={loading}>
@@ -157,7 +157,7 @@ function DepartmentsPage() {
                 </Button>
                 <Button onClick={openCreateDialog}>
                   <Plus />
-                  CrÃ©er un dÃ©partement
+                  Créer un département
                 </Button>
               </>
             }
@@ -177,21 +177,21 @@ function DepartmentsPage() {
           )}
 
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard label="Total dÃ©partements" value={departments.length} />
+            <StatCard label="Total départements" value={departments.length} />
             <StatCard label="Actifs" value={activeCount} />
             <StatCard label="Inactifs" value={departments.length - activeCount} />
           </div>
 
           <SectionSurface className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
-              <span className="text-sm font-semibold">Liste des dÃ©partements</span>
-              <span className="text-xs text-muted-foreground">{departments.length} Ã©lÃ©ments</span>
+              <span className="text-sm font-semibold">Liste des départements</span>
+              <span className="text-xs text-muted-foreground">{departments.length} éléments</span>
             </div>
 
             {loading ? (
               <LoadingState />
             ) : departments.length === 0 ? (
-              <EmptyState label="Aucun dÃ©partement n'est encore enregistrÃ©." />
+              <EmptyState label="Aucun département n'est encore enregistré." />
             ) : (
               <Table>
                 <TableHeader>
@@ -200,8 +200,8 @@ function DepartmentsPage() {
                     <TableHead>Description</TableHead>
                     <TableHead>Manager</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>CrÃ©Ã© le</TableHead>
-                    <TableHead>Mis Ã  jour</TableHead>
+                    <TableHead>Créé le</TableHead>
+                    <TableHead>Mis à jour</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -228,7 +228,7 @@ function DepartmentsPage() {
                             onClick={() => void toggleDepartmentStatus(department)}
                           >
                             <Power />
-                            {department.active ? "DÃ©sactiver" : "Activer"}
+                            {department.active ? "Désactiver" : "Activer"}
                           </Button>
                         </div>
                       </TableCell>
@@ -244,16 +244,16 @@ function DepartmentsPage() {
               <form onSubmit={submitDepartment}>
                 <DialogHeader>
                   <DialogTitle>
-                    {editingDepartment ? "Modifier le dÃ©partement" : "CrÃ©er un dÃ©partement"}
+                    {editingDepartment ? "Modifier le département" : "Créer un département"}
                   </DialogTitle>
                   <DialogDescription>
-                    Le nom du dÃ©partement sert de rÃ©fÃ©rence aux profils employÃ©s existants.
+                    Le nom du département sert de référence aux profils employés existants.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-5 md:grid-cols-2">
                   <Input
                     required
-                    placeholder="Nom du dÃ©partement"
+                    placeholder="Nom du département"
                     value={form.name}
                     onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                     className="md:col-span-2"
@@ -308,13 +308,13 @@ function cleanOptional(value: string | null | undefined) {
 
 function readDepartmentError(caught: unknown, fallback: string) {
   if (caught instanceof DepartmentApiError && caught.status === 403) {
-    return "AccÃ¨s refusÃ© par le backend pour cette opÃ©ration.";
+    return "Accès refusé par le backend pour cette opération.";
   }
   if (caught instanceof DepartmentApiError && caught.status === 404) {
-    return "DÃ©partement introuvable.";
+    return "Département introuvable.";
   }
   if (caught instanceof DepartmentApiError && caught.status === 409) {
-    return "Un dÃ©partement avec ce nom existe dÃ©jÃ .";
+    return "Un département avec ce nom existe déjà.";
   }
   return fallback;
 }
