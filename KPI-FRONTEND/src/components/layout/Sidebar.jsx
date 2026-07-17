@@ -37,7 +37,7 @@ const agentNav = [
 
 export default function Sidebar({ role }) {
   const nav = role === 'SUPERVISOR' ? supervisorNav : agentNav;
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -55,36 +55,7 @@ export default function Sidebar({ role }) {
       display: 'flex', flexDirection: 'column',
       padding: '0',
     }}>
-      <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'var(--gradient-primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, fontWeight: 800, color: 'white'
-          }}>K</div>
-        </div>
-      </div>
-
-      <div style={{ padding: '12px 20px' }}>
-        <div style={{
-          background: role === 'SUPERVISOR' ? 'rgba(212,212,212,0.1)' : 'rgba(227,25,55,0.12)',
-          border: `1px solid ${role === 'SUPERVISOR' ? 'rgba(212,212,212,0.2)' : 'rgba(227,25,55,0.25)'}`,
-          borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8
-        }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: role === 'SUPERVISOR' ? 'var(--text-secondary)' : 'var(--accent-primary)', flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: role === 'SUPERVISOR' ? 'var(--text-secondary)' : 'var(--accent-primary)' }}>
-              {role === 'SUPERVISOR' ? 'Superviseur' : 'Agent'}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
-              {user?.prenom} {user?.nom}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '16px 12px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 8px 8px' }}>
           {role === 'SUPERVISOR' ? 'Navigation' : 'Ma plateforme'}
         </div>
