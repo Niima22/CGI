@@ -106,7 +106,6 @@ export function Sidebar() {
       label: "ADMINISTRATION",
       items: [
         { icon: UserCog, label: "Utilisateurs", to: "/users" },
-        { icon: Users, label: "Employés", to: "/employees" },
         { icon: Building2, label: "Départements", to: "/departments" },
         { icon: Shield, label: "Politiques SLA", to: "/sla/policies" },
       ],
