@@ -1,0 +1,62 @@
+server:
+  port: ${KPI_PLATFORM_NPS_PORT:8095}
+
+spring:
+  application:
+    name: kpi-platform-nps-service
+
+  datasource:
+    url: ${KPI_PLATFORM_NPS_DB_URL:jdbc:postgresql://localhost:55433/nps_db}
+    username: ${KPI_PLATFORM_DB_USERNAME:kpi_user}
+    password: ${KPI_PLATFORM_DB_PASSWORD:kpi_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${KPI_PLATFORM_NPS_DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: ${KPI_PLATFORM_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      auto-startup: ${KPI_PLATFORM_KAFKA_AUTO_STARTUP:false}
+    consumer:
+      group-id: nps-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: import.completed:com.support.kpi.nps_service.event.ImportCompletedEvent
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+app:
+  jwt:
+    secret: ${KPI_PLATFORM_JWT_SECRET:kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+
+services:
+  kpi-platform-agent:
+    base-url: ${KPI_PLATFORM_AGENT_BASE_URL:http://localhost:8092}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+logging:
+  level:
+    com.support.kpi: DEBUG

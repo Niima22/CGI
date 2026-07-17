@@ -1,0 +1,57 @@
+server:
+  port: ${KPI_PLATFORM_AGENT_PORT:8092}
+
+spring:
+  application:
+    name: kpi-platform-agent-service
+
+  datasource:
+    url: ${KPI_PLATFORM_AGENT_DB_URL:jdbc:postgresql://localhost:55433/agent_db}
+    username: ${KPI_PLATFORM_DB_USERNAME:kpi_user}
+    password: ${KPI_PLATFORM_DB_PASSWORD:kpi_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${KPI_PLATFORM_AGENT_DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: ${KPI_PLATFORM_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      auto-startup: ${KPI_PLATFORM_KAFKA_AUTO_STARTUP:false}
+    consumer:
+      group-id: agent-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+app:
+  jwt:
+    secret: ${KPI_PLATFORM_JWT_SECRET:kpiSupportDsMagasinSecretKeyVeryLong2024SecureKey!@#$%^&*()}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+logging:
+  level:
+    com.support.kpi: DEBUG
