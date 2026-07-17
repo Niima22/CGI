@@ -6,11 +6,8 @@ import {
   Building2,
   CalendarDays,
   GaugeCircle,
-  HelpCircle,
   LayoutGrid,
-  LogOut,
   MessageSquare,
-  Settings,
   Shield,
   Sparkles,
   Ticket,
@@ -38,7 +35,6 @@ type MenuItem = {
     | "/departments"
     | "/users";
   badge?: string;
-  action?: "logout";
 };
 
 const sidebarTheme = {
@@ -56,7 +52,7 @@ const sidebarTheme = {
 
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { logout, hasRole, authenticatedFetch, isAuthenticated, isReady } = useAuth();
+  const { hasRole, authenticatedFetch, isAuthenticated, isReady } = useAuth();
   const [openTickets, setOpenTickets] = useState<number | null>(null);
   const canManage = hasRole("ADMIN") || hasRole("MANAGER");
 
@@ -123,14 +119,6 @@ export function Sidebar() {
         { icon: MessageSquare, label: "Messagerie", to: "/messages" },
       ],
     },
-    {
-      label: "GÉNÉRAL",
-      items: [
-        { icon: Settings, label: "Paramètres", to: "/my-profile" },
-        { icon: HelpCircle, label: "Aide", to: "/dashboard" },
-        { icon: LogOut, label: "Déconnexion", action: "logout" },
-      ],
-    },
   ] satisfies { label: string; items: MenuItem[] }[];
 
   return (
@@ -143,7 +131,7 @@ export function Sidebar() {
         <span className="text-lg font-semibold tracking-tight">CGI-Intranet</span>
       </div>
 
-      <nav className="mt-6 flex-1 space-y-6 overflow-y-auto pr-1">
+      <nav className="mt-6 flex-1 space-y-6 overflow-hidden pr-1">
         {nav.map((section) => (
           <div key={section.label}>
             <div className="px-2 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
@@ -160,43 +148,32 @@ export function Sidebar() {
                         style={{ background: "var(--cgi-gradient)" }}
                       />
                     ) : null}
-                    {item.action === "logout" ? (
-                      <button
-                        type="button"
-                        onClick={() => void logout()}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground/75 transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="flex-1 truncate text-left">{item.label}</span>
-                      </button>
-                    ) : (
-                      <Link
-                        to={item.to ?? "/dashboard"}
-                        className={
-                          "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors " +
-                          (active
-                            ? "text-white"
-                            : "text-foreground/75 hover:bg-muted hover:text-foreground")
-                        }
-                        style={active ? { background: "var(--cgi-gradient)" } : undefined}
-                      >
-                        <item.icon className="h-[18px] w-[18px] shrink-0" />
-                        <span className="flex-1 truncate text-left">{item.label}</span>
-                        {item.badge ? (
-                          <span
-                            className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                            style={{
-                              background: active
-                                ? "rgba(255,255,255,0.22)"
-                                : "rgba(82,54,152,0.1)",
-                              color: active ? "#fff" : "var(--cgi-purple)",
-                            }}
-                          >
-                            {item.badge}
-                          </span>
-                        ) : null}
-                      </Link>
-                    )}
+                    <Link
+                      to={item.to ?? "/dashboard"}
+                      className={
+                        "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors " +
+                        (active
+                          ? "text-white"
+                          : "text-foreground/75 hover:bg-muted hover:text-foreground")
+                      }
+                      style={active ? { background: "var(--cgi-gradient)" } : undefined}
+                    >
+                      <item.icon className="h-[18px] w-[18px] shrink-0" />
+                      <span className="flex-1 truncate text-left">{item.label}</span>
+                      {item.badge ? (
+                        <span
+                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            background: active
+                              ? "rgba(255,255,255,0.22)"
+                              : "rgba(82,54,152,0.1)",
+                            color: active ? "#fff" : "var(--cgi-purple)",
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </Link>
                   </li>
                 );
               })}
@@ -211,9 +188,6 @@ export function Sidebar() {
 
 function isActive(pathname: string, item: MenuItem) {
   if (!item.to) {
-    return false;
-  }
-  if (item.label === "Aide") {
     return false;
   }
   if (item.label === "Politiques SLA") {

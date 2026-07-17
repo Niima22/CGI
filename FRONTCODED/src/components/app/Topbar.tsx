@@ -1,16 +1,15 @@
-import { ChevronDown, Search } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { HelpCircle, LogOut, Search, Settings } from "lucide-react";
 import { AvailabilityStatusSelector } from "@/components/app/AvailabilityStatusSelector";
 import { CurrentUserAvatar } from "@/components/app/CurrentUserAvatar";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
+import { useAuth } from "@/lib/auth-store";
 
 export function Topbar({ compact = false }: { compact?: boolean }) {
-  const { roles } = useAuth();
-  const roleLabel =
-    roles
-      .filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
-      .map(getBusinessRoleLabel)
-      .join(", ") || "Compte";
+  const { logout } = useAuth();
+  const iconButtonClass =
+    "grid place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm transition hover:bg-muted/50 hover:text-foreground";
+  const iconButtonSize = compact ? "h-8 w-8" : "h-9 w-9";
 
   return (
     <header
@@ -36,17 +35,30 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
 
         <NotificationBell compact={compact} />
 
+        <Link to="/my-profile" aria-label="Paramètres" className={`${iconButtonClass} ${iconButtonSize}`}>
+          <Settings className="h-4 w-4" />
+        </Link>
+
+        <Link to="/dashboard" aria-label="Aide" className={`${iconButtonClass} ${iconButtonSize}`}>
+          <HelpCircle className="h-4 w-4" />
+        </Link>
+
         <button
           type="button"
-          aria-label="Menu utilisateur"
-          className="flex items-center gap-2 rounded-full border border-border/60 bg-white px-1.5 py-1 pr-3 text-sm shadow-sm transition hover:bg-muted/50"
+          aria-label="Déconnexion"
+          onClick={() => void logout()}
+          className={`${iconButtonClass} ${iconButtonSize}`}
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
+
+        <Link
+          to="/my-profile"
+          aria-label="Mon profil"
+          className="flex items-center rounded-full border border-border/60 bg-white px-1 py-1 text-sm shadow-sm transition hover:bg-muted/50"
         >
           <CurrentUserAvatar compact={compact} />
-          <span className="hidden max-w-28 truncate text-xs font-semibold text-foreground sm:inline">
-            {roleLabel}
-          </span>
-          <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:inline" />
-        </button>
+        </Link>
       </div>
     </header>
   );

@@ -81,7 +81,6 @@ type NavItem = {
   to?: "/dashboard" | "/tickets" | "/planning" | "/sla/policies" | "/employees" | "/users" | "/departments" | "/quality-lab" | "/messages" | "/my-profile" | "/kpi";
   badge?: string;
   active?: boolean;
-  action?: "logout";
 };
 
 const dashboardTheme = {
@@ -201,12 +200,11 @@ function PiloteDashboard() {
           style={{ boxShadow: "var(--cgi-shadow-shell)" }}
         >
           <Sidebar
-            logout={logout}
             openTickets={ticketSummary?.openTickets}
             canManage={canReadOperations}
           />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <TopHeader displayName={displayName} email={email} />
+            <TopHeader displayName={displayName} email={email} logout={logout} />
             <main className="min-h-0 flex-1 overflow-hidden px-3 pb-3 md:px-5 md:pb-4">
               <PageTitle
                 canExport={canReadOperations}
@@ -249,11 +247,9 @@ function PiloteDashboard() {
 }
 
 function Sidebar({
-  logout,
   openTickets,
   canManage,
 }: {
-  logout: () => Promise<void> | void;
   openTickets?: number;
   canManage: boolean;
 }) {
@@ -286,14 +282,6 @@ function Sidebar({
         { icon: MessageSquare, label: "Messagerie", to: "/messages" },
       ],
     },
-    {
-      label: "GÉNÉRAL",
-      items: [
-        { icon: Settings, label: "Paramètres", to: "/my-profile" },
-        { icon: HelpCircle, label: "Aide", to: "/dashboard" },
-        { icon: LogOut, label: "Déconnexion", action: "logout" },
-      ],
-    },
   ] satisfies { label: string; items: NavItem[] }[];
 
   return (
@@ -303,7 +291,7 @@ function Sidebar({
         <span className="text-lg font-semibold tracking-tight">CGI-Intranet</span>
       </div>
 
-      <nav className="mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
+      <nav className="mt-4 flex-1 space-y-4 overflow-hidden pr-1">
         {nav.map((section) => (
           <div key={section.label}>
             <div className="px-2 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
@@ -318,43 +306,32 @@ function Sidebar({
                       style={{ background: "var(--cgi-gradient)" }}
                     />
                   )}
-                  {it.action === "logout" ? (
-                    <button
-                      type="button"
-                      onClick={() => void logout()}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-sm text-foreground/75 transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <it.icon className="h-[18px] w-[18px] shrink-0" />
-                      <span className="flex-1 truncate text-left">{it.label}</span>
-                    </button>
-                  ) : (
-                    <Link
-                      to={it.to ?? "/dashboard"}
-                      className={
-                        "flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-sm transition-colors " +
-                        (it.active
-                          ? "text-white"
-                          : "text-foreground/75 hover:bg-muted hover:text-foreground")
-                      }
-                      style={it.active ? { background: "var(--cgi-gradient)" } : undefined}
-                    >
-                      <it.icon className="h-[18px] w-[18px] shrink-0" />
-                      <span className="flex-1 truncate text-left">{it.label}</span>
-                      {it.badge ? (
-                        <span
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                          style={{
-                            background: it.active
-                              ? "rgba(255,255,255,0.22)"
-                              : "rgba(82,54,152,0.1)",
-                            color: it.active ? "#fff" : "var(--cgi-purple)",
-                          }}
-                        >
-                          {it.badge}
-                        </span>
-                      ) : null}
-                    </Link>
-                  )}
+                  <Link
+                    to={it.to ?? "/dashboard"}
+                    className={
+                      "flex w-full items-center gap-3 rounded-xl px-3 py-1.5 text-sm transition-colors " +
+                      (it.active
+                        ? "text-white"
+                        : "text-foreground/75 hover:bg-muted hover:text-foreground")
+                    }
+                    style={it.active ? { background: "var(--cgi-gradient)" } : undefined}
+                  >
+                    <it.icon className="h-[18px] w-[18px] shrink-0" />
+                    <span className="flex-1 truncate text-left">{it.label}</span>
+                    {it.badge ? (
+                      <span
+                        className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                        style={{
+                          background: it.active
+                            ? "rgba(255,255,255,0.22)"
+                            : "rgba(82,54,152,0.1)",
+                          color: it.active ? "#fff" : "var(--cgi-purple)",
+                        }}
+                      >
+                        {it.badge}
+                      </span>
+                    ) : null}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -366,7 +343,18 @@ function Sidebar({
   );
 }
 
-function TopHeader({ displayName, email }: { displayName: string; email?: string | null }) {
+function TopHeader({
+  displayName,
+  email,
+  logout,
+}: {
+  displayName: string;
+  email?: string | null;
+  logout: () => Promise<void> | void;
+}) {
+  const iconButtonClass =
+    "grid h-9 w-9 place-items-center rounded-full border border-border/60 bg-white text-foreground/70 shadow-sm transition hover:bg-muted/50 hover:text-foreground";
+
   return (
     <header className="flex items-center gap-3 px-3 py-3 md:px-5 md:py-3">
       <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-white px-3 py-2 shadow-sm">
@@ -391,6 +379,15 @@ function TopHeader({ displayName, email }: { displayName: string; email?: string
         <Bell className="h-4 w-4" />
         <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[color:var(--cgi-red)]" />
       </Link>
+      <Link to="/my-profile" className={iconButtonClass} aria-label="Paramètres">
+        <Settings className="h-4 w-4" />
+      </Link>
+      <Link to="/dashboard" className={iconButtonClass} aria-label="Aide">
+        <HelpCircle className="h-4 w-4" />
+      </Link>
+      <button type="button" onClick={() => void logout()} className={iconButtonClass} aria-label="Déconnexion">
+        <LogOut className="h-4 w-4" />
+      </button>
       <div className="flex items-center gap-3 pl-1">
         <CurrentUserAvatar />
         <div className="hidden text-right leading-tight md:block">
