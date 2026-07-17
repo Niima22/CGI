@@ -45,30 +45,60 @@ spring:
                 - Path=/api/kpi-platform/auth/**
               filters:
                 - 'RewritePath=/api/kpi-platform/auth/(?<segment>.*), /api/auth/${segment}'
+            - id: kpi-platform-agent-service-root
+              uri: lb://kpi-platform-agent-service
+              predicates:
+                - Path=/api/kpi-platform/agents
+              filters:
+                - SetPath=/api/agents
             - id: kpi-platform-agent-service
               uri: lb://kpi-platform-agent-service
               predicates:
                 - Path=/api/kpi-platform/agents/**
               filters:
                 - 'RewritePath=/api/kpi-platform/agents/(?<segment>.*), /api/agents/${segment}'
+            - id: kpi-platform-action-plans-root
+              uri: lb://kpi-platform-agent-service
+              predicates:
+                - Path=/api/kpi-platform/action-plans
+              filters:
+                - SetPath=/api/action-plans
             - id: kpi-platform-action-plans
               uri: lb://kpi-platform-agent-service
               predicates:
                 - Path=/api/kpi-platform/action-plans/**
               filters:
                 - 'RewritePath=/api/kpi-platform/action-plans/(?<segment>.*), /api/action-plans/${segment}'
+            - id: kpi-platform-kpis-root
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/kpis
+              filters:
+                - SetPath=/api/kpi
             - id: kpi-platform-kpis
               uri: lb://kpi-platform-kpi-service
               predicates:
                 - Path=/api/kpi-platform/kpis/**
               filters:
                 - 'RewritePath=/api/kpi-platform/kpis/(?<segment>.*), /api/kpi/${segment}'
+            - id: kpi-platform-tickets-root
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/tickets
+              filters:
+                - SetPath=/api/tickets
             - id: kpi-platform-tickets
               uri: lb://kpi-platform-kpi-service
               predicates:
                 - Path=/api/kpi-platform/tickets/**
               filters:
                 - 'RewritePath=/api/kpi-platform/tickets/(?<segment>.*), /api/tickets/${segment}'
+            - id: kpi-platform-alerts-root
+              uri: lb://kpi-platform-kpi-service
+              predicates:
+                - Path=/api/kpi-platform/alerts
+              filters:
+                - SetPath=/api/alertes
             - id: kpi-platform-alerts
               uri: lb://kpi-platform-kpi-service
               predicates:

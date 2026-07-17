@@ -52,6 +52,9 @@ services:
     base-url: ${KPI_PLATFORM_AGENT_BASE_URL:http://localhost:8092}
 
 management:
+  health:
+    redis:
+      enabled: ${KPI_PLATFORM_REDIS_HEALTH_ENABLED:false}
   endpoints:
     web:
       exposure:

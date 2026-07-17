@@ -13,7 +13,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${KPI_PLATFORM_AUTH_DDL_AUTO:validate}
+      ddl-auto: ${KPI_PLATFORM_AUTH_DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
