@@ -137,6 +137,13 @@
     border-color: var(--color-border);
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 0;
+  }
+
   html {
     font-size: 15px;
   }
@@ -144,6 +151,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    overflow: hidden;
   }
 }
 

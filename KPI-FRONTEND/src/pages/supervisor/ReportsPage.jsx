@@ -45,8 +45,8 @@ export default function ReportsPage() {
                   return (
                     <div key={t.id} onClick={() => setSelectedType(t.id)} style={{
                       display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                      borderRadius: 10, border: `1px solid ${selectedType === t.id ? 'rgba(227,25,55,0.4)' : 'var(--border)'}`,
-                      background: selectedType === t.id ? 'rgba(227,25,55,0.08)' : 'var(--bg-input)',
+                      borderRadius: 10, border: `1px solid ${selectedType === t.id ? 'rgba(82,54,152,0.32)' : 'var(--border)'}`,
+                      background: selectedType === t.id ? 'var(--accent-primary-glow)' : 'var(--bg-input)',
                       cursor: 'pointer', transition: 'var(--transition)',
                     }}>
                       <Icon size={20} color="var(--accent-primary)" />
@@ -78,7 +78,7 @@ export default function ReportsPage() {
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8, letterSpacing: '0.05em' }}>FORMAT</label>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {['EXCEL', 'PDF'].map(f => (
-                    <button key={f} onClick={() => setFormat(f)} style={{ flex: 1, padding: '10px 0', borderRadius: 9, border: `1px solid ${format === f ? 'var(--accent-primary)' : 'var(--border)'}`, background: format === f ? 'rgba(227,25,55,0.15)' : 'var(--bg-input)', color: format === f ? '#FCA5A5' : 'var(--text-secondary)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font)', transition: 'var(--transition)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <button key={f} onClick={() => setFormat(f)} style={{ flex: 1, padding: '10px 0', borderRadius: 9, border: `1px solid ${format === f ? 'var(--accent-primary)' : 'var(--border)'}`, background: format === f ? 'var(--accent-primary-glow)' : 'var(--bg-input)', color: format === f ? 'var(--accent-primary)' : 'var(--text-secondary)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font)', transition: 'var(--transition)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <FormatIcon type={f} size={14} /> {f}
                     </button>
                   ))}

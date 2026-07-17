@@ -10,14 +10,23 @@
   --border: #E5E7EB;
   --border-hover: #D1D5DB;
 
-  /* CGI Red as Primary */
-  --accent-primary: #E31937;
-  --accent-primary-glow: rgba(227, 25, 55, 0.15);
+  /* CGI logo palette */
+  --kpi-cgi-red: #E21543;
+  --kpi-cgi-purple: #523698;
+  --kpi-cgi-burgundy: #721B4C;
+  --kpi-cgi-pink: #A94E89;
+  --kpi-cgi-lavender: #A48CC5;
+  --kpi-cgi-dark: #241347;
+  --kpi-cgi-gradient: linear-gradient(135deg, #E21543 0%, #A94E89 45%, #523698 100%);
+  --kpi-cgi-gradient-dark: linear-gradient(145deg, #721B4C 0%, #523698 55%, #241347 100%);
+
+  --accent-primary: var(--kpi-cgi-purple);
+  --accent-primary-glow: rgba(82, 54, 152, 0.14);
   
   /* Secondary Accents */
-  --accent-secondary: #6B7280;
-  --accent-purple: #8B5CF6;
-  --accent-cyan: #0891B2;
+  --accent-secondary: #A94E89;
+  --accent-purple: #523698;
+  --accent-cyan: #A48CC5;
   --accent-green: #10B981;
   --accent-green-glow: rgba(16, 185, 129, 0.15);
   --accent-yellow: #F59E0B;
@@ -30,11 +39,11 @@
   --text-muted: #9CA3AF; /* Light gray */
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #E31937, #C2122B);
-  --gradient-secondary: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+  --gradient-primary: var(--kpi-cgi-gradient);
+  --gradient-secondary: linear-gradient(135deg, rgba(164, 140, 197, 0.18), rgba(82, 54, 152, 0.08));
   --gradient-green: linear-gradient(135deg, #10B981, #059669);
   --gradient-orange: linear-gradient(135deg, #F59E0B, #DC2626);
-  --gradient-sidebar: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+  --gradient-sidebar: linear-gradient(180deg, #FFFFFF 0%, rgba(164, 140, 197, 0.14) 100%);
 
   /* Spacing */
   --sidebar-width: 260px;
@@ -46,8 +55,8 @@
 
   /* Shadows for Light Theme */
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-primary: 0 4px 14px rgba(227, 25, 55, 0.25);
-  --shadow-glow: 0 0 0 1px rgba(227, 25, 55, 0.1);
+  --shadow-primary: 0 4px 14px rgba(82, 54, 152, 0.24);
+  --shadow-glow: 0 0 0 1px rgba(82, 54, 152, 0.12);
 
   /* Transitions */
   --transition: all 0.2s ease;

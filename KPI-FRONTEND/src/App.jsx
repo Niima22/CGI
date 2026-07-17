@@ -69,7 +69,8 @@ function AutoLoginRedirect({ force = false }) {
   if (error) {
     return (
       <div style={{
-        minHeight: '100vh',
+        height: '100%',
+        minHeight: 0,
         display: 'grid',
         placeItems: 'center',
         background: 'var(--bg-base)',
@@ -87,7 +88,8 @@ function AutoLoginRedirect({ force = false }) {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100%',
+      minHeight: 0,
       display: 'grid',
       placeItems: 'center',
       background: 'var(--bg-base)',

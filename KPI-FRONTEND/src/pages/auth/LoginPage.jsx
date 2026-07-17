@@ -33,13 +33,13 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: 'var(--bg-base)',
+      height: '100%', minHeight: 0, background: 'var(--bg-base)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       position: 'relative', overflow: 'hidden',
     }}>
       {/* Background blobs */}
-      <div style={{ position: 'absolute', top: '10%', left: '15%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(227,25,55,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,212,212,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '10%', left: '15%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(82,54,152,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(169,78,137,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ width: '100%', maxWidth: 440, padding: '0 20px', position: 'relative', zIndex: 1 }}>
         {/* Logo */}
@@ -98,7 +98,7 @@ export default function LoginPage() {
               fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
               fontFamily: 'var(--font)', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1,
-              transition: 'var(--transition)', boxShadow: loading ? 'none' : '0 4px 20px rgba(227,25,55,0.35)',
+              transition: 'var(--transition)', boxShadow: loading ? 'none' : '0 4px 20px rgba(82,54,152,0.28)',
             }}>
               {loading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Connexion...</> : '→ Se connecter'}
             </button>
@@ -116,7 +116,7 @@ export default function LoginPage() {
               }}><Target size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Superviseur</button>
               <button onClick={() => fillDemo('agent')} style={{
                 padding: '9px 0', background: 'var(--accent-primary-glow)',
-                border: '1px solid rgba(227,25,55,0.2)', borderRadius: 8,
+                border: '1px solid rgba(82,54,152,0.2)', borderRadius: 8,
                 color: 'var(--accent-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font)', transition: 'var(--transition)',
               }}><User size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Agent</button>

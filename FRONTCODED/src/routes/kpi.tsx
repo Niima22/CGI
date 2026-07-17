@@ -67,12 +67,12 @@ function KpiModulePage() {
   };
 
   return (
-    <AppShell>
+    <AppShell lockScroll compactTopbar>
       <RoleGuard
         allowedRoles={["ADMIN", "MANAGER"]}
         message="Les indicateurs KPI sont reserves aux Pilotes et aux Superviseurs."
       >
-        <PageContainer maxWidth="7xl">
+        <PageContainer maxWidth="7xl" className="flex h-full min-h-0 flex-col space-y-3">
           <PageHeader
             icon={<BarChart3 className="h-5 w-5" />}
             title="Indicateurs KPI"
@@ -85,13 +85,13 @@ function KpiModulePage() {
             }
           />
 
-          <SectionSurface className="overflow-hidden">
+          <SectionSurface className="flex min-h-0 flex-1 overflow-hidden">
             {status === "checking" ? (
               <ModuleState label="Chargement du module KPI..." />
             ) : status === "error" ? (
               <ModuleError onRetry={retry} />
             ) : (
-              <div className="relative min-h-[calc(100vh-13rem)]">
+              <div className="relative min-h-0 flex-1">
                 {status === "loading" ? (
                   <div className="absolute inset-0 z-10 grid place-items-center bg-background/80 text-sm text-muted-foreground">
                     Chargement du module KPI...
@@ -101,7 +101,7 @@ function KpiModulePage() {
                   key={frameKey}
                   src={frameUrl}
                   title="Module Indicateurs KPI"
-                  className="h-[calc(100vh-13rem)] min-h-[620px] w-full border-0"
+                  className="block h-full min-h-0 w-full border-0"
                   sandbox="allow-scripts allow-forms allow-same-origin allow-downloads"
                   onLoad={() => setStatus("ready")}
                   onError={() => setStatus("error")}

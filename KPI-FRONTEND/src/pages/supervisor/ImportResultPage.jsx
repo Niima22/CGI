@@ -39,7 +39,7 @@ export default function ImportResultPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', flexDirection: 'column', gap: 16 }}>
-        <div className="spinner" style={{ width: 40, height: 40, border: '4px solid rgba(227, 25, 55, 0.1)', borderTop: '4px solid #E31937', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div className="spinner" style={{ width: 40, height: 40, border: '4px solid rgba(82, 54, 152, 0.1)', borderTop: '4px solid var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>Chargement des résultats...</div>
         <style>{`
           @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -157,8 +157,8 @@ export default function ImportResultPage() {
             <button
               onClick={() => navigate('/supervisor/kpi-explorer')}
               style={{
-                padding: '10px 20px', borderRadius: 8, border: '1px solid #E31937',
-                background: 'rgba(227,25,55,0.05)', color: '#E31937', fontSize: 13, fontWeight: 600,
+                padding: '10px 20px', borderRadius: 8, border: '1px solid var(--accent-primary)',
+                background: 'var(--accent-primary-glow)', color: 'var(--accent-primary)', fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', transition: 'all 0.2s ease'
               }}
             >
@@ -184,8 +184,8 @@ export default function ImportResultPage() {
               onClick={() => navigate('/supervisor/dashboard')}
               style={{
                 padding: '10px 20px', borderRadius: 8, border: 'none',
-                background: 'linear-gradient(135deg, #E31937 0%, #B30E26 100%)', color: 'white', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(227,25,55,0.2)'
+                background: 'var(--gradient-primary)', color: 'white', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: 'var(--shadow-primary)'
               }}
             >
               Dashboard <ArrowRight size={14} style={{ verticalAlign: 'middle', marginLeft: 6 }} />

@@ -2,16 +2,19 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+html { height: 100%; min-height: 0; font-size: 16px; scroll-behavior: smooth; }
 
 body {
   font-family: var(--font);
   background-color: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
+
+#root { height: 100%; min-height: 0; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -20,9 +23,9 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* Layout shell */
-.app-shell { display: flex; min-height: 100vh; }
-.app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; margin-left: var(--sidebar-width); transition: var(--transition-slow); }
-.app-content { flex: 1; padding: 28px; overflow-y: auto; }
+.app-shell { display: flex; height: 100%; min-height: 0; overflow: hidden; }
+.app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; margin-left: var(--sidebar-width); transition: var(--transition-slow); overflow: hidden; }
+.app-content { flex: 1; min-height: 0; padding: 20px; overflow-y: auto; overflow-x: hidden; }
 
 /* Cards */
 .card {
@@ -93,7 +96,7 @@ tbody td { padding: 13px 16px; color: var(--text-primary); vertical-align: middl
 
 /* Badges */
 .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-.badge-primary { background: rgba(227,25,55,0.1); color: #B91C1C; }
+.badge-primary { background: rgba(82,54,152,0.1); color: var(--accent-primary); }
 .badge-green { background: rgba(16,185,129,0.15); color: #34D399; }
 .badge-yellow { background: rgba(245,158,11,0.15); color: #FCD34D; }
 .badge-red { background: rgba(239,68,68,0.15); color: #F87171; }
@@ -102,8 +105,8 @@ tbody td { padding: 13px 16px; color: var(--text-primary); vertical-align: middl
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: var(--transition); font-family: var(--font); white-space: nowrap; }
-.btn-primary { background: var(--accent-primary); color: white; }
-.btn-primary:hover { background: #C2122B; box-shadow: 0 0 20px rgba(227,25,55,0.4); }
+.btn-primary { background: var(--gradient-primary); color: white; }
+.btn-primary:hover { filter: brightness(1.05); box-shadow: 0 0 20px rgba(82,54,152,0.28); }
 .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
 .btn-ghost:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-hover); }
 .btn-danger { background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }

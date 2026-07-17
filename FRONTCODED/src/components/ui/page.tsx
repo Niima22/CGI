@@ -11,7 +11,7 @@ export function PageContainer({
   maxWidth?: "6xl" | "7xl";
 }) {
   const maxWidthClass = maxWidth === "6xl" ? "max-w-6xl" : "max-w-7xl";
-  return <div className={cn("mx-auto w-full space-y-6", maxWidthClass, className)}>{children}</div>;
+  return <div className={cn("mx-auto w-full space-y-4", maxWidthClass, className)}>{children}</div>;
 }
 
 export function PageHeader({
@@ -26,17 +26,17 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="space-y-1.5">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-1">
         <div className="flex items-center gap-2.5">
           {icon ? (
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-cgi-soft text-[color:var(--cgi-purple)]">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-cgi-soft text-[color:var(--cgi-purple)]">
               {icon}
             </span>
           ) : null}
-          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-foreground">{title}</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-foreground">{title}</h1>
         </div>
-        {description ? <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
+        {description ? <p className="max-w-3xl text-sm leading-5 text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
