@@ -18,7 +18,7 @@ const pageTitles = {
 export default function Header() {
   const location = useLocation();
   const { user } = useAuthStore();
-  const info = pageTitles[location.pathname] || { title: 'KPI Platform', subtitle: '' };
+  const info = pageTitles[location.pathname] || { title: 'Indicateurs KPI', subtitle: '' };
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

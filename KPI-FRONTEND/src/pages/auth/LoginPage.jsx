@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { Target, User } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -49,7 +50,7 @@ export default function LoginPage() {
             fontSize: 26, fontWeight: 800, color: 'white', margin: '0 auto 16px',
             boxShadow: 'var(--shadow-primary)',
           }}>K</div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em' }}>KPI Platform</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em' }}>Indicateurs KPI</h1>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>DS Magasin · Carrefour Support IT</p>
         </div>
 
@@ -112,13 +113,13 @@ export default function LoginPage() {
                 border: '1px solid var(--border)', borderRadius: 8,
                 color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font)', transition: 'var(--transition)',
-              }}>🎯 Superviseur</button>
+              }}><Target size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Superviseur</button>
               <button onClick={() => fillDemo('agent')} style={{
                 padding: '9px 0', background: 'var(--accent-primary-glow)',
                 border: '1px solid rgba(227,25,55,0.2)', borderRadius: 8,
                 color: 'var(--accent-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'var(--font)', transition: 'var(--transition)',
-              }}>👤 Agent</button>
+              }}><User size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Agent</button>
             </div>
           </div>
           )}

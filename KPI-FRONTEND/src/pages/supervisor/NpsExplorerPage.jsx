@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { KPI_API_BASE_URL } from '../../services/api';
+import { Star } from 'lucide-react';
 
 export default function NpsExplorerPage() {
   const token = useAuthStore(state => state.token);
@@ -77,7 +78,7 @@ export default function NpsExplorerPage() {
     <div className="fade-in" style={{ padding: '0 24px 24px' }}>
       <div className="page-header" style={{ marginBottom: 24 }}>
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 24 }}>⭐</span> Explorateur NPS
+          <Star size={24} /> Explorateur NPS
         </h1>
         <p className="page-subtitle">Consultez les retours NPS détaillés et les commentaires des clients.</p>
       </div>

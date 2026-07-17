@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { KPI_API_BASE_URL } from '../../services/api';
+import { ArrowLeft, ArrowRight, BarChart3, Check, Star, X } from 'lucide-react';
 
 export default function ImportResultPage() {
   const { importId } = useParams();
@@ -25,7 +26,7 @@ export default function ImportResultPage() {
         const data = await res.json();
         setImportData(data);
       } catch (err) {
-        toast.error(`❌ Impossible de charger les détails: ${err.message}`);
+        toast.error(`Impossible de charger les details: ${err.message}`);
         navigate('/supervisor/import');
       } finally {
         setLoading(false);
@@ -77,7 +78,7 @@ export default function ImportResultPage() {
             color: isSuccess ? '#10B981' : '#EF4444',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28
           }}>
-            {isSuccess ? '✓' : '✗'}
+            {isSuccess ? <Check size={28} /> : <X size={28} />}
           </div>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
@@ -149,7 +150,7 @@ export default function ImportResultPage() {
               cursor: 'pointer', transition: 'all 0.2s ease'
             }}
           >
-            ← Retourner aux Imports
+            <ArrowLeft size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Retourner aux Imports
           </button>
           
           {isSuccess && (importData.typeSource === 'CSV_PRODUCTIVITE' || importData.typeSource === 'EXCEL_KPI_DS_MAGASIN') && (
@@ -161,7 +162,7 @@ export default function ImportResultPage() {
                 cursor: 'pointer', transition: 'all 0.2s ease'
               }}
             >
-              📊 Explorer KPI
+              <BarChart3 size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Explorer KPI
             </button>
           )}
 
@@ -174,7 +175,7 @@ export default function ImportResultPage() {
                 cursor: 'pointer', transition: 'all 0.2s ease'
               }}
             >
-              ⭐ Explorer NPS
+              <Star size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Explorer NPS
             </button>
           )}
 
@@ -187,7 +188,7 @@ export default function ImportResultPage() {
                 cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(227,25,55,0.2)'
               }}
             >
-              Dashboard ➔
+              Dashboard <ArrowRight size={14} style={{ verticalAlign: 'middle', marginLeft: 6 }} />
             </button>
           )}
         </div>

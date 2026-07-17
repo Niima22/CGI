@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { KPI_API_BASE_URL } from '../../services/api';
+import { BarChart3 } from 'lucide-react';
 
 export default function KpiExplorerPage() {
   const token = useAuthStore(state => state.token);
@@ -78,7 +79,7 @@ export default function KpiExplorerPage() {
     <div className="fade-in" style={{ padding: '0 24px 24px' }}>
       <div className="page-header" style={{ marginBottom: 24 }}>
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 24 }}>📊</span> Explorateur KPI
+          <BarChart3 size={24} /> Explorateur KPI
         </h1>
         <p className="page-subtitle">Consultez les statistiques journalières des KPIs (issues du fichier Excel KPI DS MAGASIN).</p>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { AlertCircle, BarChart3, Check, FileDown, Info, Rocket, Star, TrendingUp, Upload, Users } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { KPI_API_BASE_URL } from '../../services/api';
 
@@ -10,7 +11,7 @@ const FILE_TYPES = [
   {
     key: 'suivi-kpi-nps',
     label: 'Suivi KPI & NPS',
-    icon: '📊',
+    icon: BarChart3,
     color: '#3B82F6',
     gradient: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
     accept: '.xlsx,.xls',
@@ -21,37 +22,37 @@ const FILE_TYPES = [
   },
   {
     key: 'nps',
-    label: 'Détails NPS',
-    icon: '⭐',
+    label: 'Details NPS',
+    icon: Star,
     color: '#F59E0B',
     gradient: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
     accept: '.csv',
     endpoint: `${IMPORT_API}/nps`,
-    description: 'Scores NPS à chaud par agent',
-    example: 'Détails NPS à chaud...csv',
+    description: 'Scores NPS a chaud par agent',
+    example: 'Details NPS a chaud...csv',
     maxSize: '30 MB',
   },
   {
     key: 'prod',
-    label: 'Productivité',
-    icon: '📈',
+    label: 'Productivite',
+    icon: TrendingUp,
     color: '#10B981',
     gradient: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
     accept: '.csv',
     endpoint: `${IMPORT_API}/productivite`,
-    description: 'Résolutions, escalades et transferts',
-    example: 'Détails Productivité DA+DS+INC...csv',
+    description: 'Resolutions, escalades et transferts',
+    example: 'Details Productivite DA+DS+INC...csv',
     maxSize: '30 MB',
   },
   {
     key: 'agents-dic',
     label: 'Dictionnaire Agents',
-    icon: '👥',
+    icon: Users,
     color: '#8B5CF6',
     gradient: 'linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%)',
     accept: '.xlsx,.xls',
     endpoint: `${IMPORT_API}/agents-dic`,
-    description: 'Base de données des agents (Dic & Dic-2)',
+    description: 'Base de donnees des agents (Dic & Dic-2)',
     example: 'Suivi KPI-VF+NPS 3.xlsx',
     maxSize: '50 MB',
   },
@@ -63,9 +64,10 @@ export function UploadCard({ config }) {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  
+
   const token = useAuthStore(state => state.token);
   const navigate = useNavigate();
+  const Icon = config.icon;
 
   const handleFile = useCallback((selectedFile) => {
     setFile(selectedFile);
@@ -87,7 +89,6 @@ export function UploadCard({ config }) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Simulate progress
     const interval = setInterval(() => {
       setProgress(p => Math.min(p + 15, 90));
     }, 300);
@@ -95,13 +96,13 @@ export function UploadCard({ config }) {
     try {
       const headers = {};
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers.Authorization = `Bearer ${token}`;
       }
-      
-      const res = await fetch(config.endpoint, { 
-        method: 'POST', 
+
+      const res = await fetch(config.endpoint, {
+        method: 'POST',
         body: formData,
-        headers: headers
+        headers,
       });
       clearInterval(interval);
       setProgress(100);
@@ -112,8 +113,8 @@ export function UploadCard({ config }) {
       }
 
       const data = await res.json();
-      toast.success(`✅ ${file.name} traité avec succès`);
-      
+      toast.success(`${file.name} traite avec succes`);
+
       if (data.importId) {
         navigate(`/supervisor/import/result/${data.importId}`);
       } else {
@@ -121,7 +122,7 @@ export function UploadCard({ config }) {
       }
     } catch (err) {
       clearInterval(interval);
-      toast.error(`❌ ${err.message}`);
+      toast.error(err.message);
       setResult({ error: err.message });
     } finally {
       setUploading(false);
@@ -130,23 +131,20 @@ export function UploadCard({ config }) {
 
   return (
     <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Colored top bar */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: config.gradient }} />
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, paddingTop: 8 }}>
         <div style={{
           width: 44, height: 44, borderRadius: 12, background: config.gradient,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
-          boxShadow: `0 4px 14px ${config.color}40`,
-        }}>{config.icon}</div>
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 4px 14px ${config.color}40`, color: 'white',
+        }}><Icon size={22} /></div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>{config.label}</div>
           <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{config.description}</div>
         </div>
       </div>
 
-      {/* Drop zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
@@ -169,31 +167,30 @@ export function UploadCard({ config }) {
 
         {file ? (
           <>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
+            <Check size={28} style={{ marginBottom: 8, color: '#10B981' }} />
             <div style={{ fontWeight: 600, fontSize: 13, color: '#10B981', marginBottom: 4 }}>
               {file.name}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {(file.size / 1024 / 1024).toFixed(2)} MB — Prêt à envoyer
+              {(file.size / 1024 / 1024).toFixed(2)} MB - Pret a envoyer
             </div>
           </>
         ) : (
           <>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>{dragActive ? '📥' : config.icon}</div>
+            {dragActive ? <FileDown size={28} style={{ marginBottom: 8, color: config.color }} /> : <Icon size={28} style={{ marginBottom: 8, color: config.color }} />}
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-              {dragActive ? 'Relâchez ici' : 'Glissez votre fichier ici'}
+              {dragActive ? 'Relachez ici' : 'Glissez votre fichier ici'}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              ou cliquez pour sélectionner — {config.example}
+              ou cliquez pour selectionner - {config.example}
             </div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 6 }}>
-              Formats : {config.accept} · Max {config.maxSize}
+              Formats : {config.accept} - Max {config.maxSize}
             </div>
           </>
         )}
       </div>
 
-      {/* Progress bar */}
       {uploading && (
         <div style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>
@@ -208,7 +205,6 @@ export function UploadCard({ config }) {
         </div>
       )}
 
-      {/* Upload button */}
       <button
         onClick={handleUpload}
         disabled={!file || uploading}
@@ -219,19 +215,19 @@ export function UploadCard({ config }) {
           fontSize: 13, fontWeight: 700, cursor: file && !uploading ? 'pointer' : 'not-allowed',
           fontFamily: 'var(--font)', transition: 'all 0.2s ease',
           boxShadow: file && !uploading ? `0 4px 14px ${config.color}35` : 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}
       >
-        {uploading ? '⏳ Traitement...' : file ? '🚀 Lancer l\'import' : 'Sélectionnez un fichier'}
+        {uploading ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Traitement...</> : file ? <><Rocket size={15} /> Lancer l'import</> : 'Selectionnez un fichier'}
       </button>
 
-      {/* Results */}
       {result && !result.error && result.data && (
         <div style={{
           marginTop: 14, padding: 14, borderRadius: 10,
           background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)',
         }}>
-          <div style={{ fontWeight: 700, fontSize: 13, color: '#10B981', marginBottom: 8 }}>
-            ✓ Import réussi
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#10B981', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Check size={14} /> Import reussi
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
@@ -250,9 +246,9 @@ export function UploadCard({ config }) {
         <div style={{
           marginTop: 14, padding: 14, borderRadius: 10,
           background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
-          fontSize: 12, color: '#EF4444',
+          fontSize: 12, color: '#EF4444', display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          ❌ {result.error}
+          <AlertCircle size={14} /> {result.error}
         </div>
       )}
     </div>
@@ -263,9 +259,9 @@ export default function ImportPage() {
   return (
     <div className="fade-in">
       <div className="page-header">
-        <h1 className="page-title">Import de données</h1>
+        <h1 className="page-title">Import de donnees</h1>
         <p className="page-subtitle">
-          Importez vos 3 fichiers sources pour alimenter les tableaux de bord KPI, NPS et Productivité
+          Importez vos 3 fichiers sources pour alimenter les tableaux de bord KPI, NPS et Productivite
         </p>
       </div>
 
@@ -280,19 +276,18 @@ export default function ImportPage() {
         ))}
       </div>
 
-      {/* Info */}
       <div className="card" style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.15)' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <span style={{ fontSize: 20 }}>💡</span>
+          <Info size={20} color="#3B82F6" />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#3B82F6' }}>
-              Comment ça fonctionne ?
+              Comment ca fonctionne ?
             </div>
             <ul style={{ fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 16, margin: 0, lineHeight: 1.8 }}>
-              <li>Le système détecte automatiquement les colonnes et les séparateurs de vos fichiers.</li>
-              <li>Les noms des agents sont normalisés pour éviter les doublons (ex : "Faid Anas" = "ANAS FAID").</li>
-              <li>Les données sont envoyées au backend et sauvegardées en base de données PostgreSQL.</li>
-              <li>Vous pouvez ré-importer un fichier à tout moment, les doublons sont gérés automatiquement.</li>
+              <li>Le systeme detecte automatiquement les colonnes et les separateurs de vos fichiers.</li>
+              <li>Les noms des agents sont normalises pour eviter les doublons.</li>
+              <li>Les donnees sont envoyees au backend et sauvegardees en base de donnees PostgreSQL.</li>
+              <li>Vous pouvez re-importer un fichier a tout moment, les doublons sont geres automatiquement.</li>
             </ul>
           </div>
         </div>

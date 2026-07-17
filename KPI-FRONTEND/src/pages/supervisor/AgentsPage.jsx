@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { agentService } from '../../services/agentService';
 import { UploadCard } from './ImportPage';
 import { KPI_API_BASE_URL } from '../../services/api';
+import { Info, Users } from 'lucide-react';
 
 const BANNETTES = ['FO', 'BO', 'Promocash', 'Proximité', 'SCO'];
 const IMPORT_API = `${KPI_API_BASE_URL}/import/upload`;
@@ -141,7 +142,7 @@ export default function AgentsPage() {
         <>
           {/* Filters */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Rechercher un agent..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un agent..."
               style={{ flex: 1, minWidth: 200, padding: '9px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 9, color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font)', outline: 'none' }} />
         {['Tous', ...BANNETTES].map(b => (
           <button key={b} onClick={() => setFilterBannette(b)} style={{
@@ -216,7 +217,7 @@ export default function AgentsPage() {
             config={{
               key: 'agents-dic',
               label: 'Dictionnaire Agents',
-              icon: '👥',
+              icon: Users,
               color: '#8B5CF6',
               gradient: 'linear-gradient(135deg, #8B5CF6 0%, #D946EF 100%)',
               accept: '.xlsx,.xls',
@@ -228,7 +229,7 @@ export default function AgentsPage() {
           />
           <div className="card mt-4" style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.15)' }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 20 }}>💡</span>
+              <Info size={20} color="#3B82F6" />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#3B82F6' }}>
                   Importation des agents
