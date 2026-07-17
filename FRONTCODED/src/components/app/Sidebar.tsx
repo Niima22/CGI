@@ -205,19 +205,6 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div
-        className="mt-4 overflow-hidden rounded-2xl p-4 text-white"
-        style={{ background: "var(--cgi-gradient-dark)" }}
-      >
-        <div className="text-sm font-semibold">Plateforme opérationnelle</div>
-        <div className="mt-0.5 text-[11px] opacity-80">Services essentiels disponibles</div>
-        <Link
-          to="/dashboard"
-          className="mt-3 block w-full rounded-lg bg-white/95 py-1.5 text-center text-xs font-semibold text-[color:var(--cgi-purple)]"
-        >
-          Voir l'état
-        </Link>
-      </div>
     </aside>
   );
 }
