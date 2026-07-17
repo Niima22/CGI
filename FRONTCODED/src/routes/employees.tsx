@@ -5,6 +5,8 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Coffee,
   Eye,
   Filter,
@@ -71,10 +73,10 @@ import { useAuth } from "@/lib/auth-store";
 export const Route = createFileRoute("/employees")({
   head: () => ({
     meta: [
-      { title: "Gestion des employes - CGI-FLOW" },
+      { title: "Gestion des employes - CGI-Intranet" },
       {
         name: "description",
-        content: "Gestion des profils employes, bannettes et rattachements CGI-FLOW.",
+        content: "Gestion des profils employes, bannettes et rattachements CGI-Intranet.",
       },
     ],
   }),
@@ -83,6 +85,7 @@ export const Route = createFileRoute("/employees")({
 
 type LinkedFilter = "all" | "linked" | "unlinked";
 type AvailabilityFilter = "all" | AvailabilityStatus;
+const pageSize = 25;
 
 function EmployeesPage() {
   const { hasRole, authenticatedFetch } = useAuth();
@@ -99,6 +102,7 @@ function EmployeesPage() {
   const [bannette, setBannette] = useState("all");
   const [availability, setAvailability] = useState<AvailabilityFilter>("all");
   const [linked, setLinked] = useState<LinkedFilter>("all");
+  const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<EmployeePayload>(emptyEmployeeForm);
   const [submitting, setSubmitting] = useState(false);
@@ -180,6 +184,17 @@ function EmployeesPage() {
     return counters;
   }, [filteredEmployees]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [availability, bannette, department, linked, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleEmployees = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredEmployees.slice(start, start + pageSize);
+  }, [currentPage, filteredEmployees]);
+
   async function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -253,20 +268,20 @@ function EmployeesPage() {
         </div>
 
         {isManager && !isAdmin && (
-          <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+          <div className="rounded-xl border border-cgi-violet/25 bg-gradient-cgi-soft px-4 py-3 text-sm text-cgi-purple">
             Superviseur: la visibilite depend du rattachement `managerKeycloakId` des employes.
             Si toute l'equipe n'est pas encore rattachee, la liste peut etre partielle.
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />
             {error}
           </div>
         )}
         {notice && (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 className="h-4 w-4" />
             {notice}
           </div>
@@ -285,7 +300,7 @@ function EmployeesPage() {
           <SummaryCard label="Hors ligne" value={summary.OFFLINE} icon={WifiOff} />
         </div>
 
-        <div className="rounded-md border border-border bg-card p-4 shadow-card">
+        <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Filter className="h-4 w-4 text-muted-foreground" />
             Filtres
@@ -348,8 +363,8 @@ function EmployeesPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-md border border-border bg-card shadow-card">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
             <div className="flex items-center gap-2">
               <BriefcaseBusiness className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Tableau de disponibilite</span>
@@ -379,7 +394,7 @@ function EmployeesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.map((employee) => {
+                {visibleEmployees.map((employee) => {
                   const pending = pendingBannetteId === employee.id;
                   return (
                     <TableRow key={employee.id}>
@@ -456,6 +471,40 @@ function EmployeesPage() {
                 })}
               </TableBody>
             </Table>
+          )}
+          {!loading && filteredEmployees.length > pageSize && (
+            <div className="flex flex-col gap-3 border-t border-border/70 px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <span>
+                Affichage {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, filteredEmployees.length)} sur{" "}
+                {filteredEmployees.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                >
+                  <ChevronLeft />
+                  Precedent
+                </Button>
+                <span className="min-w-20 text-center text-xs">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                >
+                  Suivant
+                  <ChevronRight />
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -559,7 +608,7 @@ function SummaryCard({
   icon: typeof Users;
 }) {
   return (
-    <div className="rounded-md border border-border bg-card p-4 shadow-card">
+    <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>

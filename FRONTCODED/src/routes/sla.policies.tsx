@@ -57,7 +57,7 @@ import { useAuth } from "@/lib/auth-store";
 export const Route = createFileRoute("/sla/policies")({
   head: () => ({
     meta: [
-      { title: "Règles SLA - CGI-FLOW" },
+      { title: "Règles SLA - CGI-Intranet" },
       {
         name: "description",
         content: "Gestion des règles SLA appliquées aux tickets.",
@@ -244,13 +244,13 @@ function SlaPoliciesPage() {
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
           )}
           {notice && (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               {notice}
             </div>
           )}
@@ -271,8 +271,8 @@ function SlaPoliciesPage() {
             />
           </div>
 
-          <div className="overflow-hidden rounded-md border border-border bg-card shadow-card">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
+            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
               <span className="text-sm font-semibold">Liste des règles</span>
               <span className="text-xs text-muted-foreground">{sortedPolicies.length} élément(s)</span>
             </div>
@@ -507,7 +507,7 @@ function SelectField({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-card px-4 py-3 shadow-card">
+    <div className="rounded-2xl border border-border/60 bg-white px-4 py-3 shadow-card">
       <div className="text-sm text-muted-foreground">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-foreground">{value}</div>
     </div>

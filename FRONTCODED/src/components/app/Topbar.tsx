@@ -5,12 +5,17 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
 
 export function Topbar({ compact = false }: { compact?: boolean }) {
-  const { roles, email, fullName } = useAuth();
+  const { roles } = useAuth();
+  const roleLabel =
+    roles
+      .filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
+      .map(getBusinessRoleLabel)
+      .join(", ") || "Compte";
 
   return (
     <header
-      className={`sticky top-0 z-30 flex items-center gap-3 border-b border-border/60 bg-white/90 px-4 backdrop-blur sm:px-6 ${
-        compact ? "min-h-12 py-1.5" : "min-h-16 py-2.5"
+      className={`sticky top-0 z-30 flex items-center gap-3 bg-white px-4 sm:px-6 ${
+        compact ? "min-h-12 py-2" : "min-h-16 py-4"
       }`}
     >
       <div className="relative max-w-2xl flex-1">
@@ -18,7 +23,7 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
         <input
           type="text"
           placeholder="Rechercher un ticket, un employé, un département..."
-          className={`w-full rounded-xl border border-border/70 bg-muted/40 pl-10 pr-4 text-sm outline-none transition-all focus:border-[oklch(0.6_0.2_300)] focus:bg-white focus:ring-2 focus:ring-[oklch(0.6_0.2_300)]/20 ${
+          className={`w-full rounded-2xl border border-border/60 bg-white pl-10 pr-4 text-sm shadow-sm outline-none transition-all placeholder:text-muted-foreground focus:border-[color:var(--cgi-purple)] focus:ring-2 focus:ring-[color:var(--cgi-purple)]/15 ${
             compact ? "py-2" : "py-2.5"
           }`}
         />
@@ -31,22 +36,15 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
 
         <NotificationBell compact={compact} />
 
-        <div className="hidden min-w-0 text-right xl:block">
-          <div className="truncate text-sm font-medium text-foreground">{fullName}</div>
-          <div className="truncate text-xs text-muted-foreground">{email}</div>
-        </div>
-        <span className="hidden shrink-0 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-          {roles
-            .filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
-            .map(getBusinessRoleLabel)
-            .join(", ")}
-        </span>
         <button
           type="button"
           aria-label="Menu utilisateur"
-          className="flex items-center gap-2 rounded-lg border border-border/70 bg-white px-1.5 py-1 pr-2.5 text-sm transition hover:bg-muted/50"
+          className="flex items-center gap-2 rounded-full border border-border/60 bg-white px-1.5 py-1 pr-3 text-sm shadow-sm transition hover:bg-muted/50"
         >
           <CurrentUserAvatar compact={compact} />
+          <span className="hidden max-w-28 truncate text-xs font-semibold text-foreground sm:inline">
+            {roleLabel}
+          </span>
           <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:inline" />
         </button>
       </div>

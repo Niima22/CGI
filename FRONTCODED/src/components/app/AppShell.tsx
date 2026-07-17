@@ -14,8 +14,14 @@ export function AppShell({
 }) {
   return (
     <AuthenticatedView>
-      <div className="h-screen w-full overflow-hidden bg-[oklch(0.985_0.003_260)] text-foreground">
-        <div className="mx-auto flex h-full max-w-[1600px] overflow-hidden">
+      <div
+        className="h-screen w-full overflow-hidden p-3 text-foreground md:p-6"
+        style={{ background: "color-mix(in oklab, var(--cgi-red) 7%, white)" }}
+      >
+        <div
+          className="mx-auto flex h-full max-w-[1500px] overflow-hidden rounded-3xl shadow-glass"
+          style={{ background: "color-mix(in oklab, var(--cgi-red) 3%, white)" }}
+        >
           <Sidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Topbar compact={compactTopbar} />

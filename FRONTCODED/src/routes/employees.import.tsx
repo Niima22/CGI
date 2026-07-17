@@ -40,10 +40,10 @@ import { useAuth } from "@/lib/auth-store";
 export const Route = createFileRoute("/employees/import")({
   head: () => ({
     meta: [
-      { title: "Import employes - CGI-FLOW" },
+      { title: "Import employes - CGI-Intranet" },
       {
         name: "description",
-        content: "Preview et confirmation d'import Excel des profils employes CGI-FLOW.",
+        content: "Preview et confirmation d'import Excel des profils employes CGI-Intranet.",
       },
     ],
   }),
@@ -124,25 +124,25 @@ function EmployeeImportPage() {
           </Button>
         </div>
 
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Les donnees KPI, QS, NPS, appels, pourcentages, totaux et calculs sont ignorees. Le
           fichier sert uniquement a extraire les informations employes.
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />
             {error}
           </div>
         )}
         {notice && (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 className="h-4 w-4" />
             {notice}
           </div>
         )}
 
-        <div className="rounded-md border border-border bg-card p-4 shadow-card">
+        <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold">Fichier Excel</h2>
@@ -168,8 +168,8 @@ function EmployeeImportPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-md border border-border bg-card shadow-card">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
+          <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
             <div className="text-sm font-semibold">Apercu import</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{preview.length} profil(s)</span>

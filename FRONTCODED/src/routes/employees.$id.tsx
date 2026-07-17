@@ -49,10 +49,10 @@ import { useAuth } from "@/lib/auth-store";
 export const Route = createFileRoute("/employees/$id")({
   head: () => ({
     meta: [
-      { title: "Detail employe - CGI-FLOW" },
+      { title: "Detail employe - CGI-Intranet" },
       {
         name: "description",
-        content: "Detail et administration d'un profil employe CGI-FLOW.",
+        content: "Detail et administration d'un profil employe CGI-Intranet.",
       },
     ],
   }),
@@ -249,26 +249,26 @@ function EmployeeDetailPage() {
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />
             {error}
           </div>
         )}
         {notice && (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 className="h-4 w-4" />
             {notice}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-md border border-border bg-card shadow-card">
+          <div className="rounded-2xl border border-border/60 bg-white shadow-card">
             <LoadingState />
           </div>
         ) : employee && form ? (
           <>
             <div className="grid gap-4 lg:grid-cols-3">
-              <div className="rounded-md border border-border bg-card p-4 shadow-card lg:col-span-2">
+              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card lg:col-span-2">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold">Profil operationnel</h2>
@@ -338,7 +338,7 @@ function EmployeeDetailPage() {
                 )}
               </div>
 
-              <div className="rounded-md border border-border bg-card p-4 shadow-card">
+              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
                 <h2 className="text-sm font-semibold">Synthese</h2>
                 <div className="mt-4 grid gap-3 text-sm">
                   <Info label="ID employee" value={employee.id} />
@@ -351,7 +351,7 @@ function EmployeeDetailPage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
-              <div className="rounded-md border border-border bg-card p-4 shadow-card">
+              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
                 <h2 className="text-sm font-semibold">Affectation bannette</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Pilote et Superviseur peuvent demander une mise a jour. Le backend valide le
@@ -381,7 +381,7 @@ function EmployeeDetailPage() {
 
               {isAdmin && (
                 <>
-                  <div className="rounded-md border border-border bg-card p-4 shadow-card">
+                  <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
                     <h2 className="text-sm font-semibold">Département</h2>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Affectation administrative du profil employé.
@@ -408,7 +408,7 @@ function EmployeeDetailPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-md border border-border bg-card p-4 shadow-card">
+                  <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
                     <h2 className="text-sm font-semibold">Lien compte</h2>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Rattachement au compte Keycloak existant.
@@ -433,7 +433,7 @@ function EmployeeDetailPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-md border border-border bg-card p-4 shadow-card">
+                  <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
                     <h2 className="text-sm font-semibold">Superviseur</h2>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Affectation au Superviseur par identifiant Keycloak.
@@ -455,7 +455,7 @@ function EmployeeDetailPage() {
             </div>
 
             {isManager && !isAdmin && (
-              <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+              <div className="rounded-xl border border-cgi-violet/25 bg-gradient-cgi-soft px-4 py-3 text-sm text-cgi-purple">
                 Superviseur: les controles de lien compte, creation utilisateur et assignation
                 globale sont reserves aux Pilotes.
               </div>
@@ -475,7 +475,7 @@ function EmployeeDetailPage() {
 
 function Info({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
-    <div className="rounded-md border border-border/70 bg-background px-3 py-2">
+    <div className="rounded-xl border border-border/70 bg-background px-3 py-2">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 break-all font-medium">{formatValue(value)}</div>
     </div>

@@ -395,21 +395,21 @@ function PlanningViewPage() {
             </p>
           </div>
         ) : loading ? (
-          <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
-            <LoaderCircle className="mx-auto mb-3 h-8 w-8 animate-spin text-cyan-600" />
+          <div className="rounded-2xl border border-border/60 bg-white p-12 text-center text-muted-foreground shadow-card">
+            <LoaderCircle className="mx-auto mb-3 h-8 w-8 animate-spin text-cgi-purple" />
             Chargement du planning...
           </div>
         ) : !planning?.planningWeekId ? (
-          <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
+          <div className="rounded-2xl border border-border/60 bg-white p-12 text-center text-muted-foreground shadow-card">
             <Eye className="mx-auto mb-3 h-8 w-8" />
             {loading ? "Chargement…" : "Aucun planning sauvegardé pour cette semaine."}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] table-fixed">
                 <thead>
-                  <tr className="bg-slate-50 text-[10px] uppercase text-slate-500">
+                  <tr className="bg-muted/40 text-[10px] uppercase text-muted-foreground">
                     <th className="w-32 border-r px-2 py-2 text-left">Agents</th>
                     {days.map((day) => (
                       <th key={formatDate(day)} className="border-r px-1 py-2 text-center">
@@ -469,7 +469,7 @@ function PlanningViewPage() {
         )}
 
         {viewer?.linkedToPlanningAgent && planning?.planningWeekId && (
-          <section className="rounded-xl border bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-border/60 bg-white p-4 shadow-card">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-sm font-semibold">Demande</h2>
@@ -660,7 +660,7 @@ function RequestList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">
+      <div className="mt-3 rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
         Aucune demande.
       </div>
     );
@@ -668,13 +668,13 @@ function RequestList({
   return (
     <div className="mt-3 space-y-2">
       {items.slice(0, 5).map((item) => (
-        <div key={item.id} className="rounded-md bg-slate-50 px-3 py-2">
+        <div key={item.id} className="rounded-md bg-muted/40 px-3 py-2">
           <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="truncate text-xs font-semibold">{item.title}</div>
-            <div className="truncate text-[11px] text-slate-500">{item.detail}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{item.detail}</div>
           </div>
-          <span className="rounded-full border bg-white px-2 py-1 text-[10px] font-semibold text-slate-600">
+          <span className="rounded-full border bg-white px-2 py-1 text-[10px] font-semibold text-muted-foreground">
             {statusLabel(item.status)}
           </span>
           </div>
@@ -703,9 +703,9 @@ function cellColor(code?: string, reason?: string) {
   if (reason === "TELETRAVAIL") return "bg-sky-50 text-sky-800";
   if (reason === "ABSENT") return "bg-rose-50 text-rose-800";
   if (reason) return "bg-emerald-50 text-emerald-800";
-  if (!code) return "bg-slate-100 text-slate-500";
+  if (!code) return "bg-muted text-muted-foreground";
   if (code === "SCO_11_20") return "bg-fuchsia-50 text-fuchsia-800";
-  if (code === "OPEN_03_12") return "bg-cyan-50 text-cyan-800";
+  if (code === "OPEN_03_12") return "bg-gradient-cgi-soft text-cgi-purple";
   if (code.startsWith("CLOSE")) return "bg-orange-50 text-orange-800";
   return "bg-indigo-50 text-indigo-800";
 }

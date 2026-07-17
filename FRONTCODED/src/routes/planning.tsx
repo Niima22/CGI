@@ -895,31 +895,31 @@ function PlanningPage() {
             )}
 
             {loadingPlanning && !hasPlanningContent && (
-              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-[0_10px_40px_-24px_rgba(15,23,42,0.25)]">
-                <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-cyan-600" />
-                <h2 className="mt-4 text-base font-semibold text-slate-900">
+              <div className="rounded-2xl border border-border/60 bg-white p-10 text-center shadow-card">
+                <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-cgi-purple" />
+                <h2 className="mt-4 text-base font-semibold text-foreground">
                   Chargement du planning
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Recuperation des agents, shifts et affectations de la semaine.
                 </p>
               </div>
             )}
 
             {!loadingPlanning && !hasPlanningContent && (
-              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-[0_10px_40px_-24px_rgba(15,23,42,0.25)]">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50">
-                  <CalendarDays className="h-5 w-5 text-cyan-600" />
+              <div className="rounded-2xl border border-border/60 bg-white p-10 text-center shadow-card">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-cgi-soft">
+                  <CalendarDays className="h-5 w-5 text-cgi-purple" />
                 </div>
-                <h2 className="mt-4 text-base font-semibold text-slate-900">
+                <h2 className="mt-4 text-base font-semibold text-foreground">
                   Créer le planning de la semaine
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Choisissez une semaine puis lancez la génération automatique.
                 </p>
                 <div className="mt-5 flex justify-center">
                   <Button
-                    className="h-9 rounded-md bg-cyan-600 hover:bg-cyan-700"
+                    className="h-9 rounded-md bg-gradient-cgi hover:brightness-110"
                     onClick={() => void generatePlanning()}
                     disabled={!isSupervisor || loading}
                   >
@@ -1012,13 +1012,13 @@ function FreezeDurationDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-        <h3 className="text-base font-semibold text-slate-950">Durée du gel</h3>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="w-full max-w-md rounded-2xl border border-border/60 bg-white p-5 shadow-2xl">
+        <h3 className="text-base font-semibold text-foreground">Durée du gel</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Choisissez pendant combien de semaines cette affectation doit rester figée.
         </p>
-        <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
-          <div className="font-medium text-slate-950">{pendingFreeze.agent.fullName}</div>
+        <div className="mt-4 rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">
+          <div className="font-medium text-foreground">{pendingFreeze.agent.fullName}</div>
           <div>{new Intl.DateTimeFormat("fr-FR").format(parseLocalDate(pendingFreeze.date))}</div>
         </div>
         <div className="mt-4">
@@ -1038,7 +1038,7 @@ function FreezeDurationDialog({
               <SelectItem value="forever">Toujours, jusqu'au dégel manuel</SelectItem>
             </SelectContent>
           </Select>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             {endDate
               ? `Le gel s'arrêtera après le ${new Intl.DateTimeFormat("fr-FR").format(endDate)}.`
               : "Le gel restera actif pour toutes les prochaines semaines jusqu'à ce que vous le retiriez."}
@@ -1048,7 +1048,7 @@ function FreezeDurationDialog({
           <Button variant="outline" onClick={onCancel}>
             Annuler
           </Button>
-          <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={onConfirm}>
+          <Button className="bg-gradient-cgi hover:brightness-110" onClick={onConfirm}>
             Confirmer le gel
           </Button>
         </div>
@@ -1075,16 +1075,16 @@ function LeavePeriodDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-        <h3 className="text-base font-semibold text-slate-950">Periode du conge</h3>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="w-full max-w-md rounded-2xl border border-border/60 bg-white p-5 shadow-2xl">
+        <h3 className="text-base font-semibold text-foreground">Periode du conge</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Choisissez la date de fin. Le planning bloquera tous les jours entre le debut et la fin.
         </p>
-        <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-slate-700">
-          <div className="font-medium text-slate-950">{pendingLeavePeriod.agent.fullName}</div>
+        <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-muted-foreground">
+          <div className="font-medium text-foreground">{pendingLeavePeriod.agent.fullName}</div>
           <div>Debut: {formatter.format(startDate)}</div>
         </div>
-        <label className="mt-4 block text-sm font-medium text-slate-700" htmlFor="leave-period-end">
+        <label className="mt-4 block text-sm font-medium text-muted-foreground" htmlFor="leave-period-end">
           Date de fin
         </label>
         <input
@@ -1093,7 +1093,7 @@ function LeavePeriodDialog({
           min={pendingLeavePeriod.date}
           value={pendingLeavePeriod.endDate}
           onChange={(event) => onEndDateChange(event.target.value)}
-          className="mt-2 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+          className="mt-2 h-10 w-full rounded-xl border border-border/60 px-3 text-sm text-foreground outline-none transition focus:border-cgi-purple focus:ring-2 focus:ring-cgi-purple/10"
         />
         {isInvalid && (
           <p className="mt-2 text-xs font-medium text-rose-600">
@@ -1131,13 +1131,13 @@ function LatenessDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-        <h3 className="text-base font-semibold text-slate-950">Retard</h3>
-        <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-slate-700">
-          <div className="font-medium text-slate-950">{pendingLateness.agent.fullName}</div>
+      <div className="w-full max-w-md rounded-2xl border border-border/60 bg-white p-5 shadow-2xl">
+        <h3 className="text-base font-semibold text-foreground">Retard</h3>
+        <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-muted-foreground">
+          <div className="font-medium text-foreground">{pendingLateness.agent.fullName}</div>
           <div>{new Intl.DateTimeFormat("fr-FR").format(parseLocalDate(pendingLateness.date))}</div>
         </div>
-        <label className="mt-4 block text-sm font-medium text-slate-700" htmlFor="lateness-minutes">
+        <label className="mt-4 block text-sm font-medium text-muted-foreground" htmlFor="lateness-minutes">
           Minutes de retard
         </label>
         <input
@@ -1147,7 +1147,7 @@ function LatenessDialog({
           step={1}
           value={String(pendingLateness.minutes)}
           onChange={(event) => onChange(event.target.value === "" ? Number.NaN : Number(event.target.value))}
-          className="mt-2 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+          className="mt-2 h-10 w-full rounded-xl border border-border/60 px-3 text-sm text-foreground outline-none transition focus:border-cgi-purple focus:ring-2 focus:ring-cgi-purple/10"
         />
         <div className="mt-3 flex flex-wrap gap-2">
           {quickValues.map((minutes) => (
@@ -1206,42 +1206,42 @@ function SaveConfirmationDialog({
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-950">
+            <h3 className="text-base font-semibold text-foreground">
               {requiresOverride
                 ? "Confirmer la dérogation superviseur"
                 : "Confirmer la sauvegarde du planning"}
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               Certaines règles métier ne sont pas respectées. Voulez-vous sauvegarder ce planning
               avec une dérogation superviseur ?
             </p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mt-4 rounded-xl border border-border/60 bg-muted/40 p-3">
           <div className="flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold text-slate-950">Modifications détectées</h4>
-            <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600">
+            <h4 className="text-sm font-semibold text-foreground">Modifications détectées</h4>
+            <span className="rounded-full bg-white px-2 py-0.5 text-xs text-muted-foreground">
               {changes.length}
             </span>
           </div>
           {changes.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               Aucune modification manuelle détectée. Le planning courant sera sauvegardé tel quel.
             </p>
           ) : (
-            <ul className="mt-3 max-h-48 space-y-2 overflow-auto text-sm text-slate-800">
+            <ul className="mt-3 max-h-48 space-y-2 overflow-auto text-sm text-foreground">
               {changes.map((change) => (
                 <li key={change.key} className="rounded-lg bg-white px-3 py-2 shadow-sm">
-                  <div className="font-semibold text-slate-950">
+                  <div className="font-semibold text-foreground">
                     {formatProblemDate(change.date)} · {change.agentName}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">
+                    <span className="rounded-md bg-muted px-2 py-1 text-muted-foreground">
                       {change.before}
                     </span>
-                    <span className="text-slate-400">→</span>
-                    <span className="rounded-md bg-cyan-50 px-2 py-1 font-medium text-cyan-900">
+                    <span className="text-muted-foreground">→</span>
+                    <span className="rounded-md bg-gradient-cgi-soft px-2 py-1 font-medium text-cgi-purple">
                       {change.after}
                     </span>
                   </div>
@@ -1274,7 +1274,7 @@ function SaveConfirmationDialog({
         )}
 
         {requiresOverride && (
-          <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+          <div className="mt-4 rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
             Aucune raison n’est obligatoire. L’action sera quand même enregistrée dans l’audit avec
             votre identité, la date et les règles concernées.
           </div>
@@ -1286,7 +1286,7 @@ function SaveConfirmationDialog({
           </Button>
           <Button
             className={
-              requiresOverride ? "bg-amber-600 hover:bg-amber-700" : "bg-cyan-600 hover:bg-cyan-700"
+              requiresOverride ? "bg-amber-600 hover:bg-amber-700" : "bg-gradient-cgi hover:brightness-110"
             }
             onClick={onConfirm}
             disabled={saving}
@@ -1324,11 +1324,11 @@ function MonthCalendar({
   const cells = Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 
   return (
-    <aside className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+    <aside className="rounded-2xl border border-border/60 bg-white p-2.5 shadow-card">
       <div className="flex items-center justify-between">
         <button
           type="button"
-          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
           onClick={() =>
             setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))
           }
@@ -1336,7 +1336,7 @@ function MonthCalendar({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <div className="text-sm font-semibold capitalize text-slate-900">
+        <div className="text-sm font-semibold capitalize text-foreground">
           {new Intl.DateTimeFormat("fr-FR", {
             month: "long",
             year: "numeric",
@@ -1344,7 +1344,7 @@ function MonthCalendar({
         </div>
         <button
           type="button"
-          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
           onClick={() =>
             setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))
           }
@@ -1354,7 +1354,7 @@ function MonthCalendar({
         </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-medium uppercase text-slate-400">
+      <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-medium uppercase text-muted-foreground">
         {["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"].map((day) => (
           <span key={day}>{day}</span>
         ))}
@@ -1373,11 +1373,11 @@ function MonthCalendar({
               className={`flex h-6 items-center justify-center rounded-md text-[10px] transition ${
                 inSelectedWeek
                   ? monday
-                    ? "bg-cyan-600 font-semibold text-white"
-                    : "bg-cyan-50 font-medium text-cyan-800"
+                    ? "bg-gradient-cgi font-semibold text-white"
+                    : "bg-gradient-cgi-soft font-medium text-cgi-purple"
                   : inMonth
-                    ? "text-slate-700 hover:bg-slate-100"
-                    : "text-slate-300 hover:bg-slate-50"
+                    ? "text-muted-foreground hover:bg-muted"
+                    : "text-slate-300 hover:bg-muted/40"
               }`}
             >
               {date.getDate()}
@@ -1385,7 +1385,7 @@ function MonthCalendar({
           );
         })}
       </div>
-      <div className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-[10px] text-slate-600">
+      <div className="mt-2 rounded-lg bg-muted/40 px-2 py-1.5 text-[10px] text-muted-foreground">
         Semaine du <strong>{new Intl.DateTimeFormat("fr-FR").format(selected)}</strong>
       </div>
     </aside>
@@ -1538,14 +1538,14 @@ function PlanningGrid({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_40px_-24px_rgba(15,23,42,0.25)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-foreground">
             {formatWeekRange(days.map(parseLocalDate))}
           </h2>
-          <div className="mt-1 flex items-center gap-3 text-[11px] text-slate-500">
-            <ShiftLegend color="bg-cyan-500" label="Ouverture" />
+          <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+            <ShiftLegend color="bg-cgi-violet" label="Ouverture" />
             <ShiftLegend color="bg-indigo-500" label="Intermédiaire" />
             <ShiftLegend color="bg-orange-500" label="Fermeture" />
             <ShiftLegend color="bg-fuchsia-500" label="SCO" />
@@ -1570,7 +1570,7 @@ function PlanningGrid({
           )}
           <Button
             size="sm"
-            className="h-8 rounded-md bg-cyan-600 hover:bg-cyan-700"
+            className="h-8 rounded-md bg-gradient-cgi hover:brightness-110"
             onClick={() => {
               onGenerate(
                 selectedRegenerationDates.length > 0 ? selectedRegenerationDates : undefined,
@@ -1652,35 +1652,35 @@ function PlanningGrid({
         <table className="w-full min-w-[760px] table-fixed text-sm">
           <thead className="sticky top-0 z-30 bg-white/95 backdrop-blur">
             <tr>
-              <th className="sticky left-0 z-40 w-32 border-b border-r border-slate-200 bg-slate-50 px-2 py-1 text-left">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              <th className="sticky left-0 z-40 w-32 border-b border-r border-border/70 bg-muted/40 px-2 py-1 text-left">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Agents
                 </div>
               </th>
               {days.map((day, index) => (
                 <th
                   key={day}
-                  className={`border-b border-r border-slate-200 px-1 py-1 text-center ${
-                    index >= 5 ? "bg-slate-100/70" : "bg-slate-50"
+                  className={`border-b border-r border-border/70 px-1 py-1 text-center ${
+                    index >= 5 ? "bg-muted/60" : "bg-muted/40"
                   }`}
                 >
-                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {formatWeekday(day)}
                   </div>
                   <div
                     className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold ${
-                      isToday(day) ? "bg-cyan-600 text-white" : "text-slate-900"
+                      isToday(day) ? "bg-gradient-cgi text-white" : "text-foreground"
                     }`}
                   >
                     {parseLocalDate(day).getDate()}
                   </div>
                   {!readOnly && (
-                    <label className="mt-1 inline-flex cursor-pointer items-center gap-1 text-[8px] font-normal normal-case tracking-normal text-slate-400">
+                    <label className="mt-1 inline-flex cursor-pointer items-center gap-1 text-[8px] font-normal normal-case tracking-normal text-muted-foreground">
                       <input
                         type="checkbox"
                         checked={selectedRegenerationDates.includes(day)}
                         onChange={() => toggleRegenerationDate(day)}
-                        className="h-2.5 w-2.5 accent-cyan-600"
+                        className="h-2.5 w-2.5 accent-cgi-purple"
                       />
                       regénérer
                     </label>
@@ -1695,16 +1695,16 @@ function PlanningGrid({
               const hours = agentAssignments.reduce((sum, item) => sum + item.paidHours, 0);
               return (
                 <tr key={agent.id} className="group border-b border-slate-100 last:border-b-0">
-                  <td className="sticky left-0 z-20 border-r border-slate-200 bg-white px-2 py-1 group-hover:bg-slate-50">
+                  <td className="sticky left-0 z-20 border-r border-border/70 bg-white px-2 py-1 group-hover:bg-muted/40">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-[9px] font-semibold text-cyan-700">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-cgi-soft text-[9px] font-semibold text-cgi-purple">
                         {agentInitials(agent.fullName)}
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate text-[11px] font-semibold text-slate-900">
+                        <div className="truncate text-[11px] font-semibold text-foreground">
                           {agent.fullName}
                         </div>
-                        <div className="flex items-center gap-1 text-[9px] text-slate-500">
+                        <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${
                               hours === 40 ? "bg-emerald-500" : "bg-amber-500"
@@ -1731,8 +1731,8 @@ function PlanningGrid({
                         onKeyDown={(event) =>
                           handleCellKeyDown(event, agent, day, rowIndex, index, assignment)
                         }
-                        className={`border-r border-slate-100 p-0.5 align-top outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300 ${
-                          index >= 5 ? "bg-slate-50/55" : ""
+                        className={`border-r border-border/60 p-0.5 align-top outline-none transition focus-visible:ring-2 focus-visible:ring-cgi-purple/30 ${
+                          index >= 5 ? "bg-muted/30" : ""
                         }`}
                         title={
                           readOnly
@@ -1844,7 +1844,7 @@ function ShiftCell({
     <div className="group/cell relative">
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          className={`h-9 w-full rounded-md border px-1.5 pr-6 shadow-none transition hover:border-slate-400 ${visual.card} ${latenessAccent}`}
+          className={`h-9 w-full rounded-md border px-1.5 pr-6 shadow-none transition hover:border-cgi-purple/40 ${visual.card} ${latenessAccent}`}
           title={latenessMinutes > 0 ? `Retard ${formatLateness(latenessMinutes)}` : undefined}
         >
           <div className="min-w-0 text-left">
@@ -1881,7 +1881,7 @@ function ShiftCell({
         aria-label="Figer cette affectation pour les prochaines semaines"
         title="Figer pour les prochaines semaines"
         onClick={() => onToggleLock(true)}
-        className="absolute right-0.5 top-0.5 rounded p-0.5 text-slate-400 hover:bg-amber-50 hover:text-amber-700"
+        className="absolute right-0.5 top-0.5 rounded p-0.5 text-muted-foreground hover:bg-amber-50 hover:text-amber-700"
       >
         <Unlock className="h-3 w-3" />
       </button>
@@ -1930,7 +1930,7 @@ function CellStatusCluster({
             className={`flex h-4 min-w-4 items-center justify-center rounded-full border px-0.5 text-[7px] font-bold leading-none transition ${
               latenessMinutes > 0
                 ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                : "border-transparent text-slate-400 opacity-0 hover:bg-amber-50 hover:text-amber-700 group-hover/cell:opacity-100 disabled:cursor-not-allowed disabled:opacity-0 disabled:group-hover/cell:opacity-35 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                : "border-transparent text-muted-foreground opacity-0 hover:bg-amber-50 hover:text-amber-700 group-hover/cell:opacity-100 disabled:cursor-not-allowed disabled:opacity-0 disabled:group-hover/cell:opacity-35 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
             }`}
           >
             <Clock3 className="h-3 w-3" />
@@ -1946,7 +1946,7 @@ function CellStatusCluster({
             className={`flex h-4 w-4 items-center justify-center rounded-full border transition ${
               isTelework
                 ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
-                : "border-transparent text-slate-400 opacity-0 hover:bg-sky-50 hover:text-sky-700 group-hover/cell:opacity-100 disabled:cursor-not-allowed disabled:opacity-0 disabled:group-hover/cell:opacity-35 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                : "border-transparent text-muted-foreground opacity-0 hover:bg-sky-50 hover:text-sky-700 group-hover/cell:opacity-100 disabled:cursor-not-allowed disabled:opacity-0 disabled:group-hover/cell:opacity-35 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
             }`}
           >
             <Home className="h-3 w-3" />
@@ -1968,15 +1968,15 @@ function WeekendOffPanel({
 }) {
   const weekends = weekendStartsBetween(statistics[0]?.periodStart, statistics[0]?.periodEnd);
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
       <div className="flex flex-col gap-3 border-b border-slate-300 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Suivi week-ends OFF</h3>
-          <p className="text-[10px] text-slate-500">
+          <h3 className="text-sm font-semibold text-foreground">Suivi week-ends OFF</h3>
+          <p className="text-[10px] text-muted-foreground">
             Case bleue = week-end complet OFF. Période affichée : {weekends.length} week-ends.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-slate-600">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>Période</span>
           <Select
             value={String(periodWeeks)}
@@ -1995,7 +1995,7 @@ function WeekendOffPanel({
       </div>
       <div className="max-h-[360px] overflow-auto">
         <table className="min-w-full border-collapse text-[11px]">
-          <thead className="sticky top-0 z-10 bg-white text-slate-950">
+          <thead className="sticky top-0 z-10 bg-white text-foreground">
             <tr>
               {weekends.map((weekend) => (
                 <th
@@ -2003,7 +2003,7 @@ function WeekendOffPanel({
                   className="min-w-16 border border-slate-950 px-1 py-1 text-center text-[10px] font-bold leading-tight"
                 >
                   <span className="block">{formatWeekendHeader(weekend)}</span>
-                  <span className="block text-[9px] font-medium text-slate-500">
+                  <span className="block text-[9px] font-medium text-muted-foreground">
                     {formatWeekendMonth(weekend)}
                   </span>
                 </th>
@@ -2027,7 +2027,7 @@ function WeekendOffPanel({
                       <td
                         key={dateKey}
                         className={`h-6 min-w-7 border border-slate-950 text-center font-semibold ${
-                          completeDates.has(dateKey) ? "bg-blue-100" : "bg-white"
+                          completeDates.has(dateKey) ? "bg-gradient-cgi-soft" : "bg-white"
                         }`}
                         title={
                           completeDates.has(dateKey)
@@ -2039,12 +2039,12 @@ function WeekendOffPanel({
                       </td>
                     );
                   })}
-                  <td className="border border-slate-950 bg-white px-2 text-center font-semibold text-slate-950">
+                  <td className="border border-slate-950 bg-white px-2 text-center font-semibold text-foreground">
                     {item.completeWeekendOffCount}
                   </td>
                   <td
-                    className={`min-w-40 border border-slate-950 px-2 py-1 font-medium text-slate-950 ${
-                      index % 2 === 0 ? "bg-blue-100" : "bg-amber-100"
+                    className={`min-w-40 border border-slate-950 px-2 py-1 font-medium text-foreground ${
+                      index % 2 === 0 ? "bg-gradient-cgi-soft" : "bg-amber-100"
                     }`}
                     title={
                       item.lastCompleteWeekendOff
@@ -2068,14 +2068,14 @@ function WeekendOffPanel({
 
 function OldWeekendOffPanel({ statistics }: { statistics: WeekendOffStatistic[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-3">
-        <h3 className="text-sm font-semibold text-slate-900">Historique des week-ends OFF</h3>
-        <p className="text-xs text-slate-500">Fenêtre glissante de huit semaines.</p>
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-white">
+      <div className="border-b border-border/70 px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Historique des week-ends OFF</h3>
+        <p className="text-xs text-muted-foreground">Fenêtre glissante de huit semaines.</p>
       </div>
       <div className="max-h-64 overflow-auto">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-slate-50 text-slate-500">
+          <thead className="sticky top-0 bg-muted/40 text-muted-foreground">
             <tr>
               <th className="px-3 py-2 text-left">Agent</th>
               <th className="px-3 py-2 text-center">Samedi OFF</th>
@@ -2087,13 +2087,13 @@ function OldWeekendOffPanel({ statistics }: { statistics: WeekendOffStatistic[] 
           <tbody>
             {statistics.map((item) => (
               <tr key={item.agentId} className="border-t border-slate-100">
-                <td className="px-3 py-2 font-medium text-slate-900">{item.fullName}</td>
+                <td className="px-3 py-2 font-medium text-foreground">{item.fullName}</td>
                 <td className="px-3 py-2 text-center">{item.saturdayOffCount}</td>
                 <td className="px-3 py-2 text-center">{item.sundayOffCount}</td>
                 <td className="px-3 py-2 text-center font-semibold">
                   {item.completeWeekendOffCount}
                 </td>
-                <td className="px-3 py-2 text-slate-600">
+                <td className="px-3 py-2 text-muted-foreground">
                   {item.lastCompleteWeekendOff
                     ? new Intl.DateTimeFormat("fr-FR").format(
                         parseLocalDate(item.lastCompleteWeekendOff),
@@ -2155,8 +2155,8 @@ function ShiftLegend({ color, label }: { color: string; label: string }) {
 function shiftVisual(category?: ShiftCategory) {
   if (category === "OPENING") {
     return {
-      card: "border-cyan-200 bg-cyan-50 text-cyan-950",
-      dot: "bg-cyan-500",
+      card: "border-cgi-violet/30 bg-gradient-cgi-soft text-cgi-purple",
+      dot: "bg-cgi-violet",
     };
   }
   if (category === "CLOSING") {
@@ -2178,7 +2178,7 @@ function shiftVisual(category?: ShiftCategory) {
     };
   }
   return {
-    card: "border-slate-200 bg-slate-50 text-slate-600",
+    card: "border-border/60 bg-muted/40 text-muted-foreground",
     dot: "bg-slate-300",
   };
 }
