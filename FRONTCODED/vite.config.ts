@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080";
+const kpiAppProxyTarget = process.env.VITE_KPI_APP_PROXY_TARGET ?? "http://127.0.0.1:5180";
 
 export default defineConfig({
   vite: {
@@ -14,6 +15,10 @@ export default defineConfig({
       proxy: {
         "/api": {
           target: apiProxyTarget,
+          changeOrigin: true,
+        },
+        "/kpi-app": {
+          target: kpiAppProxyTarget,
           changeOrigin: true,
         },
       },
