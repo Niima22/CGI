@@ -10,7 +10,6 @@ import {
   LogOut,
   Search,
   Star,
-  Target,
   TrendingUp,
   Upload,
   Users,
@@ -24,7 +23,6 @@ const supervisorNav = [
   { to: '/supervisor/nps-explorer', icon: Star, label: 'Explorateur NPS' },
   { to: '/supervisor/import', icon: Upload, label: 'Import donnees' },
   { to: '/supervisor/alerts', icon: Bell, label: 'Alertes', badge: 3 },
-  { to: '/supervisor/coaching', icon: Target, label: 'Plans d\'action' },
   { to: '/supervisor/reports', icon: TrendingUp, label: 'Rapports' },
 ];
 
