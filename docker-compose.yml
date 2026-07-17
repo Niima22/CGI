@@ -282,6 +282,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-postgres}
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_PUBLIC_URL:-http://host.docker.internal:8085}/realms/cgi-flow
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-account}
       EUREKA_DEFAULT_ZONE: http://discovery-service:8761/eureka
       SECURITY_DEV_ADMIN_BYPASS: "false"
     ports:
