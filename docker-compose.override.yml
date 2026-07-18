@@ -1,0 +1,17 @@
+# Local override: pin infra to images already present on this machine
+# (Docker Hub CDN DNS is unreachable, so new pulls fail).
+# Keycloak 25.0 uses the legacy KEYCLOAK_ADMIN/KEYCLOAK_ADMIN_PASSWORD bootstrap vars.
+services:
+  auth-postgres:
+    image: postgres:15-alpine
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # All-localhost dev: issuer must match what the resource servers expect
+      # (http://localhost:8085/realms/cgi-flow) and what the browser can reach.
+      KC_HOSTNAME: http://localhost:8085
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "false"
