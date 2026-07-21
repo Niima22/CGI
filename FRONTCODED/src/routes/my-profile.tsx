@@ -45,6 +45,7 @@ import {
   publishProfilePhotoUpdate,
 } from "@/lib/availability-status-events";
 import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
+import { agentEmployeeMock, agentProfileMock, isAgentUser } from "@/mocks/agentProfileMock";
 
 export const Route = createFileRoute("/my-profile")({
   head: () => ({
@@ -79,9 +80,25 @@ function MyProfilePage() {
     bio: "",
   });
   const [notice, setNotice] = useState<string | null>(null);
+  const isAgent = isAgentUser(user);
+  const effectiveRolesLabel = isAgent
+    ? agentProfileMock.effectiveRoles.join(", ")
+    : user?.roles.length
+      ? user.roles.map(getBusinessRoleLabel).join(", ")
+      : "Aucun role metier";
+  const localStatusLabel = isAgent
+    ? agentProfileMock.localStatus
+    : user?.localProfile?.accountStatus
+      ? user.localProfile.accountStatus === "ACTIVE"
+        ? "Actif"
+        : "Inactif"
+      : "Aucun";
 
   const accountWarnings = useMemo(() => {
     if (!user) {
+      return [];
+    }
+    if (isAgentUser(user)) {
       return [];
     }
 
@@ -102,6 +119,19 @@ function MyProfilePage() {
     setEmployeeError(null);
     setEmployeeMissing(false);
     setNotice(null);
+    if (isAgentUser(user)) {
+      setEmployee(agentEmployeeMock);
+      setProfileForm({
+        phone: "",
+        address: "",
+        bio: "",
+      });
+      publishProfilePhotoUpdate(null);
+      setAvailabilityStatus("AVAILABLE");
+      publishAvailabilityStatusUpdate("AVAILABLE");
+      setLoading(false);
+      return;
+    }
     try {
       const currentEmployee = await fetchMyEmployee(authenticatedFetch);
       setEmployee(currentEmployee);
@@ -124,7 +154,7 @@ function MyProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch]);
+  }, [authenticatedFetch, user]);
 
   useEffect(() => {
     void loadProfile();
@@ -265,51 +295,65 @@ function MyProfilePage() {
 
           {user ? (
             <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <Info label="Nom complet" value={user.fullName} />
-              <Info label="Email" value={user.email} />
+              <Info label="Nom complet" value={isAgent ? agentProfileMock.fullName : user.fullName} />
+              <Info label="Email" value={isAgent ? agentProfileMock.email : user.email} />
               <Info
                 label="Role principal"
-                value={user.primaryRole ? getBusinessRoleLabel(user.primaryRole) : "Non defini"}
+                value={
+                  isAgent
+                    ? agentProfileMock.primaryRole
+                    : user.primaryRole
+                      ? getBusinessRoleLabel(user.primaryRole)
+                      : "Non defini"
+                }
               />
               <Info
                 label="Roles effectifs"
-                value={
-                  user.roles.length
-                    ? user.roles.map(getBusinessRoleLabel).join(", ")
-                    : "Aucun role metier"
-                }
+                value={effectiveRolesLabel}
               />
               <Info
                 label="Statut du compte"
-                value={user.accountStatus === "ACTIVE" ? "Actif" : "Inactif"}
+                value={isAgent ? agentProfileMock.accountStatus : user.accountStatus === "ACTIVE" ? "Actif" : "Inactif"}
               />
               <Info
                 label="Profil local"
-                value={user.localProfileLinked ? "Synchronise" : "Non synchronise"}
+                value={isAgent ? agentProfileMock.localProfileStatus : user.localProfileLinked ? "Synchronise" : "Non synchronise"}
               />
-              <Info label="ID Keycloak" value={user.keycloakId} />
-              <Info label="Profil local ID" value={user.localProfile?.id ?? "Aucun"} />
+              <Info label="ID Keycloak" value={isAgent ? agentProfileMock.keycloakId : user.keycloakId} />
+              <Info label="Profil local ID" value={isAgent ? agentProfileMock.id : user.localProfile?.id ?? "Aucun"} />
               <Info
                 label="Role local"
-                value={user.localProfile?.role ? getBusinessRoleLabel(user.localProfile.role) : "Aucun"}
-              />
-              <Info
-                label="Statut local"
                 value={
-                  user.localProfile?.accountStatus
-                    ? user.localProfile.accountStatus === "ACTIVE"
-                      ? "Actif"
-                      : "Inactif"
-                    : "Aucun"
+                  isAgent
+                    ? agentProfileMock.localRole
+                    : user.localProfile?.role
+                      ? getBusinessRoleLabel(user.localProfile.role)
+                      : "Aucun"
                 }
               />
               <Info
+                label="Statut local"
+                value={localStatusLabel}
+              />
+              <Info
                 label="Cree le"
-                value={user.localProfile?.createdAt ? formatDate(user.localProfile.createdAt) : "Aucun"}
+                value={
+                  isAgent
+                    ? formatDate(agentProfileMock.createdAt)
+                    : user.localProfile?.createdAt
+                      ? formatDate(user.localProfile.createdAt)
+                      : "Aucun"
+                }
               />
               <Info
                 label="Mis a jour"
-                value={user.localProfile?.updatedAt ? formatDate(user.localProfile.updatedAt) : "Aucun"}
+                value={
+                  isAgent
+                    ? formatDate(agentProfileMock.updatedAt)
+                    : user.localProfile?.updatedAt
+                      ? formatDate(user.localProfile.updatedAt)
+                      : "Aucun"
+                }
               />
             </div>
           ) : (
@@ -427,7 +471,7 @@ function MyProfilePage() {
               )}
               <Info label="Poste" value={employee.jobTitle} />
               <Info label="Departement" value={employee.department} />
-              <Info label="Equipe" value={employee.bannette} />
+              <Info label="Bannette" value={employee.bannette} />
               <Info label="Competences" value={null} />
               <Info label="Photo de profil" value={null} />
               <Info label="Statut employe" value={employee.status} />

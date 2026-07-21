@@ -33,9 +33,18 @@ If your PostgreSQL password is not the default `postgres`, put the real value in
 `POSTGRES_PASSWORD` and `SPRING_DATASOURCE_PASSWORD`.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\build-backend.ps1
-powershell -ExecutionPolicy Bypass -File scripts\start-dev.ps1
-powershell -ExecutionPolicy Bypass -File scripts\health-dev.ps1
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1
+```
+
+By default, this builds the backend services, starts Docker dependencies, starts the local services,
+starts `FRONTCODED/`, and runs the health checks. The frontend is served at
+`http://127.0.0.1:5173/`.
+
+Useful options:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1 -SkipBuild
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1 -SeedUsers
 ```
 
 ## Launch Order
@@ -113,9 +122,7 @@ profiles when the backend is running, and writes generated credentials to
 Before a demo, use this sequence to avoid stale JARs:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\build-backend.ps1
-powershell -ExecutionPolicy Bypass -File scripts\start-dev.ps1
-powershell -ExecutionPolicy Bypass -File scripts\health-dev.ps1
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1
 ```
 
 `start-dev.ps1` now stops stale listeners on the managed ports before relaunching the local stack,

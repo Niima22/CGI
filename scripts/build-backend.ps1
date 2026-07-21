@@ -1,3 +1,7 @@
+param(
+    [switch]$SkipTests
+)
+
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -18,6 +22,7 @@ $servicePorts = @{
     "employee-service" = 8082
     "ticket-service" = 8083
     "sla-service" = 8084
+    "messaging-service" = 8086
     "planning-service" = 8087
 }
 
@@ -50,6 +55,7 @@ $services = @(
     "api-gateway",
     "ticket-service",
     "sla-service",
+    "messaging-service",
     "planning-service"
 )
 
@@ -60,7 +66,11 @@ foreach ($service in $services) {
             Stop-ManagedListener -ServiceName $service -Port $servicePorts[$service]
         }
         Write-Host "Building $service..."
-        & $maven -f (Join-Path $serviceDir "pom.xml") clean package
+        $mavenArgs = @("-f", (Join-Path $serviceDir "pom.xml"), "clean", "package")
+        if ($SkipTests) {
+            $mavenArgs += "-DskipTests"
+        }
+        & $maven @mavenArgs
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed for $service."
         }

@@ -11,10 +11,10 @@ import {
   Sparkles,
   Timer,
   Users,
-  Workflow,
 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useAuth } from "@/lib/auth-store";
+import logoUrl from "../../images/logo.png?url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -86,7 +86,7 @@ function LoginPage() {
   ];
 
   return (
-    <main className="relative grid h-dvh place-items-center overflow-hidden bg-[oklch(0.985_0.005_300)] px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8 lg:pb-14 lg:pt-8 [@media(max-height:700px)]:px-4 [@media(max-height:700px)]:pb-8 [@media(max-height:700px)]:pt-4">
+    <main className="relative grid min-h-dvh place-items-center overflow-x-hidden overflow-y-auto bg-[oklch(0.985_0.005_300)] px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:px-8 lg:pb-14 lg:pt-8 [@media(max-height:700px)]:px-4 [@media(max-height:700px)]:pb-6 [@media(max-height:700px)]:pt-4">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-70"
@@ -107,21 +107,15 @@ function LoginPage() {
       />
 
       <div className="relative w-full max-w-[1280px]">
-          <div className="mx-auto w-full overflow-hidden rounded-[24px] border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl lg:rounded-[28px]">
+          <div className="mx-auto w-full overflow-hidden rounded-[20px] border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl sm:rounded-[24px] lg:rounded-[28px]">
             <div className="grid grid-cols-1 lg:grid-cols-[45fr_55fr]">
               <section className="relative flex flex-col gap-4 p-5 sm:p-6 lg:gap-5 lg:p-7 [@media(max-height:760px)]:gap-3 [@media(max-height:760px)]:p-5 [@media(max-height:640px)]:gap-2 [@media(max-height:640px)]:p-4">
-                <header className="flex items-center gap-3">
-                  <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-cgi shadow-soft [@media(max-height:640px)]:h-9 [@media(max-height:640px)]:w-9">
-                    <Workflow className="h-5 w-5 text-white" strokeWidth={2.5} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-base font-semibold tracking-tight text-foreground">
-                      CGI-Intranet
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground [@media(max-height:640px)]:hidden">
-                      Pilotez vos opérations avec une intelligence augmentée.
-                    </div>
-                  </div>
+                <header className="flex items-center justify-center">
+                  <img
+                    src={logoUrl}
+                    alt="CGI-Intranet"
+                    className="h-10 max-w-[160px] object-contain [@media(max-height:640px)]:h-8"
+                  />
                 </header>
 
                 <div className="space-y-3 [@media(max-height:760px)]:space-y-2">
@@ -226,7 +220,7 @@ function LoginPage() {
                     </button>
                   </form>
 
-                  <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground [@media(max-height:640px)]:hidden">
+                  <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground [@media(max-height:640px)]:hidden [@media(max-width:380px)]:hidden">
                     <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[oklch(0.5_0.2_300)]" />
                     Authentification sécurisée via votre compte professionnel CGI
                   </p>

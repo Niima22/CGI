@@ -53,6 +53,8 @@ public interface EmployeeService {
 
     EmployeeResponse updateEmployeeStatus(Long id, UpdateEmployeeStatusRequest request);
 
+    EmployeeResponse updateEmployeeAvailabilityStatus(Long id, UpdateMyAvailabilityStatusRequest request);
+
     EmployeeResponse updateEmployeeBannette(
             Long id,
             UpdateEmployeeBannetteRequest request,

@@ -98,6 +98,54 @@ class EmployeeEndpointSecurityTest {
     }
 
     @Test
+    void adminCanUpdateEmployeeAvailabilityStatus() throws Exception {
+        when(employeeService.updateEmployeeAvailabilityStatus(any(), any()))
+                .thenReturn(employeeResponse(AvailabilityStatus.IN_COMMUNICATION));
+
+        mockMvc.perform(patch("/api/employees/1/availability-status")
+                        .with(jwt().jwt(jwt -> jwt
+                                        .subject("admin-id")
+                                        .claim("email", "admin@test.com")
+                                        .claim("realm_access", java.util.Map.of("roles", java.util.List.of("ADMIN"))))
+                                .authorities(() -> "ROLE_ADMIN"))
+                        .contentType("application/json")
+                        .content("{\"availabilityStatus\":\"IN_COMMUNICATION\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availabilityStatus").value("IN_COMMUNICATION"));
+    }
+
+    @Test
+    void managerAndEmployeeCannotUpdateAnotherEmployeeAvailabilityStatus() throws Exception {
+        mockMvc.perform(patch("/api/employees/1/availability-status")
+                        .with(jwt().jwt(jwt -> jwt
+                                        .subject("manager-id")
+                                        .claim("email", "manager@test.com")
+                                        .claim("realm_access", java.util.Map.of("roles", java.util.List.of("MANAGER"))))
+                                .authorities(() -> "ROLE_MANAGER"))
+                        .contentType("application/json")
+                        .content("{\"availabilityStatus\":\"AVAILABLE\"}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(patch("/api/employees/1/availability-status")
+                        .with(jwt().jwt(jwt -> jwt
+                                        .subject("employee-id")
+                                        .claim("email", "employee@test.com")
+                                        .claim("realm_access", java.util.Map.of("roles", java.util.List.of("EMPLOYEE"))))
+                                .authorities(() -> "ROLE_EMPLOYEE"))
+                        .contentType("application/json")
+                        .content("{\"availabilityStatus\":\"AVAILABLE\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void employeeAvailabilityStatusUpdateRequiresAuthentication() throws Exception {
+        mockMvc.perform(patch("/api/employees/1/availability-status")
+                        .contentType("application/json")
+                        .content("{\"availabilityStatus\":\"AVAILABLE\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void profileUpdateRequiresAuthentication() throws Exception {
         mockMvc.perform(patch("/api/employees/me/profile")
                         .contentType("application/json")
@@ -138,9 +186,9 @@ class EmployeeEndpointSecurityTest {
                                         .subject("employee-id")
                                         .claim("email", "employee@test.com")
                                         .claim("realm_access", java.util.Map.of("roles", java.util.List.of("EMPLOYEE"))))
-                                .authorities(() -> "ROLE_EMPLOYEE"))
+                        .authorities(() -> "ROLE_EMPLOYEE"))
                         .contentType("application/json")
-                        .content("{\"name\":\"Support\",\"description\":\"Support department\"}"))
+                        .content("{\"name\":\"Operations\",\"description\":\"Operations department\"}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -151,9 +199,9 @@ class EmployeeEndpointSecurityTest {
                                         .subject("manager-id")
                                         .claim("email", "manager@test.com")
                                         .claim("realm_access", java.util.Map.of("roles", java.util.List.of("MANAGER"))))
-                                .authorities(() -> "ROLE_MANAGER"))
+                        .authorities(() -> "ROLE_MANAGER"))
                         .contentType("application/json")
-                        .content("{\"name\":\"Support\",\"description\":\"Support department\"}"))
+                        .content("{\"name\":\"Operations\",\"description\":\"Operations department\"}"))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(patch("/api/employees/1/department")

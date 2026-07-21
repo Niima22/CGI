@@ -17,7 +17,7 @@ export const Route = createFileRoute("/access-denied")({
 
 function AccessDeniedPage() {
   return (
-    <AppShell>
+    <AppShell lockScroll>
       <AccessDeniedContent message="Vous n'avez pas les droits necessaires pour acceder a cette page." />
     </AppShell>
   );

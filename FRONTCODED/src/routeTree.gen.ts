@@ -17,6 +17,7 @@ import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as MyProfileRouteImport } from './routes/my-profile'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as KpiRouteImport } from './routes/kpi'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as DepartmentsRouteImport } from './routes/departments'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -65,6 +66,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const KpiRoute = KpiRouteImport.update({
   id: '/kpi',
   path: '/kpi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeesRoute = EmployeesRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/departments': typeof DepartmentsRoute
   '/employees': typeof EmployeesRouteWithChildren
+  '/help': typeof HelpRoute
   '/kpi': typeof KpiRoute
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/departments': typeof DepartmentsRoute
   '/employees': typeof EmployeesRouteWithChildren
+  '/help': typeof HelpRoute
   '/kpi': typeof KpiRoute
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/departments': typeof DepartmentsRoute
   '/employees': typeof EmployeesRouteWithChildren
+  '/help': typeof HelpRoute
   '/kpi': typeof KpiRoute
   '/messages': typeof MessagesRoute
   '/my-profile': typeof MyProfileRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/employees'
+    | '/help'
     | '/kpi'
     | '/messages'
     | '/my-profile'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/employees'
+    | '/help'
     | '/kpi'
     | '/messages'
     | '/my-profile'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departments'
     | '/employees'
+    | '/help'
     | '/kpi'
     | '/messages'
     | '/my-profile'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DepartmentsRoute: typeof DepartmentsRoute
   EmployeesRoute: typeof EmployeesRouteWithChildren
+  HelpRoute: typeof HelpRoute
   KpiRoute: typeof KpiRoute
   MessagesRoute: typeof MessagesRoute
   MyProfileRoute: typeof MyProfileRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/kpi'
       fullPath: '/kpi'
       preLoaderRoute: typeof KpiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employees': {
@@ -403,6 +423,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DepartmentsRoute: DepartmentsRoute,
   EmployeesRoute: EmployeesRouteWithChildren,
+  HelpRoute: HelpRoute,
   KpiRoute: KpiRoute,
   MessagesRoute: MessagesRoute,
   MyProfileRoute: MyProfileRoute,

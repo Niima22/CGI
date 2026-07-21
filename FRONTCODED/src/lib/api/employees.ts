@@ -180,6 +180,34 @@ export async function updateEmployeeBannette(
   );
 }
 
+export async function updateEmployeeStatus(
+  authenticatedFetch: Fetcher,
+  id: string | number,
+  status: EmployeeStatus,
+) {
+  return parseResponse<Employee>(
+    await authenticatedFetch(`/api/employees/${id}/status`, {
+      method: "PATCH",
+      headers: jsonHeaders(),
+      body: JSON.stringify({ status }),
+    }),
+  );
+}
+
+export async function updateEmployeeAvailabilityStatus(
+  authenticatedFetch: Fetcher,
+  id: string | number,
+  availabilityStatus: AvailabilityStatus,
+) {
+  return parseResponse<Employee>(
+    await authenticatedFetch(`/api/employees/${id}/availability-status`, {
+      method: "PATCH",
+      headers: jsonHeaders(),
+      body: JSON.stringify({ availabilityStatus }),
+    }),
+  );
+}
+
 export async function linkEmployeeUser(
   authenticatedFetch: Fetcher,
   id: string | number,

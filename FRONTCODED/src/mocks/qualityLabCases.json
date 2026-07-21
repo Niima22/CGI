@@ -1,0 +1,56 @@
+[
+  {
+    "id": "quality-case-001",
+    "input": {
+      "title": "Déconnexion automatique inattendue",
+      "basket": "BO",
+      "summary": "La session utilisateur se ferme sans action volontaire pendant l’utilisation de la plateforme.",
+      "actions": "Vérification de la durée de session configurée. Contrôle des événements enregistrés au moment de la déconnexion. Reproduction du problème sur un second poste.",
+      "tools": "Console du navigateur, journaux applicatifs"
+    },
+    "output": {
+      "suggestedType": "Incident",
+      "qualityScore": 86,
+      "resolutionFrame": {
+        "title": "Déconnexion automatique inattendue",
+        "basket": "BO",
+        "context": "La session utilisateur se ferme sans action volontaire pendant l’utilisation de la plateforme.",
+        "diagnosis": "Les informations fournies confirment une fermeture inattendue de la session. La cause définitive n’est pas encore renseignée.",
+        "actionsPerformed": [
+          "Vérification de la durée de session configurée.",
+          "Contrôle des événements enregistrés au moment de la déconnexion.",
+          "Reproduction du problème sur un second poste."
+        ],
+        "toolsUsed": [
+          "Console du navigateur",
+          "Journaux applicatifs"
+        ],
+        "result": "Le problème a été reproduit, mais la solution définitive et le résultat de validation restent à compléter.",
+        "closingMessage": "Merci de compléter la cause identifiée, la solution appliquée et le résultat du test de validation avant la clôture du ticket."
+      },
+      "similarCases": [
+        {
+          "ticketId": 124118433,
+          "title": "Déconnexion automatique inattendue",
+          "similarity": 96
+        },
+        {
+          "ticketId": 124649873,
+          "title": "Session interrompue pendant l’utilisation",
+          "similarity": 88
+        },
+        {
+          "ticketId": 123845902,
+          "title": "Expiration prématurée de la session utilisateur",
+          "similarity": 81
+        }
+      ],
+      "missingElements": [
+        "Cause racine identifiée",
+        "Solution définitive appliquée",
+        "Résultat du test de validation",
+        "Version du navigateur concerné"
+      ]
+    }
+  }
+]

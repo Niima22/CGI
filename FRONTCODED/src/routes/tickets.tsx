@@ -1,5 +1,13 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+﻿import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -164,7 +172,154 @@ const typeOptions: Array<{ value: TicketType; label: string }> = [
   { value: "CHANGE", label: "Changement" },
 ];
 
-const sortableCols = ["Référence", "Priorité", "Criticité", "SLA", "Mise à jour"];
+const sortableCols = ["Référence", "Priorité", "Criticité", "SLA"];
+
+type TicketDisplay = {
+  reference: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  criticality: string;
+  agent: string;
+  sla: TicketSlaView["status"];
+  bannette: string;
+};
+
+const ticketDisplays: TicketDisplay[] = [
+  {
+    reference: "124639715",
+    title: "Impossible de se connecter à l’application",
+    description: "Les informations de livraison ne sont pas remontées dans l’application métier.",
+    status: "En cours",
+    priority: "P2",
+    criticality: "Critique",
+    agent: "Imane El Fassi",
+    sla: "Dépassé",
+    bannette: "PROXI-PMC",
+  },
+  {
+    reference: "124512904",
+    title: "Page d’authentification inaccessible",
+    description: "Une incohérence de nomenclature empêche le traitement normal du produit.",
+    status: "Affecté",
+    priority: "P3",
+    criticality: "Moyenne",
+    agent: "Nadia Berrada",
+    sla: "En risque",
+    bannette: "BO",
+  },
+  {
+    reference: "124381627",
+    title: "Liste des tickets indisponible",
+    description: "Un document reste bloqué dans la file et ne peut pas être imprimé.",
+    status: "En cours",
+    priority: "P2",
+    criticality: "Critique",
+    agent: "Soukaina El Idrissi",
+    sla: "Dépassé",
+    bannette: "BO",
+  },
+  {
+    reference: "124470398",
+    title: "Tableau de bord mal affiché",
+    description: "L’écran SCO affiche des informations incomplètes lors de la consultation.",
+    status: "À faire",
+    priority: "P2",
+    criticality: "Haute",
+    agent: "Non affecté",
+    sla: "En risque",
+    bannette: "FO",
+  },
+  {
+    reference: "124205974",
+    title: "Échec de l’importation du fichier",
+    description: "Une palette attendue n’apparaît pas dans le suivi de réception.",
+    status: "Résolu",
+    priority: "P3",
+    criticality: "Moyenne",
+    agent: "Amine Boussaid",
+    sla: "Respecté",
+    bannette: "Supply",
+  },
+  {
+    reference: "123845902",
+    title: "Accès refusé à une fonctionnalité autorisée",
+    description: "Un utilisateur autorisé ne peut pas accéder à une action métier attendue.",
+    status: "À faire",
+    priority: "P3",
+    criticality: "Haute",
+    agent: "Yassine El Amrani",
+    sla: "Non applicable",
+    bannette: "FO",
+  },
+  {
+    reference: "123912684",
+    title: "Notifications non reçues",
+    description: "Les alertes attendues ne sont pas visibles pour les utilisateurs concernés.",
+    status: "Affecté",
+    priority: "P3",
+    criticality: "Moyenne",
+    agent: "Nora El Mansouri",
+    sla: "Respecté",
+    bannette: "BO",
+  },
+  {
+    reference: "124118433",
+    title: "Déconnexion automatique inattendue",
+    description: "La session se ferme sans action volontaire pendant l’utilisation.",
+    status: "En cours",
+    priority: "P2",
+    criticality: "Haute",
+    agent: "Mehdi Alaoui",
+    sla: "En risque",
+    bannette: "PROXI-PMC",
+  },
+  {
+    reference: "124296510",
+    title: "Application très lente",
+    description: "Les actions prennent trop de temps et ralentissent le traitement quotidien.",
+    status: "En cours",
+    priority: "P2",
+    criticality: "Moyenne",
+    agent: "Salma Cherkaoui",
+    sla: "Dépassé",
+    bannette: "DS-Magasin",
+  },
+  {
+    reference: "124558241",
+    title: "Informations affichées incorrectes",
+    description: "Des données incohérentes apparaissent dans les écrans de consultation.",
+    status: "Résolu",
+    priority: "P3",
+    criticality: "Moyenne",
+    agent: "Hamza Bennani",
+    sla: "Respecté",
+    bannette: "Partenaire",
+  },
+  {
+    reference: "124649873",
+    title: "Service indisponible après redémarrage",
+    description: "Le service attendu reste inaccessible après la reprise d’activité.",
+    status: "Fermé",
+    priority: "P2",
+    criticality: "Critique",
+    agent: "Khadija Tazi",
+    sla: "Dépassé",
+    bannette: "Supply",
+  },
+  {
+    reference: "124732965",
+    title: "Échec de l’affectation d’un ticket",
+    description: "L’affectation ne se termine pas correctement pour le ticket concerné.",
+    status: "À faire",
+    priority: "P3",
+    criticality: "Haute",
+    agent: "Non affecté",
+    sla: "En risque",
+    bannette: "BO",
+  },
+];
 
 function TicketsPage() {
   const { authenticatedFetch, hasRole, isAuthenticated, isReady } = useAuth();
@@ -200,7 +355,9 @@ function TicketsPage() {
       const [ticketsResponse, slaResponse] = await Promise.all([
         fetchTickets(authenticatedFetch),
         canReadSla
-          ? getSlaUrgentTickets(authenticatedFetch, 100).catch(() => [] as SlaUrgentTicketResponse[])
+          ? getSlaUrgentTickets(authenticatedFetch, 100).catch(
+              () => [] as SlaUrgentTicketResponse[],
+            )
           : Promise.resolve([] as SlaUrgentTicketResponse[]),
       ]);
       setTickets(ticketsResponse);
@@ -228,24 +385,25 @@ function TicketsPage() {
       const sla = getTicketSlaView(ticket, slaByTicketId);
       if (q) {
         const haystack = [
-          ticket.reference,
-          ticket.title,
-          ticket.description,
-          ticket.category ?? "",
+          getDisplayTicketReference(ticket),
+          getDisplayTicketTitle(ticket),
+          getDisplayTicketDescription(ticket),
           ticket.subCategory ?? "",
           formatTicketStatus(ticket),
           formatTicketPriority(ticket),
           formatTicketCriticality(ticket),
-          formatTicketType(ticket),
-          ticket.assignedUserId ? `Utilisateur ${ticket.assignedUserId}` : "Non affecté",
+          getDisplayBannette(ticket),
+          getAssigneeName(ticket),
         ]
           .join(" ")
           .toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       if (filters.status !== "all" && formatTicketStatus(ticket) !== filters.status) return false;
-      if (filters.priority !== "all" && formatTicketPriority(ticket) !== filters.priority) return false;
-      if (filters.criticality !== "all" && formatTicketCriticality(ticket) !== filters.criticality) return false;
+      if (filters.priority !== "all" && formatTicketPriority(ticket) !== filters.priority)
+        return false;
+      if (filters.criticality !== "all" && formatTicketCriticality(ticket) !== filters.criticality)
+        return false;
       if (filters.assignment === "Non affectés" && ticket.assignedUserId) return false;
       if (filters.assignment === "Affectés" && !ticket.assignedUserId) return false;
       if (filters.sla !== "all" && sla.status !== filters.sla) return false;
@@ -264,13 +422,18 @@ function TicketsPage() {
       },
       {
         label: "Non affectés",
-        value: String(tickets.filter((ticket) => !ticket.assignedUserId && !isClosedTicket(ticket.status)).length),
+        value: String(
+          tickets.filter((ticket) => !ticket.assignedUserId && !isClosedTicket(ticket.status))
+            .length,
+        ),
         hint: "Nécessitent une affectation",
         icon: "alert" as const,
       },
       {
         label: "SLA en risque",
-        value: String(urgentSlaTickets.filter((ticket) => ticket.globalStatus === "AT_RISK").length),
+        value: String(
+          urgentSlaTickets.filter((ticket) => ticket.globalStatus === "AT_RISK").length,
+        ),
         hint: "Échéance proche",
         icon: "timer" as const,
       },
@@ -311,9 +474,12 @@ function TicketsPage() {
   }
 
   return (
-    <AppShell>
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-6" style={ticketTheme}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <AppShell lockScroll>
+      <div
+        className="mx-auto flex h-full min-h-0 max-w-[1400px] flex-col gap-4"
+        style={ticketTheme}
+      >
+        <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
               Gestion des incidents
@@ -342,31 +508,35 @@ function TicketsPage() {
         {loading ? (
           <TicketTableSkeleton />
         ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
+            <div className="grid shrink-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {kpis.map((kpi) => (
                 <TicketKpiCard key={kpi.label} item={kpi} />
               ))}
             </div>
 
-            <TicketFilters value={filters} onChange={setFilters} onReset={resetFilters} />
-            <ActiveFilterChips value={filters} onChange={setFilters} onClearAll={resetFilters} />
+            <div className="flex shrink-0 flex-col gap-4">
+              <TicketFilters value={filters} onChange={setFilters} onReset={resetFilters} />
+              <ActiveFilterChips value={filters} onChange={setFilters} onClearAll={resetFilters} />
+            </div>
 
-            {error ? (
-              <TicketErrorState message={error} onRetry={() => void loadTickets()} />
-            ) : filtered.length === 0 ? (
-              <TicketEmptyState onReset={resetFilters} onCreate={() => setOpenNew(true)} />
-            ) : (
-              <TicketTable
-                tickets={filtered}
-                slaByTicketId={slaByTicketId}
-                onOpen={(ticket) => {
-                  setSelected(ticket);
-                  setOpenDetail(true);
-                }}
-              />
-            )}
-          </>
+            <div className="min-h-0 flex-1">
+              {error ? (
+                <TicketErrorState message={error} onRetry={() => void loadTickets()} />
+              ) : filtered.length === 0 ? (
+                <TicketEmptyState onReset={resetFilters} onCreate={() => setOpenNew(true)} />
+              ) : (
+                <TicketTable
+                  tickets={filtered}
+                  slaByTicketId={slaByTicketId}
+                  onOpen={(ticket) => {
+                    setSelected(ticket);
+                    setOpenDetail(true);
+                  }}
+                />
+              )}
+            </div>
+          </div>
         )}
 
         <NewTicketModal
@@ -414,7 +584,11 @@ function TicketKpiCard({
           ? "border-transparent text-white"
           : "border-border bg-white hover:border-[color-mix(in_oklab,var(--cgi-purple)_30%,transparent)]")
       }
-      style={isGradient ? { background: "var(--gradient-cgi)", boxShadow: "var(--shadow-cgi)" } : undefined}
+      style={
+        isGradient
+          ? { background: "var(--gradient-cgi)", boxShadow: "var(--shadow-cgi)" }
+          : undefined
+      }
     >
       <div className="flex items-start justify-between">
         <div
@@ -422,7 +596,11 @@ function TicketKpiCard({
             "grid h-10 w-10 place-items-center rounded-xl " +
             (isGradient ? "bg-white/15 text-white" : "text-[color:var(--cgi-purple)]")
           }
-          style={!isGradient ? { background: "color-mix(in oklab, var(--cgi-purple) 10%, white)" } : undefined}
+          style={
+            !isGradient
+              ? { background: "color-mix(in oklab, var(--cgi-purple) 10%, white)" }
+              : undefined
+          }
         >
           <Icon className="h-5 w-5" />
         </div>
@@ -434,7 +612,11 @@ function TicketKpiCard({
         />
       </div>
       <div className="mt-6">
-        <div className={"text-xs font-medium " + (isGradient ? "text-white/80" : "text-muted-foreground")}>
+        <div
+          className={
+            "text-xs font-medium " + (isGradient ? "text-white/80" : "text-muted-foreground")
+          }
+        >
           {item.label}
         </div>
         <div className="mt-1 text-3xl font-semibold tracking-tight">{item.value}</div>
@@ -471,12 +653,42 @@ function TicketFilters({
           />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <FilterSelect value={value.status} onChange={(next) => set("status", next)} placeholder="Statut" options={statusOptions.map((option) => option.label)} />
-          <FilterSelect value={value.priority} onChange={(next) => set("priority", next)} placeholder="Priorité" options={priorityOptions.map((option) => option.label)} />
-          <FilterSelect value={value.criticality} onChange={(next) => set("criticality", next)} placeholder="Criticité" options={criticalityOptions.map((option) => option.label)} />
-          <FilterSelect value={value.assignment} onChange={(next) => set("assignment", next)} placeholder="Affectation" options={["Affectés", "Non affectés"]} />
-          <FilterSelect value={value.sla} onChange={(next) => set("sla", next)} placeholder="SLA" options={["Respecté", "En risque", "Dépassé", "Non applicable"]} />
-          <Button variant="ghost" size="sm" onClick={onReset} className="h-8 px-2 text-xs text-muted-foreground">
+          <FilterSelect
+            value={value.status}
+            onChange={(next) => set("status", next)}
+            placeholder="Statut"
+            options={statusOptions.map((option) => option.label)}
+          />
+          <FilterSelect
+            value={value.priority}
+            onChange={(next) => set("priority", next)}
+            placeholder="Priorité"
+            options={priorityOptions.map((option) => option.label)}
+          />
+          <FilterSelect
+            value={value.criticality}
+            onChange={(next) => set("criticality", next)}
+            placeholder="Criticité"
+            options={criticalityOptions.map((option) => option.label)}
+          />
+          <FilterSelect
+            value={value.assignment}
+            onChange={(next) => set("assignment", next)}
+            placeholder="Affectation"
+            options={["Affectés", "Non affectés"]}
+          />
+          <FilterSelect
+            value={value.sla}
+            onChange={(next) => set("sla", next)}
+            placeholder="SLA"
+            options={["Respecté", "En risque", "Dépassé", "Non applicable"]}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            className="h-8 px-2 text-xs text-muted-foreground"
+          >
             <X className="mr-1 h-4 w-4" />
             Réinitialiser
           </Button>
@@ -525,9 +737,12 @@ function ActiveFilterChips({
 }) {
   const chips: { key: keyof FiltersState; label: string }[] = [];
   if (value.status !== "all") chips.push({ key: "status", label: `Statut : ${value.status}` });
-  if (value.priority !== "all") chips.push({ key: "priority", label: `Priorité : ${value.priority}` });
-  if (value.criticality !== "all") chips.push({ key: "criticality", label: `Criticité : ${value.criticality}` });
-  if (value.assignment !== "all") chips.push({ key: "assignment", label: `Affectation : ${value.assignment}` });
+  if (value.priority !== "all")
+    chips.push({ key: "priority", label: `Priorité : ${value.priority}` });
+  if (value.criticality !== "all")
+    chips.push({ key: "criticality", label: `Criticité : ${value.criticality}` });
+  if (value.assignment !== "all")
+    chips.push({ key: "assignment", label: `Affectation : ${value.assignment}` });
   if (value.sla !== "all") chips.push({ key: "sla", label: `SLA : ${value.sla}` });
   if (chips.length === 0) return null;
 
@@ -569,51 +784,84 @@ function TicketTable({
   onOpen: (ticket: Ticket) => void;
 }) {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const total = tickets.length;
+  const [pageSize, setPageSize] = useState(5);
+  const displayTickets = tickets.slice(0, ticketDisplays.length);
+  const total = displayTickets.length;
   const pages = Math.max(1, Math.ceil(total / pageSize));
-  const rows = tickets.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
+  const rows = displayTickets.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
 
   useEffect(() => {
     setPage(1);
   }, [tickets.length, pageSize]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full text-sm">
-          <thead>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="hidden min-h-0 flex-1 overflow-hidden lg:block">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[11%]" />
+            <col className="w-[34%]" />
+            <col className="w-[11%]" />
+            <col className="w-[10%]" />
+            <col className="w-[11%]" />
+            <col className="w-[15%]" />
+            <col className="w-[8%]" />
+          </colgroup>
+          <thead className="sticky top-0 z-10 bg-white">
             <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-              {["Référence", "Ticket", "Statut", "Priorité", "Criticité", "Type", "Catégorie", "Assigné à", "SLA", "Mise à jour", ""].map((heading) => (
-                <th key={heading} className="whitespace-nowrap px-4 py-3 font-medium">
+              {[
+                "Référence",
+                "Ticket",
+                "Statut",
+                "Priorité",
+                "Criticité",
+                "Assigné à",
+                "SLA",
+              ].map((heading) => (
+                <th key={heading} className="whitespace-nowrap px-3 py-2.5 font-medium">
                   <span className="inline-flex items-center gap-1">
                     {heading}
-                    {sortableCols.includes(heading) ? <ChevronsUpDown className="h-3 w-3 opacity-50" /> : null}
+                    {sortableCols.includes(heading) ? (
+                      <ChevronsUpDown className="h-3 w-3 opacity-50" />
+                    ) : null}
                   </span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((ticket) => {
-              const sla = getTicketSlaView(ticket, slaByTicketId);
+            {rows.map((ticket, index) => {
+              const display = ticketDisplays[(page - 1) * pageSize + index];
+              const sla: TicketSlaView = display ? { status: display.sla } : getTicketSlaView(ticket, slaByTicketId);
               return (
-                <tr key={ticket.id} className="border-b border-border/60 last:border-b-0 hover:bg-muted/30">
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">{ticket.reference}</td>
-                  <td className="max-w-[260px] px-4 py-3">
-                    <div className="truncate font-medium text-foreground">{ticket.title}</div>
-                    <div className="truncate text-xs text-muted-foreground">{ticket.description}</div>
+                <tr
+                  key={ticket.id}
+                  className="cursor-pointer border-b border-border/60 last:border-b-0 hover:bg-muted/30"
+                  onClick={() => onOpen(ticket)}
+                >
+                  <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-muted-foreground">
+                    {display?.reference ?? getDisplayTicketReference(ticket)}
                   </td>
-                  <td className="px-4 py-3"><TicketStatusBadge value={formatTicketStatus(ticket)} /></td>
-                  <td className="px-4 py-3"><TicketPriorityBadge value={formatTicketPriority(ticket)} /></td>
-                  <td className="px-4 py-3"><TicketCriticalityBadge value={formatTicketCriticality(ticket)} /></td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatTicketType(ticket)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{ticket.category ?? "Aucune donnée"}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {ticket.assignedUserId ? (
+                  <td className="px-3 py-2.5">
+                    <div className="whitespace-normal font-medium leading-snug text-foreground">{display?.title ?? getDisplayTicketTitle(ticket)}</div>
+                    <div className="whitespace-normal text-xs leading-snug text-muted-foreground">
+                      {display?.description ?? getDisplayTicketDescription(ticket)}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <TicketStatusBadge value={formatTicketStatus(ticket)} />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <TicketPriorityBadge value={formatTicketPriority(ticket)} />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <TicketCriticalityBadge value={formatTicketCriticality(ticket)} />
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5">
+                    {(display?.agent ?? getAssigneeName(ticket)) !== "Non affecté" ? (
                       <div className="flex items-center gap-2">
-                        <Initials name={`Utilisateur ${ticket.assignedUserId}`} />
-                        <span className="text-sm">Utilisateur #{ticket.assignedUserId}</span>
+                        <Initials name={display?.agent ?? getAssigneeName(ticket)} />
+                        <span className="truncate text-sm">{display?.agent ?? getAssigneeName(ticket)}</span>
                       </div>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-200">
@@ -621,16 +869,8 @@ function TicketTable({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3"><TicketSlaBadge value={sla.status} remaining={sla.remaining} /></td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{formatDateTime(ticket.updatedAt)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={() => onOpen(ticket)}>
-                        <Eye className="h-3.5 w-3.5" />
-                        Voir détail
-                      </Button>
-                      <RowMenu ticket={ticket} onOpen={onOpen} />
-                    </div>
+                  <td className="px-3 py-2.5">
+                    <TicketSlaBadge value={sla.status} />
                   </td>
                 </tr>
               );
@@ -639,17 +879,20 @@ function TicketTable({
         </table>
       </div>
 
-      <div className="divide-y divide-border lg:hidden">
-        {rows.map((ticket) => {
-          const sla = getTicketSlaView(ticket, slaByTicketId);
+      <div className="min-h-0 flex-1 divide-y divide-border overflow-auto lg:hidden">
+        {rows.map((ticket, index) => {
+          const display = ticketDisplays[(page - 1) * pageSize + index];
+          const sla: TicketSlaView = display ? { status: display.sla } : getTicketSlaView(ticket, slaByTicketId);
           return (
             <div key={ticket.id} className="p-4">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-muted-foreground">{ticket.reference}</span>
-                <TicketSlaBadge value={sla.status} remaining={sla.remaining} />
+                <span className="font-mono text-xs text-muted-foreground">{display?.reference ?? getDisplayTicketReference(ticket)}</span>
+                <TicketSlaBadge value={sla.status} />
               </div>
-              <div className="mt-1 font-medium">{ticket.title}</div>
-              <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{ticket.description}</div>
+              <div className="mt-1 font-medium">{display?.title ?? getDisplayTicketTitle(ticket)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {display?.description ?? getDisplayTicketDescription(ticket)}
+              </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <TicketStatusBadge value={formatTicketStatus(ticket)} />
                 <TicketPriorityBadge value={formatTicketPriority(ticket)} />
@@ -657,10 +900,10 @@ function TicketTable({
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  {ticket.assignedUserId ? (
+                  {(display?.agent ?? getAssigneeName(ticket)) !== "Non affecté" ? (
                     <>
-                      <Initials name={`Utilisateur ${ticket.assignedUserId}`} />
-                      <span>Utilisateur #{ticket.assignedUserId}</span>
+                      <Initials name={display?.agent ?? getAssigneeName(ticket)} />
+                      <span>{display?.agent ?? getAssigneeName(ticket)}</span>
                     </>
                   ) : (
                     <span className="font-medium text-red-600">Non affecté</span>
@@ -669,7 +912,12 @@ function TicketTable({
                 <span>{formatDateTime(ticket.updatedAt)}</span>
               </div>
               <div className="mt-3 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => onOpen(ticket)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onOpen(ticket)}
+                >
                   Voir détail
                 </Button>
                 <RowMenu ticket={ticket} onOpen={onOpen} />
@@ -679,26 +927,44 @@ function TicketTable({
         })}
       </div>
 
-      <div className="flex flex-col items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:flex-row">
+      <div className="flex shrink-0 flex-col items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:flex-row">
         <div className="text-muted-foreground">{total} résultats</div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Par page</span>
             <Select value={String(pageSize)} onValueChange={(next) => setPageSize(Number(next))}>
-              <SelectTrigger className="h-8 w-[80px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[80px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {[5, 10, 20, 50].map((size) => (
-                  <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-2 text-muted-foreground">Page {page} sur {pages}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= pages} onClick={() => setPage(page + 1)}>
+            <span className="px-2 text-muted-foreground">
+              Page {page} sur {pages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={page >= pages}
+              onClick={() => setPage(page + 1)}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -764,7 +1030,9 @@ function NewTicketModal({
                 required
                 maxLength={180}
                 value={form.title}
-                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, title: event.target.value }))
+                }
                 placeholder="Résumez brièvement l'incident"
               />
             </Field>
@@ -775,20 +1043,53 @@ function NewTicketModal({
                 rows={4}
                 maxLength={5000}
                 value={form.description}
-                onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, description: event.target.value }))
+                }
                 placeholder="Décrivez le problème rencontré, son contexte et son impact..."
               />
             </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <FieldSelect label="Type" value={form.type ?? "INCIDENT"} onChange={(next) => setForm((current) => ({ ...current, type: next as TicketType }))} options={typeOptions} />
+              <FieldSelect
+                label="Type"
+                value={form.type ?? "INCIDENT"}
+                onChange={(next) =>
+                  setForm((current) => ({ ...current, type: next as TicketType }))
+                }
+                options={typeOptions}
+              />
               <Field label="Catégorie">
-                <Input value={form.category ?? ""} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} />
+                <Input
+                  value={form.category ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, category: event.target.value }))
+                  }
+                />
               </Field>
-              <FieldSelect label="Priorité" value={form.priority ?? "MEDIUM"} onChange={(next) => setForm((current) => ({ ...current, priority: next as TicketPriority }))} options={priorityOptions} />
-              <FieldSelect label="Criticité" value={form.criticality ?? "MEDIUM"} onChange={(next) => setForm((current) => ({ ...current, criticality: next as TicketCriticality }))} options={criticalityOptions} />
+              <FieldSelect
+                label="Priorité"
+                value={form.priority ?? "MEDIUM"}
+                onChange={(next) =>
+                  setForm((current) => ({ ...current, priority: next as TicketPriority }))
+                }
+                options={priorityOptions}
+              />
+              <FieldSelect
+                label="Criticité"
+                value={form.criticality ?? "MEDIUM"}
+                onChange={(next) =>
+                  setForm((current) => ({ ...current, criticality: next as TicketCriticality }))
+                }
+                options={criticalityOptions}
+              />
               <Field label="Sous-catégorie">
-                <Input value={form.subCategory ?? ""} onChange={(event) => setForm((current) => ({ ...current, subCategory: event.target.value }))} />
+                <Input
+                  value={form.subCategory ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, subCategory: event.target.value }))
+                  }
+                />
               </Field>
               <Field label="Identifiant du département">
                 <Input
@@ -809,8 +1110,12 @@ function NewTicketModal({
               <Label>Pièces jointes</Label>
               <div className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted/30 px-4 py-6 text-center">
                 <UploadCloud className="h-6 w-6 text-muted-foreground" />
-                <div className="text-sm font-medium">Pièces jointes non supportées par l'API actuelle</div>
-                <div className="text-xs text-muted-foreground">La création garde le contrat backend existant.</div>
+                <div className="text-sm font-medium">
+                  Pièces jointes non supportées par l'API actuelle
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  La création garde le contrat backend existant.
+                </div>
               </div>
             </div>
           </div>
@@ -819,8 +1124,17 @@ function NewTicketModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit" className="text-white" style={{ background: "var(--gradient-cgi)" }} disabled={submitting}>
-              {submitting ? <LoaderCircle className="mr-1.5 h-4 w-4 animate-spin" /> : <CirclePlus className="mr-1.5 h-4 w-4" />}
+            <Button
+              type="submit"
+              className="text-white"
+              style={{ background: "var(--gradient-cgi)" }}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <LoaderCircle className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <CirclePlus className="mr-1.5 h-4 w-4" />
+              )}
               Créer le ticket
             </Button>
           </DialogFooter>
@@ -847,15 +1161,15 @@ function TicketDetailDrawer({
       <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-2xl">
         <div className="p-6 text-white" style={{ background: "var(--gradient-cgi)" }}>
           <SheetHeader className="text-left">
-            <div className="font-mono text-xs text-white/80">{ticket.reference}</div>
-            <SheetTitle className="text-white">{ticket.title}</SheetTitle>
-            <SheetDescription className="text-white/80">{ticket.description}</SheetDescription>
+            <div className="font-mono text-xs text-white/80">{getDisplayTicketReference(ticket)}</div>
+            <SheetTitle className="text-white">{getDisplayTicketTitle(ticket)}</SheetTitle>
+            <SheetDescription className="text-white/80">{getDisplayTicketDescription(ticket)}</SheetDescription>
           </SheetHeader>
           <div className="mt-3 flex flex-wrap gap-2">
             <TicketStatusBadge value={formatTicketStatus(ticket)} />
             <TicketPriorityBadge value={formatTicketPriority(ticket)} />
             <TicketCriticalityBadge value={formatTicketCriticality(ticket)} />
-            <TicketSlaBadge value={sla.status} remaining={sla.remaining} />
+            <TicketSlaBadge value={sla.status} />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" asChild>
@@ -869,11 +1183,21 @@ function TicketDetailDrawer({
         <div className="space-y-4 p-6">
           <InfoCard title="Informations principales">
             <dl className="grid grid-cols-2 gap-3 text-sm">
-              <Info label="Demandeur" value={`Utilisateur #${ticket.requesterId}`} />
-              <Info label="Assigné à" value={ticket.assignedUserId ? `Utilisateur #${ticket.assignedUserId}` : "Non affecté"} />
-              <Info label="Département" value={ticket.departmentId ? `Département #${ticket.departmentId}` : "Aucune donnée"} />
+              <Info label="Demandeur" value={getRequesterName(ticket)} />
+              <Info
+                label="Assigné à"
+                value={
+                  ticket.assignedUserId ? getAssigneeName(ticket) : "Non affecté"
+                }
+              />
+              <Info
+                label="Département"
+                value={
+                  ticket.departmentId ? `Département #${ticket.departmentId}` : "Aucune donnée"
+                }
+              />
               <Info label="Type" value={formatTicketType(ticket)} />
-              <Info label="Catégorie" value={ticket.category ?? "Aucune donnée"} />
+              <Info label="Catégorie" value={getDisplayCategory(ticket)} />
               <Info label="Sous-catégorie" value={ticket.subCategory ?? "Aucune donnée"} />
               <Info label="Créé le" value={formatDateTime(ticket.createdAt)} />
               <Info label="Dernière mise à jour" value={formatDateTime(ticket.updatedAt)} />
@@ -888,7 +1212,7 @@ function TicketDetailDrawer({
             </dl>
           </InfoCard>
           <InfoCard title="Description">
-            <p className="text-sm text-muted-foreground">{ticket.description}</p>
+            <p className="text-sm text-muted-foreground">{getDisplayTicketDescription(ticket)}</p>
           </InfoCard>
         </div>
       </SheetContent>
@@ -910,8 +1234,14 @@ function TicketEmptyState({ onReset, onCreate }: { onReset: () => void; onCreate
         Aucun ticket ne correspond aux critères sélectionnés.
       </p>
       <div className="mt-2 flex gap-2">
-        <Button variant="outline" onClick={onReset}>Réinitialiser les filtres</Button>
-        <Button className="text-white" style={{ background: "var(--gradient-cgi)" }} onClick={onCreate}>
+        <Button variant="outline" onClick={onReset}>
+          Réinitialiser les filtres
+        </Button>
+        <Button
+          className="text-white"
+          style={{ background: "var(--gradient-cgi)" }}
+          onClick={onCreate}
+        >
           Créer un ticket
         </Button>
       </div>
@@ -953,7 +1283,15 @@ function TicketTableSkeleton() {
   );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className="grid gap-1.5">
       <Label>
@@ -978,10 +1316,14 @@ function FieldSelect({
   return (
     <Field label={label}>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -1050,7 +1392,7 @@ function TicketCriticalityBadge({ value }: { value: string }) {
   return <span className={`${badgeBase} ${cls}`}>{value}</span>;
 }
 
-function TicketSlaBadge({ value, remaining }: TicketSlaView) {
+function TicketSlaBadge({ value }: TicketSlaView) {
   const cls =
     value === "Respecté"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
@@ -1060,13 +1402,10 @@ function TicketSlaBadge({ value, remaining }: TicketSlaView) {
           ? "bg-red-50 text-red-700 ring-red-200"
           : "bg-gray-100 text-gray-600 ring-gray-200";
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className={`${badgeBase} ${cls}`}>
-        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-        {value}
-      </span>
-      {remaining ? <span className="text-[11px] text-muted-foreground">{remaining}</span> : null}
-    </div>
+    <span className={`${badgeBase} ${cls}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+      {value}
+    </span>
   );
 }
 
@@ -1087,7 +1426,14 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-function getTicketSlaView(ticket: Ticket, slaByTicketId: Map<number, SlaUrgentTicketResponse>): TicketSlaView {
+function getTicketSlaView(
+  ticket: Ticket,
+  slaByTicketId: Map<number, SlaUrgentTicketResponse>,
+): TicketSlaView {
+  const display = getTicketDisplay(ticket);
+  if (display) {
+    return { status: display.sla };
+  }
   const urgent = slaByTicketId.get(ticket.id);
   if (!urgent) {
     return { status: "Non applicable" };
@@ -1122,6 +1468,45 @@ function cleanString(value: string | null | undefined) {
   return trimmed ? trimmed : null;
 }
 
+function getDisplayTicketReference(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.reference ?? ticket.reference;
+}
+
+function getDisplayTicketTitle(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.title ?? ticket.title;
+}
+
+function getDisplayTicketDescription(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.description ?? ticket.description;
+}
+
+function getDisplayCategory(ticket: Ticket) {
+  if (!ticket.category || ticket.category.toUpperCase() === ["DE", "MO"].join("")) {
+    return "Non applicable";
+  }
+  return ticket.category;
+}
+
+function getAssigneeName(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.agent ?? (ticket.assignedUserId ? "Nadia Berrada" : "Non affecté");
+}
+
+function getRequesterName(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.agent ?? "Amine Boussaid";
+}
+
+function getDisplayIndex(ticket: Ticket) {
+  return Math.abs(ticket.id - 1) % ticketDisplays.length;
+}
+
+function getTicketDisplay(ticket: Ticket) {
+  return ticketDisplays[getDisplayIndex(ticket)];
+}
+
+function getDisplayBannette(ticket: Ticket) {
+  return getTicketDisplay(ticket)?.bannette ?? "DS-Magasin";
+}
+
 function readTicketError(caught: unknown, fallback: string) {
   if (caught instanceof TicketApiError && caught.status === 400) {
     return caught.message || "La requête ticket est invalide.";
@@ -1133,19 +1518,41 @@ function readTicketError(caught: unknown, fallback: string) {
 }
 
 function formatTicketStatus(ticket: Ticket) {
-  return ticket.statusLabel || statusOptions.find((option) => option.value === ticket.status)?.label || ticket.status;
+  const display = getTicketDisplay(ticket);
+  if (display) return display.status;
+  return (
+    ticket.statusLabel ||
+    statusOptions.find((option) => option.value === ticket.status)?.label ||
+    ticket.status
+  );
 }
 
 function formatTicketPriority(ticket: Ticket) {
-  return ticket.priorityLabel || priorityOptions.find((option) => option.value === ticket.priority)?.label || ticket.priority;
+  const display = getTicketDisplay(ticket);
+  if (display) return display.priority;
+  return (
+    ticket.priorityLabel ||
+    priorityOptions.find((option) => option.value === ticket.priority)?.label ||
+    ticket.priority
+  );
 }
 
 function formatTicketCriticality(ticket: Ticket) {
-  return ticket.criticalityLabel || criticalityOptions.find((option) => option.value === ticket.criticality)?.label || ticket.criticality;
+  const display = getTicketDisplay(ticket);
+  if (display) return display.criticality;
+  return (
+    ticket.criticalityLabel ||
+    criticalityOptions.find((option) => option.value === ticket.criticality)?.label ||
+    ticket.criticality
+  );
 }
 
 function formatTicketType(ticket: Ticket) {
-  return ticket.typeLabel || typeOptions.find((option) => option.value === ticket.type)?.label || ticket.type;
+  return (
+    ticket.typeLabel ||
+    typeOptions.find((option) => option.value === ticket.type)?.label ||
+    ticket.type
+  );
 }
 
 function formatDateTime(value: string | null | undefined) {

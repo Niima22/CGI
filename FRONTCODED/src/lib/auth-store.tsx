@@ -66,6 +66,7 @@ let keycloakInit: Promise<boolean> | null = null;
 const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085";
 const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "cgi-flow";
 const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "cgi-flow-web";
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
 const planningDevAdminBypass = import.meta.env.VITE_PLANNING_DEV_ADMIN_BYPASS === "true";
 const tokenStorageKey = "cgi-flow.keycloak.tokens";
 
@@ -99,11 +100,33 @@ function getKeycloakUrl() {
     return keycloakUrl;
   }
 
-  if (keycloakUrl.includes("host.docker.internal")) {
+  const isLocalFrontend = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const isLocalKeycloak =
+    keycloakUrl.includes("localhost:8085") ||
+    keycloakUrl.includes("127.0.0.1:8085") ||
+    keycloakUrl.includes("host.docker.internal:8085");
+
+  if (isLocalFrontend && isLocalKeycloak) {
     return `${window.location.protocol}//${window.location.hostname}:8085`;
   }
 
   return keycloakUrl;
+}
+
+function getApiUrl(input: RequestInfo | URL) {
+  if (typeof input !== "string" || !input.startsWith("/api")) {
+    return input;
+  }
+
+  if (apiBaseUrl) {
+    return `${apiBaseUrl}${input}`;
+  }
+
+  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return `${window.location.protocol}//${window.location.hostname}:8080${input}`;
+  }
+
+  return input;
 }
 
 function getKeycloak() {
@@ -168,11 +191,12 @@ async function refreshClientToken(client: Keycloak) {
 
 async function loadCurrentUser(client: Keycloak): Promise<CurrentUser> {
   await refreshClientToken(client);
-  const response = await fetch("/api/auth/me", {
+  const response = await fetch(getApiUrl("/api/auth/me"), {
     headers: { Authorization: `Bearer ${client.token}` },
   });
 
   if (!response.ok) {
+    clearTokens();
     throw new Error(`Unable to load current user: HTTP ${response.status}`);
   }
   return response.json() as Promise<CurrentUser>;
@@ -221,6 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async ({ email, password }: LoginCredentials) => {
+    clearTokens();
+    keycloak = null;
+    keycloakInit = null;
+
     const response = await fetch(
       `${getKeycloakUrl()}/realms/${keycloakRealm}/protocol/openid-connect/token`,
       {
@@ -296,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isPlanningApi && planningDevAdminBypass) {
       const headers = new Headers(init?.headers);
       headers.set("X-CGI-Dev-Admin", "true");
-      return fetch(input, { ...init, headers });
+      return fetch(getApiUrl(input), { ...init, headers });
     }
 
     const client = getKeycloak();
@@ -307,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const headers = new Headers(init?.headers);
     headers.set("Authorization", `Bearer ${client.token}`);
-    return fetch(input, { ...init, headers });
+    return fetch(getApiUrl(input), { ...init, headers });
   }, []);
 
   const roles = useMemo<Role[]>(() => user?.roles ?? [], [user]);

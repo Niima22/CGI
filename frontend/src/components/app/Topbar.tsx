@@ -1,11 +1,18 @@
-import { ChevronDown, Search } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
+import { Menu } from "lucide-react";
 import { AvailabilityStatusSelector } from "@/components/app/AvailabilityStatusSelector";
-import { CurrentUserAvatar } from "@/components/app/CurrentUserAvatar";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
+import { UserMenu } from "@/components/app/UserMenu";
 
-export function Topbar({ compact = false }: { compact?: boolean }) {
-  const { roles, email, fullName } = useAuth();
+export function Topbar({
+  compact = false,
+  onOpenMobileSidebar,
+}: {
+  compact?: boolean;
+  onOpenMobileSidebar?: () => void;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const title = getPageTitle(pathname);
 
   return (
     <header
@@ -13,43 +20,45 @@ export function Topbar({ compact = false }: { compact?: boolean }) {
         compact ? "min-h-12 py-1.5" : "min-h-16 py-2.5"
       }`}
     >
-      <div className="relative max-w-2xl flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Rechercher un ticket, un employé, un département..."
-          className={`w-full rounded-xl border border-border/70 bg-muted/40 pl-10 pr-4 text-sm outline-none transition-all focus:border-[oklch(0.6_0.2_300)] focus:bg-white focus:ring-2 focus:ring-[oklch(0.6_0.2_300)]/20 ${
-            compact ? "py-2" : "py-2.5"
-          }`}
-        />
+      <button
+        type="button"
+        aria-label="Ouvrir le menu"
+        onClick={onOpenMobileSidebar}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/70 bg-white text-foreground transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.55_0.24_300)] lg:hidden"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          CGI-Intranet
+        </div>
+        <h1 className="truncate text-base font-semibold tracking-normal text-foreground sm:text-lg">
+          {title}
+        </h1>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
         <div className="hidden min-w-[188px] sm:block">
           <AvailabilityStatusSelector compact={compact} />
         </div>
-
         <NotificationBell compact={compact} />
-
-        <div className="hidden min-w-0 text-right xl:block">
-          <div className="truncate text-sm font-medium text-foreground">{fullName}</div>
-          <div className="truncate text-xs text-muted-foreground">{email}</div>
-        </div>
-        <span className="hidden shrink-0 rounded-lg border border-border/70 bg-white px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-          {roles
-            .filter((role) => ["ADMIN", "MANAGER", "EMPLOYEE"].includes(role))
-            .map(getBusinessRoleLabel)
-            .join(", ")}
-        </span>
-        <button
-          type="button"
-          aria-label="Menu utilisateur"
-          className="flex items-center gap-2 rounded-lg border border-border/70 bg-white px-1.5 py-1 pr-2.5 text-sm transition hover:bg-muted/50"
-        >
-          <CurrentUserAvatar compact={compact} />
-          <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:inline" />
-        </button>
+        <UserMenu compact={compact} />
       </div>
     </header>
   );
+}
+
+function getPageTitle(pathname: string) {
+  if (pathname.startsWith("/tickets")) return "Tickets";
+  if (pathname.startsWith("/sla")) return "SLA";
+  if (pathname.startsWith("/quality-lab")) return "Quality Lab IA";
+  if (pathname.startsWith("/employees")) return "Employes";
+  if (pathname.startsWith("/planning")) return "Planning";
+  if (pathname.startsWith("/messages")) return "Messagerie";
+  if (pathname.startsWith("/my-profile")) return "Mon profil";
+  if (pathname.startsWith("/departments")) return "Departements";
+  if (pathname.startsWith("/users")) return "Utilisateurs";
+  if (pathname.startsWith("/help")) return "Aide";
+  return "Tableau de bord";
 }

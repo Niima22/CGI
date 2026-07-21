@@ -1,3 +1,4 @@
+import { UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function ProfileAvatar({
@@ -9,23 +10,34 @@ export function ProfileAvatar({
   fullName?: string | null;
   email?: string | null;
   profilePhotoUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }) {
   const [failed, setFailed] = useState(false);
   const initials = useMemo(() => getInitials(fullName, email), [email, fullName]);
   const dimension =
-    size === "sm"
-      ? "h-8 w-8 text-xs"
-      : size === "lg"
-        ? "h-20 w-20 text-xl"
-        : "h-10 w-10 text-sm";
+    size === "xs"
+      ? "h-6 w-6 text-[10px]"
+      : size === "sm"
+        ? "h-8 w-8 text-xs"
+        : size === "lg"
+          ? "h-20 w-20 text-xl"
+          : "h-10 w-10 text-sm";
+  const iconSize =
+    size === "xs"
+      ? "h-3.5 w-3.5"
+      : size === "sm"
+        ? "h-4 w-4"
+        : size === "lg"
+          ? "h-9 w-9"
+          : "h-5 w-5";
 
   if (!profilePhotoUrl || failed) {
     return (
       <div
-        className={`flex items-center justify-center rounded-xl bg-cgi-gradient font-semibold text-white shadow-glow ${dimension}`}
+        className={`flex items-center justify-center rounded-full bg-cgi-gradient font-semibold text-white shadow-glow ${dimension}`}
+        title={initials}
       >
-        {initials}
+        <UserRound className={iconSize} style={{ color: "#241347" }} />
       </div>
     );
   }

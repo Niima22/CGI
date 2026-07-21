@@ -2,8 +2,8 @@ import type { Conversation, ConversationType, MessagingDirectoryUser } from "@/l
 
 const conversationTypeLabels: Record<ConversationType, string> = {
   DIRECT: "Conversation directe",
-  GROUP: "Groupe",
-  TICKET: "Discussion ticket",
+  GROUP: "Conversation de groupe",
+  TICKET: "Discussion liée au ticket",
 };
 
 export function getConversationTypeLabel(type: ConversationType) {
@@ -17,6 +17,16 @@ export function formatMessageDateTime(value: string | null) {
   return new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "short",
     timeStyle: "short",
+  }).format(new Date(value));
+}
+
+export function formatMessageTime(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+  return new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(value));
 }
 
@@ -53,10 +63,13 @@ export function buildConversationTitle(
   usersById: Map<number, MessagingDirectoryUser>,
 ) {
   if (conversation.type === "GROUP") {
-    return conversation.title?.trim() || "Groupe sans titre";
+    return conversation.title?.trim() || "Conversation de groupe sans titre";
   }
   if (conversation.type === "TICKET") {
-    return conversation.ticketId ? `Ticket #${conversation.ticketId}` : "Discussion ticket";
+    if (conversation.title?.trim()) {
+      return conversation.title.trim();
+    }
+    return conversation.ticketId ? `Ticket ${conversation.ticketId}` : "Discussion liée au ticket";
   }
 
   const otherParticipant = conversation.participants.find(

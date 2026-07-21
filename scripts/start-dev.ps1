@@ -1,3 +1,8 @@
+param(
+    [ValidateRange(1, 65535)]
+    [int]$FrontendPort = 5173
+)
+
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -14,7 +19,7 @@ $managedServices = @(
     @{ Name = "planning-service"; Port = 8087 },
     @{ Name = "api-gateway"; Port = 8080 },
     @{ Name = "ai-service"; Port = 8001 },
-    @{ Name = "frontend"; Port = 5173 }
+    @{ Name = "frontend"; Port = $FrontendPort }
 )
 
 function Import-DotEnv {
@@ -239,12 +244,12 @@ Wait-Port 8080 "api-gateway"
 Start-LoggedProcess "ai-service" (Join-Path $repoRoot "ai_service\.venv\Scripts\python.exe") @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8001") (Join-Path $repoRoot "ai_service") 8001
 Wait-Port 8001 "ai-service"
 
-Start-LoggedProcess "frontend" "npm.cmd" @("run", "dev", "--", "--host", "127.0.0.1", "--port", "5173") (Join-Path $repoRoot "FRONTCODED") 5173
-Wait-Port 5173 "frontend"
+Start-LoggedProcess "frontend" "npm.cmd" @("run", "dev", "--", "--host", "127.0.0.1", "--port", "$FrontendPort") (Join-Path $repoRoot "FRONTCODED") $FrontendPort
+Wait-Port $FrontendPort "frontend"
 
 Write-Host ""
 Write-Host "CGI-FLOW is running:"
-Write-Host "  Frontend: http://127.0.0.1:5173/"
+Write-Host "  Frontend: http://127.0.0.1:$FrontendPort/"
 Write-Host "  Keycloak: http://127.0.0.1:8085/"
 Write-Host "  Eureka:   http://127.0.0.1:8761/"
 Write-Host "  Planning: http://127.0.0.1:8087/api/plannings/health"

@@ -77,7 +77,7 @@ function LoginPage() {
   ];
 
   return (
-    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-[oklch(0.985_0.005_300)] p-6 sm:p-8 lg:p-10 [@media(max-height:700px)]:p-5">
+    <main className="relative grid min-h-dvh place-items-center overflow-x-hidden overflow-y-auto bg-[oklch(0.985_0.005_300)] p-4 sm:p-6 lg:p-10 [@media(max-height:700px)]:p-4">
       {/* Ambient gradient wash */}
       <div
         aria-hidden
@@ -101,7 +101,7 @@ function LoginPage() {
       />
 
       <div className="relative mx-auto w-full max-w-[1120px]">
-          <div className="mx-auto max-h-[calc(100dvh-5rem)] w-full overflow-hidden rounded-[24px] border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl lg:rounded-[28px] [@media(max-height:700px)]:max-h-[calc(100dvh-2.5rem)]">
+          <div className="mx-auto w-full overflow-hidden rounded-[20px] border border-white/50 bg-white/40 shadow-glass backdrop-blur-2xl sm:rounded-[24px] lg:max-h-[calc(100dvh-5rem)] lg:rounded-[28px] lg:[@media(max-height:700px)]:max-h-none">
             <div className="grid grid-cols-1 lg:grid-cols-[45fr_55fr]">
               {/* LEFT PANEL */}
               <section className="relative flex flex-col gap-4 p-5 sm:p-6 lg:gap-5 lg:p-7 [@media(max-height:760px)]:gap-3 [@media(max-height:760px)]:p-5 [@media(max-height:640px)]:gap-2 [@media(max-height:640px)]:p-4">
@@ -240,7 +240,7 @@ function LoginPage() {
                     )}
                   </button>
 
-                  <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
+                  <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground [@media(max-width:380px)]:hidden">
                     <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[oklch(0.5_0.2_300)]" />
                     Authentification sécurisée via votre compte professionnel CGI
                   </p>

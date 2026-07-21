@@ -16,16 +16,16 @@ import {
   Send,
   Ticket,
   TriangleAlert,
-  UserRound,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app/AppShell";
+import { ProfileAvatar } from "@/components/app/ProfileAvatar";
 import {
   buildConversationTitle,
   buildParticipantSummary,
   formatConversationActivityDate,
-  formatMessageDateTime,
+  formatMessageTime,
   getConversationTypeLabel,
   getUserDisplayLabel,
 } from "@/components/messages/message-ui";
@@ -67,8 +67,14 @@ import {
   type Message,
   type MessagingDirectoryUser,
 } from "@/lib/api/messages";
-import { useAuth } from "@/lib/auth-store";
+import { getBusinessRoleLabel, useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import {
+  type AdminMessagesConversation,
+  getAdminMessagesMockData,
+  isAdminMessagesMockEnabled,
+  MOCK_CURRENT_USER_ID,
+} from "@/mocks/adminMessagesMock";
 
 const routeSearchSchema = z.object({
   conversationId: z.coerce.number().optional(),
@@ -123,16 +129,19 @@ export function MessagesPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const { authenticatedFetch, hasRole, isAuthenticated, isReady, user } = useAuth();
-  const currentUserId = user?.localProfile?.id ?? null;
+  const demoMode = isAdminMessagesMockEnabled();
+  const mockData = useMemo(() => (demoMode ? getAdminMessagesMockData() : null), [demoMode]);
+  const currentUserId = demoMode ? mockData!.currentUserId : (user?.localProfile?.id ?? null);
   const [conversationFilter, setConversationFilter] = useState("");
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<AdminMessagesConversation[]>([]);
   const [directoryUsers, setDirectoryUsers] = useState<MessagingDirectoryUser[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingDirectory, setLoadingDirectory] = useState(true);
   const [conversationsError, setConversationsError] = useState<string | null>(null);
   const [directoryError, setDirectoryError] = useState<string | null>(null);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversation, setSelectedConversation] =
+    useState<AdminMessagesConversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState<string | null>(null);
@@ -210,13 +219,6 @@ export function MessagesPage() {
     return buildConversationTitle(selectedConversation, currentUserId, usersById);
   }, [currentUserId, selectedConversation, usersById]);
 
-  const selectedConversationTypeLabel = useMemo(() => {
-    if (!selectedConversation) {
-      return null;
-    }
-    return getConversationTypeLabel(selectedConversation.type);
-  }, [selectedConversation]);
-
   const selectedParticipantSummary = useMemo(() => {
     if (!selectedConversation) {
       return null;
@@ -228,12 +230,15 @@ export function MessagesPage() {
     if (!selectedConversation || selectedConversation.type !== "GROUP" || !currentUserId) {
       return false;
     }
+    if (demoMode) {
+      return true;
+    }
     return (
       selectedConversation.createdByUserId === currentUserId ||
       hasRole("ADMIN") ||
       hasRole("MANAGER")
     );
-  }, [currentUserId, hasRole, selectedConversation]);
+  }, [currentUserId, demoMode, hasRole, selectedConversation]);
 
   const availableParticipantsToAdd = useMemo(() => {
     const activeParticipantIds = new Set(
@@ -255,9 +260,15 @@ export function MessagesPage() {
       });
   }, [currentUserId, directoryUsers, participantSearch, selectedConversation]);
 
-  const canSendMessage = composerValue.trim().length > 0 && !sendingMessage && Boolean(selectedConversationId);
+  const canSendMessage =
+    composerValue.trim().length > 0 && !sendingMessage && Boolean(selectedConversationId);
 
   const loadDirectory = useCallback(async () => {
+    if (demoMode) {
+      setDirectoryUsers(mockData!.directoryUsers);
+      setLoadingDirectory(false);
+      return;
+    }
     if (!isReady || !isAuthenticated) {
       setDirectoryUsers([]);
       setLoadingDirectory(false);
@@ -268,13 +279,21 @@ export function MessagesPage() {
     try {
       setDirectoryUsers(await listMessagingDirectoryUsers(authenticatedFetch));
     } catch (caught) {
-      setDirectoryError(readMessagesError(caught, "Impossible de charger l'annuaire des participants."));
+      setDirectoryError(
+        readMessagesError(caught, "Impossible de charger l'annuaire des participants."),
+      );
     } finally {
       setLoadingDirectory(false);
     }
-  }, [authenticatedFetch, isAuthenticated, isReady]);
+  }, [authenticatedFetch, demoMode, isAuthenticated, isReady, mockData]);
 
   const loadUnreadTotal = useCallback(async () => {
+    if (demoMode) {
+      setTotalUnreadCount(
+        mockData!.conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0),
+      );
+      return;
+    }
     if (!isReady || !isAuthenticated) {
       setTotalUnreadCount(0);
       return;
@@ -285,9 +304,14 @@ export function MessagesPage() {
     } catch {
       setTotalUnreadCount(0);
     }
-  }, [authenticatedFetch, isAuthenticated, isReady]);
+  }, [authenticatedFetch, demoMode, isAuthenticated, isReady, mockData]);
 
   const loadConversations = useCallback(async () => {
+    if (demoMode) {
+      setConversations(mockData!.conversations);
+      setLoadingConversations(false);
+      return;
+    }
     if (!isReady || !isAuthenticated) {
       setConversations([]);
       setLoadingConversations(false);
@@ -304,10 +328,13 @@ export function MessagesPage() {
     } finally {
       setLoadingConversations(false);
     }
-  }, [authenticatedFetch, isAuthenticated, isReady]);
+  }, [authenticatedFetch, demoMode, isAuthenticated, isReady, mockData]);
 
   const refreshOverview = useCallback(
     async (showSpinner = false) => {
+      if (demoMode) {
+        return;
+      }
       if (!isReady || !isAuthenticated) {
         setConversations([]);
         setTotalUnreadCount(0);
@@ -332,7 +359,7 @@ export function MessagesPage() {
         }
       }
     },
-    [authenticatedFetch, isAuthenticated, isReady],
+    [authenticatedFetch, demoMode, isAuthenticated, isReady],
   );
 
   const scrollMessagesToBottom = useCallback(() => {
@@ -378,7 +405,8 @@ export function MessagesPage() {
         }
         return {
           ...matched,
-          participants: current.participants.length > 0 ? current.participants : matched.participants,
+          participants:
+            current.participants.length > 0 ? current.participants : matched.participants,
         };
       });
     },
@@ -387,6 +415,19 @@ export function MessagesPage() {
 
   const loadConversationContext = useCallback(
     async (conversationId: number, scrollToBottomAfterLoad = true) => {
+      if (demoMode) {
+        const detail = mockData!.conversations.find(
+          (conversation) => conversation.id === conversationId,
+        );
+        setSelectedConversation(detail ?? null);
+        setMessages(mockData!.messagesByConversationId[conversationId] ?? []);
+        setOlderPageIndex(null);
+        setOlderPagesAvailable(false);
+        if (scrollToBottomAfterLoad) {
+          scrollMessagesToBottom();
+        }
+        return;
+      }
       setMessagesLoading(true);
       setMessagesError(null);
       try {
@@ -403,16 +444,21 @@ export function MessagesPage() {
         }
       } catch (caught) {
         setMessages([]);
-        setMessagesError(readMessagesError(caught, "Impossible de charger l'historique de la conversation."));
+        setMessagesError(
+          readMessagesError(caught, "Impossible de charger l'historique de la conversation."),
+        );
       } finally {
         setMessagesLoading(false);
       }
     },
-    [authenticatedFetch, fetchLatestMessagePage, scrollMessagesToBottom],
+    [authenticatedFetch, demoMode, fetchLatestMessagePage, mockData, scrollMessagesToBottom],
   );
 
   const openConversation = useCallback(
-    async (conversationId: number, options?: { updateSearch?: boolean; scrollToBottomAfterLoad?: boolean }) => {
+    async (
+      conversationId: number,
+      options?: { updateSearch?: boolean; scrollToBottomAfterLoad?: boolean },
+    ) => {
       setTicketThreadNotice(null);
       setSelectedConversationId(conversationId);
       if (options?.updateSearch !== false) {
@@ -431,6 +477,9 @@ export function MessagesPage() {
 
   const refreshSelectedConversationMessages = useCallback(
     async (conversationId: number, scrollToLatest = false) => {
+      if (demoMode) {
+        return;
+      }
       const latestPage = await fetchLatestMessagePage(conversationId);
       setOlderPageIndex((current) => {
         if (current == null) {
@@ -444,7 +493,7 @@ export function MessagesPage() {
         scrollMessagesToBottom();
       }
     },
-    [fetchLatestMessagePage, scrollMessagesToBottom],
+    [demoMode, fetchLatestMessagePage, scrollMessagesToBottom],
   );
 
   const loadOlderMessages = useCallback(async () => {
@@ -491,7 +540,9 @@ export function MessagesPage() {
           setTicketThreadNotice("Aucune discussion ticket n'existe encore pour cette reference.");
           return;
         }
-        setTicketThreadNotice(readMessagesError(caught, "Impossible d'ouvrir la discussion ticket."));
+        setTicketThreadNotice(
+          readMessagesError(caught, "Impossible d'ouvrir la discussion ticket."),
+        );
       }
     },
     [authenticatedFetch, openConversation],
@@ -544,11 +595,29 @@ export function MessagesPage() {
   ]);
 
   useEffect(() => {
-    if (!selectedConversation || selectedConversation.unreadCount <= 0 || markReadInFlightRef.current) {
+    if (
+      !selectedConversation ||
+      selectedConversation.unreadCount <= 0 ||
+      markReadInFlightRef.current
+    ) {
       return;
     }
 
     const unreadToClear = selectedConversation.unreadCount;
+
+    if (demoMode) {
+      setSelectedConversation((current) => (current ? { ...current, unreadCount: 0 } : current));
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === selectedConversation.id
+            ? { ...conversation, unreadCount: 0 }
+            : conversation,
+        ),
+      );
+      setTotalUnreadCount((current) => Math.max(0, current - unreadToClear));
+      return;
+    }
+
     markReadInFlightRef.current = true;
     void markConversationRead(authenticatedFetch, selectedConversation.id)
       .then((participant) => {
@@ -565,7 +634,9 @@ export function MessagesPage() {
         );
         setConversations((current) =>
           current.map((conversation) =>
-            conversation.id === selectedConversation.id ? { ...conversation, unreadCount: 0 } : conversation,
+            conversation.id === selectedConversation.id
+              ? { ...conversation, unreadCount: 0 }
+              : conversation,
           ),
         );
         setTotalUnreadCount((current) => Math.max(0, current - unreadToClear));
@@ -576,9 +647,12 @@ export function MessagesPage() {
       .finally(() => {
         markReadInFlightRef.current = false;
       });
-  }, [authenticatedFetch, selectedConversation]);
+  }, [authenticatedFetch, demoMode, selectedConversation]);
 
   useEffect(() => {
+    if (demoMode) {
+      return;
+    }
     const intervalId = window.setInterval(() => {
       if (document.visibilityState !== "visible" || conversationsPollInFlightRef.current) {
         return;
@@ -590,10 +664,10 @@ export function MessagesPage() {
     }, CONVERSATIONS_POLL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [refreshOverview]);
+  }, [demoMode, refreshOverview]);
 
   useEffect(() => {
-    if (!selectedConversationId) {
+    if (demoMode || !selectedConversationId) {
       return;
     }
 
@@ -610,7 +684,7 @@ export function MessagesPage() {
     }, MESSAGES_POLL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [refreshOverview, refreshSelectedConversationMessages, selectedConversationId]);
+  }, [demoMode, refreshOverview, refreshSelectedConversationMessages, selectedConversationId]);
 
   async function handleRefreshAll() {
     await refreshOverview(true);
@@ -625,6 +699,53 @@ export function MessagesPage() {
     }
     setSendingMessage(true);
     setComposerError(null);
+
+    if (demoMode) {
+      const sentMessage: Message = {
+        id: Date.now(),
+        conversationId: selectedConversationId,
+        senderUserId: currentUserId ?? MOCK_CURRENT_USER_ID,
+        content: composerValue.trim(),
+        urgent: composerUrgent,
+        createdAt: new Date().toISOString(),
+        editedAt: null,
+        deletedAt: null,
+        ownMessage: true,
+      };
+      setMessages((current) => mergeMessages(current, [sentMessage]));
+      setComposerValue("");
+      setComposerUrgent(false);
+      setConversations((current) =>
+        sortConversationsByActivity(
+          current.map((conversation) =>
+            conversation.id === selectedConversationId
+              ? {
+                  ...conversation,
+                  lastMessagePreview: sentMessage.content,
+                  lastMessageAt: sentMessage.createdAt,
+                  lastMessageUrgent: sentMessage.urgent,
+                  updatedAt: sentMessage.createdAt,
+                }
+              : conversation,
+          ),
+        ),
+      );
+      setSelectedConversation((current) =>
+        current
+          ? {
+              ...current,
+              lastMessagePreview: sentMessage.content,
+              lastMessageAt: sentMessage.createdAt,
+              lastMessageUrgent: sentMessage.urgent,
+              updatedAt: sentMessage.createdAt,
+            }
+          : current,
+      );
+      scrollMessagesToBottom();
+      setSendingMessage(false);
+      return;
+    }
+
     try {
       const sentMessage = await sendMessage(authenticatedFetch, selectedConversationId, {
         content: composerValue,
@@ -676,13 +797,42 @@ export function MessagesPage() {
     }
     setParticipantMutationPending(true);
     setParticipantMutationError(null);
+
+    if (demoMode) {
+      const newParticipant = {
+        userId,
+        joinedAt: new Date().toISOString(),
+        active: true,
+        lastReadAt: null,
+      };
+      setSelectedConversation((current) =>
+        current ? { ...current, participants: [...current.participants, newParticipant] } : current,
+      );
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === selectedConversationId
+            ? { ...conversation, participants: [...conversation.participants, newParticipant] }
+            : conversation,
+        ),
+      );
+      setParticipantDialogOpen(false);
+      setParticipantSearch("");
+      setParticipantMutationPending(false);
+      return;
+    }
+
     try {
       await addConversationParticipant(authenticatedFetch, selectedConversationId, userId);
-      await Promise.all([loadConversationContext(selectedConversationId, false), refreshOverview(false)]);
+      await Promise.all([
+        loadConversationContext(selectedConversationId, false),
+        refreshOverview(false),
+      ]);
       setParticipantDialogOpen(false);
       setParticipantSearch("");
     } catch (caught) {
-      setParticipantMutationError(readMessagesError(caught, "Impossible d'ajouter le participant."));
+      setParticipantMutationError(
+        readMessagesError(caught, "Impossible d'ajouter le participant."),
+      );
     } finally {
       setParticipantMutationPending(false);
     }
@@ -694,9 +844,36 @@ export function MessagesPage() {
     }
     setParticipantMutationPending(true);
     setParticipantMutationError(null);
+
+    if (demoMode) {
+      setSelectedConversation((current) =>
+        current
+          ? {
+              ...current,
+              participants: current.participants.filter((item) => item.userId !== userId),
+            }
+          : current,
+      );
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === selectedConversationId
+            ? {
+                ...conversation,
+                participants: conversation.participants.filter((item) => item.userId !== userId),
+              }
+            : conversation,
+        ),
+      );
+      setParticipantMutationPending(false);
+      return;
+    }
+
     try {
       await removeConversationParticipant(authenticatedFetch, selectedConversationId, userId);
-      await Promise.all([loadConversationContext(selectedConversationId, false), refreshOverview(false)]);
+      await Promise.all([
+        loadConversationContext(selectedConversationId, false),
+        refreshOverview(false),
+      ]);
     } catch (caught) {
       const message = readMessagesError(caught, "Impossible de retirer le participant.");
       setParticipantMutationError(message);
@@ -745,22 +922,73 @@ export function MessagesPage() {
     setCreatingConversation(true);
     setCreateError(null);
     try {
+      if (createForm.mode === "DIRECT" && createForm.participantIds.length !== 1) {
+        throw new Error("Sélectionnez exactement un participant pour une conversation directe.");
+      }
+      if (createForm.mode === "GROUP" && !createForm.title.trim()) {
+        throw new Error("Le titre du groupe est obligatoire.");
+      }
+      if (createForm.mode === "GROUP" && createForm.participantIds.length < 1) {
+        throw new Error("Sélectionnez au moins un participant pour le groupe.");
+      }
+      if (createForm.mode === "TICKET" && !createForm.ticketId) {
+        throw new Error("L'identifiant du ticket est obligatoire.");
+      }
+
+      if (demoMode) {
+        const now = new Date().toISOString();
+        const participantIds =
+          createForm.mode === "DIRECT"
+            ? createForm.participantIds
+            : dedupeNumbers(createForm.participantIds);
+        const newConversation: Conversation = {
+          id: Date.now(),
+          type: createForm.mode,
+          title: createForm.mode === "GROUP" ? createForm.title.trim() : null,
+          ticketId: createForm.mode === "TICKET" ? createForm.ticketId : null,
+          createdByUserId: currentUserId ?? MOCK_CURRENT_USER_ID,
+          createdAt: now,
+          updatedAt: now,
+          lastMessagePreview: createForm.initialMessage.trim() || null,
+          lastMessageAt: createForm.initialMessage.trim() ? now : null,
+          lastMessageUrgent: createForm.initialMessage.trim() ? createForm.urgent : null,
+          unreadCount: 0,
+          participants: [
+            {
+              userId: currentUserId ?? MOCK_CURRENT_USER_ID,
+              joinedAt: now,
+              active: true,
+              lastReadAt: now,
+            },
+            ...participantIds.map((userId) => ({
+              userId,
+              joinedAt: now,
+              active: true,
+              lastReadAt: null,
+            })),
+          ],
+        };
+        setConversations((current) => sortConversationsByActivity([...current, newConversation]));
+        setCreateOpen(false);
+        setTicketThreadContext(null);
+        setTicketThreadNotice(null);
+        setCreateForm(emptyCreationForm);
+        await openConversation(newConversation.id, { updateSearch: true });
+        toast.success("Conversation ouverte.");
+        return;
+      }
+
       let createdConversation: Conversation;
       if (createForm.mode === "DIRECT") {
-        if (createForm.participantIds.length !== 1) {
-          throw new Error("Selectionnez exactement un participant pour une conversation directe.");
-        }
-        createdConversation = await createDirectConversation(authenticatedFetch, createForm.participantIds[0], {
-          initialMessage: createForm.initialMessage.trim() || null,
-          urgent: createForm.urgent,
-        });
+        createdConversation = await createDirectConversation(
+          authenticatedFetch,
+          createForm.participantIds[0],
+          {
+            initialMessage: createForm.initialMessage.trim() || null,
+            urgent: createForm.urgent,
+          },
+        );
       } else if (createForm.mode === "GROUP") {
-        if (!createForm.title.trim()) {
-          throw new Error("Le titre du groupe est obligatoire.");
-        }
-        if (createForm.participantIds.length < 1) {
-          throw new Error("Selectionnez au moins un participant pour le groupe.");
-        }
         createdConversation = await createGroupConversation(authenticatedFetch, {
           title: createForm.title.trim(),
           participantUserIds: dedupeNumbers(createForm.participantIds),
@@ -768,14 +996,15 @@ export function MessagesPage() {
           urgent: createForm.urgent,
         });
       } else {
-        if (!createForm.ticketId) {
-          throw new Error("Le ticket de reference est obligatoire.");
-        }
-        createdConversation = await createTicketConversation(authenticatedFetch, createForm.ticketId, {
-          participantUserIds: dedupeNumbers(createForm.participantIds),
-          initialMessage: createForm.initialMessage.trim() || null,
-          urgent: createForm.urgent,
-        });
+        createdConversation = await createTicketConversation(
+          authenticatedFetch,
+          createForm.ticketId!,
+          {
+            participantUserIds: dedupeNumbers(createForm.participantIds),
+            initialMessage: createForm.initialMessage.trim() || null,
+            urgent: createForm.urgent,
+          },
+        );
       }
 
       setCreateOpen(false);
@@ -787,9 +1016,7 @@ export function MessagesPage() {
       toast.success("Conversation ouverte.");
     } catch (caught) {
       setCreateError(
-        caught instanceof Error
-          ? caught.message
-          : "Impossible de creer la conversation.",
+        caught instanceof Error ? caught.message : "Impossible de créer la conversation.",
       );
     } finally {
       setCreatingConversation(false);
@@ -806,14 +1033,21 @@ export function MessagesPage() {
               <h1 className="text-2xl font-semibold text-foreground">Messagerie</h1>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Conversations internes, discussions ticket et suivi des messages urgents.
+              Conversations internes, discussions liées aux tickets et suivi des messages urgents.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
-              {totalUnreadCount} non lu{totalUnreadCount > 1 ? "s" : ""}
-            </Badge>
-            <Button variant="outline" onClick={() => void handleRefreshAll()} disabled={refreshingOverview}>
+            {totalUnreadCount > 0 ? (
+              <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
+                {totalUnreadCount} message{totalUnreadCount > 1 ? "s" : ""} non lu
+                {totalUnreadCount > 1 ? "s" : ""}
+              </Badge>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={() => void handleRefreshAll()}
+              disabled={refreshingOverview}
+            >
               <RefreshCw className={refreshingOverview ? "animate-spin" : ""} />
               Actualiser
             </Button>
@@ -831,9 +1065,13 @@ export function MessagesPage() {
               <span>{ticketThreadNotice}</span>
             </div>
             {ticketThreadContext ? (
-              <Button size="sm" variant="outline" onClick={() => openCreateDialog("TICKET", ticketThreadContext)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openCreateDialog("TICKET", ticketThreadContext)}
+              >
                 <MessageSquareMore />
-                Creer la discussion ticket
+                Créer la discussion liée au ticket
               </Button>
             ) : null}
           </div>
@@ -853,7 +1091,7 @@ export function MessagesPage() {
                     </div>
                     <Button size="sm" variant="outline" onClick={() => openCreateDialog("GROUP")}>
                       <Users />
-                      Groupe
+                      Conversation de groupe
                     </Button>
                   </div>
                   <div className="relative mt-3">
@@ -870,20 +1108,32 @@ export function MessagesPage() {
                 <ScrollArea className="min-h-0 flex-1">
                   <div className="space-y-1 p-2">
                     {loadingConversations ? (
-                      <PanelNotice label="Chargement des conversations..." icon={LoaderCircle} spinning />
+                      <PanelNotice
+                        label="Chargement des conversations..."
+                        icon={LoaderCircle}
+                        spinning
+                      />
                     ) : conversationsError ? (
                       <PanelError message={conversationsError} />
                     ) : filteredConversations.length === 0 ? (
                       <PanelNotice
                         label="Aucune conversation disponible pour le moment."
-                        description="Demarrez un echange direct, un groupe ou une discussion ticket."
+                        description="Démarrez un échange direct, une conversation de groupe ou une discussion liée à un ticket."
                         icon={MessagesSquare}
                       />
                     ) : (
                       filteredConversations.map((conversation) => {
                         const active = conversation.id === selectedConversationId;
-                        const title = buildConversationTitle(conversation, currentUserId, usersById);
-                        const summary = buildParticipantSummary(conversation, currentUserId, usersById);
+                        const title = buildConversationTitle(
+                          conversation,
+                          currentUserId,
+                          usersById,
+                        );
+                        const summary = buildParticipantSummary(
+                          conversation,
+                          currentUserId,
+                          usersById,
+                        );
                         return (
                           <button
                             key={conversation.id}
@@ -891,36 +1141,67 @@ export function MessagesPage() {
                             onClick={() => void openConversation(conversation.id)}
                             className={`w-full rounded-lg border px-3 py-3 text-left transition ${
                               active
-                                ? "border-primary/40 bg-primary/5 shadow-sm"
+                                ? "border-primary/50 bg-primary/[0.06] shadow-sm ring-1 ring-primary/20"
                                 : "border-transparent hover:border-border hover:bg-muted/40"
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="truncate text-sm font-medium text-foreground">{title}</div>
-                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{getConversationTypeLabel(conversation.type)}</span>
-                                  {conversation.ticketId ? <span>Ticket #{conversation.ticketId}</span> : null}
+                            <div className="flex items-start gap-2.5">
+                              <ConversationAvatar
+                                conversation={conversation}
+                                currentUserId={currentUserId}
+                                usersById={usersById}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="truncate text-sm font-semibold text-foreground">
+                                      {title}
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                      <ConversationTypeBadge type={conversation.type} />
+                                      {conversation.ticketId ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="border-amber-200 bg-amber-50 text-[11px] font-medium text-amber-800"
+                                        >
+                                          Ticket {conversation.ticketId}
+                                        </Badge>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {formatConversationActivityDate(
+                                        conversation.lastMessageAt ?? conversation.updatedAt,
+                                      )}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      {conversation.lastMessageUrgent ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="gap-1 border-red-200 bg-red-50 px-1.5 py-0 text-[10px] font-semibold text-[color:var(--cgi-red)]"
+                                        >
+                                          <TriangleAlert className="h-3 w-3" />
+                                          Urgent
+                                        </Badge>
+                                      ) : null}
+                                      {conversation.unreadCount > 0 ? (
+                                        <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
+                                          {conversation.unreadCount > 9
+                                            ? "9+"
+                                            : conversation.unreadCount}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex shrink-0 items-center gap-2">
-                                {conversation.lastMessageUrgent ? (
-                                  <TriangleAlert className="h-4 w-4 text-[color:var(--cgi-red)]" />
-                                ) : null}
-                                {conversation.unreadCount > 0 ? (
-                                  <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
-                                    {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                            <div className="mt-2 truncate text-xs text-muted-foreground">{summary}</div>
-                            <div className="mt-2 flex items-center justify-between gap-3">
-                              <div className="min-w-0 truncate text-sm text-foreground/85">
-                                {conversation.lastMessagePreview || "Aucun message pour le moment."}
-                              </div>
-                              <div className="shrink-0 text-[11px] text-muted-foreground">
-                                {formatConversationActivityDate(conversation.lastMessageAt ?? conversation.updatedAt)}
+                                <div className="mt-1.5 truncate text-xs text-muted-foreground">
+                                  {summary}
+                                </div>
+                                <div className="mt-1.5 truncate text-sm text-foreground/80">
+                                  {conversation.lastMessagePreview ||
+                                    "Aucun message pour le moment."}
+                                </div>
                               </div>
                             </div>
                           </button>
@@ -940,24 +1221,49 @@ export function MessagesPage() {
                   <>
                     <div className="border-b border-border px-5 py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-lg font-semibold text-foreground">
-                            {selectedConversationTitle}
+                        <div className="flex min-w-0 items-center gap-3">
+                          <ConversationAvatar
+                            conversation={selectedConversation}
+                            currentUserId={currentUserId}
+                            usersById={usersById}
+                            size="md"
+                          />
+                          <div className="min-w-0">
+                            <div className="truncate text-lg font-semibold text-foreground">
+                              {selectedConversationTitle}
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                              <ConversationTypeBadge type={selectedConversation.type} />
+                              {selectedConversation.ticketId ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-amber-200 bg-amber-50 text-[11px] font-medium text-amber-800"
+                                >
+                                  Ticket {selectedConversation.ticketId}
+                                </Badge>
+                              ) : null}
+                              {selectedConversation.bannette ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-border bg-muted/50 text-[11px] font-medium text-foreground/80"
+                                >
+                                  Bannette : {selectedConversation.bannette}
+                                </Badge>
+                              ) : null}
+                              {selectedConversation.lastMessageUrgent ? (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 border-red-200 bg-red-50 text-[11px] font-semibold text-[color:var(--cgi-red)]"
+                                >
+                                  <TriangleAlert className="h-3 w-3" />
+                                  Urgent
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <div className="mt-2 text-sm text-muted-foreground">
+                              {selectedParticipantSummary}
+                            </div>
                           </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant="outline">{selectedConversationTypeLabel}</Badge>
-                            {selectedConversation.ticketId ? (
-                              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
-                                Ticket #{selectedConversation.ticketId}
-                              </Badge>
-                            ) : null}
-                            {selectedConversation.lastMessageUrgent ? (
-                              <Badge variant="outline" className="border-red-200 bg-red-50 text-[color:var(--cgi-red)]">
-                                Dernier message urgent
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <div className="mt-2 text-sm text-muted-foreground">{selectedParticipantSummary}</div>
                         </div>
 
                         {selectedConversation.ticketId ? (
@@ -985,7 +1291,11 @@ export function MessagesPage() {
 
                           {olderPagesAvailable ? (
                             <div className="mb-4 flex justify-center">
-                              <Button size="sm" variant="outline" onClick={() => void loadOlderMessages()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => void loadOlderMessages()}
+                              >
                                 <ArrowUp />
                                 Charger les messages plus anciens
                               </Button>
@@ -993,13 +1303,17 @@ export function MessagesPage() {
                           ) : null}
 
                           {messagesLoading ? (
-                            <PanelNotice label="Chargement des messages..." icon={LoaderCircle} spinning />
+                            <PanelNotice
+                              label="Chargement des messages..."
+                              icon={LoaderCircle}
+                              spinning
+                            />
                           ) : messagesError ? (
                             <PanelError message={messagesError} />
                           ) : messages.length === 0 ? (
                             <PanelNotice
                               label="Aucun message dans cette conversation."
-                              description="Envoyez le premier message pour demarrer l'echange."
+                              description="Envoyez le premier message pour démarrer l'échange."
                               icon={MessageCircleMore}
                             />
                           ) : (
@@ -1010,27 +1324,45 @@ export function MessagesPage() {
                                   usersById,
                                   currentUserId,
                                 );
+                                const senderRole = message.ownMessage
+                                  ? null
+                                  : usersById.get(message.senderUserId)?.role;
+                                const senderRoleLabel = senderRole
+                                  ? getBusinessRoleLabel(senderRole)
+                                  : null;
                                 const previousMessage = index > 0 ? messages[index - 1] : null;
                                 const senderChanged =
                                   !previousMessage ||
                                   previousMessage.senderUserId !== message.senderUserId ||
                                   previousMessage.ownMessage !== message.ownMessage;
+                                const senderDirectoryUser = usersById.get(message.senderUserId);
                                 return (
                                   <div
                                     key={message.id}
                                     className={cn(
-                                      "flex w-full",
+                                      "flex w-full items-end gap-2",
                                       message.ownMessage ? "justify-end" : "justify-start",
                                       senderChanged && index > 0 ? "pt-1.5" : "",
                                     )}
                                   >
+                                    {!message.ownMessage ? (
+                                      <div className="h-6 w-6 shrink-0">
+                                        {senderChanged ? (
+                                          <ProfileAvatar
+                                            fullName={senderDirectoryUser?.fullName ?? senderLabel}
+                                            email={senderDirectoryUser?.email}
+                                            size="xs"
+                                          />
+                                        ) : null}
+                                      </div>
+                                    ) : null}
                                     <div
                                       data-testid={`message-bubble-${message.id}`}
                                       className={cn(
                                         "inline-flex w-auto max-w-[88%] flex-col rounded-2xl px-3 py-2 text-left sm:max-w-[75%] sm:px-3.5 xl:max-w-[55%]",
                                         message.ownMessage
                                           ? "ml-auto rounded-br-md border border-primary/15 bg-primary text-primary-foreground"
-                                          : "mr-auto rounded-bl-md border border-border/60 bg-muted/40 text-foreground",
+                                          : "rounded-bl-md border border-border/60 bg-muted/40 text-foreground",
                                         message.urgent
                                           ? message.ownMessage
                                             ? "border-r-[3px] border-r-red-200"
@@ -1041,7 +1373,7 @@ export function MessagesPage() {
                                       <div className="flex items-center gap-1.5">
                                         <span
                                           className={cn(
-                                            "text-[11px] font-medium leading-none",
+                                            "text-[11px] font-semibold leading-none",
                                             message.ownMessage
                                               ? "text-primary-foreground/85"
                                               : "text-foreground/80",
@@ -1049,33 +1381,39 @@ export function MessagesPage() {
                                         >
                                           {senderLabel}
                                         </span>
+                                        {senderRoleLabel ? (
+                                          <span className="text-[10px] leading-none text-muted-foreground">
+                                            · {senderRoleLabel}
+                                          </span>
+                                        ) : null}
                                         {message.urgent ? (
                                           <Badge
                                             variant="outline"
                                             className={cn(
-                                              "h-5 px-2 text-[10px] font-medium",
+                                              "h-5 gap-1 px-1.5 text-[10px] font-medium",
                                               message.ownMessage
                                                 ? "border-white/30 bg-white/10 text-white"
                                                 : "border-red-200 bg-red-50 text-[color:var(--cgi-red)]",
                                             )}
                                           >
+                                            <TriangleAlert className="h-3 w-3" />
                                             Urgent
                                           </Badge>
                                         ) : null}
                                       </div>
                                       <div className="mt-1 whitespace-pre-wrap text-sm leading-5 [overflow-wrap:anywhere]">
-                                        {message.deletedAt ? "Message supprime." : message.content}
+                                        {message.deletedAt ? "Message supprimé." : message.content}
                                       </div>
                                       <div
                                         className={cn(
-                                          "mt-1.5 flex items-center gap-2 text-[10px] leading-none",
+                                          "mt-1.5 flex items-center justify-end gap-2 text-[10px] leading-none tabular-nums",
                                           message.ownMessage
                                             ? "text-primary-foreground/75"
                                             : "text-muted-foreground",
                                         )}
                                       >
-                                        <span>{formatMessageDateTime(message.createdAt)}</span>
-                                        {message.editedAt ? <span>Modifie</span> : null}
+                                        {message.editedAt ? <span>Modifié</span> : null}
+                                        <span>{formatMessageTime(message.createdAt)}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -1089,8 +1427,8 @@ export function MessagesPage() {
 
                     <Separator />
 
-                    <div className="px-5 py-4">
-                      <div className="space-y-3">
+                    <div className="px-5 py-3">
+                      <div className="space-y-2">
                         {composerError ? (
                           <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                             <AlertCircle className="h-4 w-4" />
@@ -1101,8 +1439,8 @@ export function MessagesPage() {
                           value={composerValue}
                           onChange={(event) => setComposerValue(event.target.value)}
                           onKeyDown={handleComposerKeyDown}
-                          placeholder="Ecrire un message... Entrer pour envoyer, Maj + Entrer pour une nouvelle ligne."
-                          rows={4}
+                          placeholder="Écrivez un message... Entrée pour envoyer, Maj + Entrée pour un retour à la ligne."
+                          rows={3}
                         />
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-2">
@@ -1115,7 +1453,10 @@ export function MessagesPage() {
                               Marquer comme urgent
                             </Label>
                           </div>
-                          <Button onClick={() => void handleSendMessage()} disabled={!canSendMessage}>
+                          <Button
+                            onClick={() => void handleSendMessage()}
+                            disabled={!canSendMessage}
+                          >
                             {sendingMessage ? <LoaderCircle className="animate-spin" /> : <Send />}
                             Envoyer
                           </Button>
@@ -1126,8 +1467,8 @@ export function MessagesPage() {
                 ) : (
                   <div className="flex h-full items-center justify-center px-6">
                     <PanelNotice
-                      label="Selectionnez une conversation"
-                      description="Choisissez un echange dans la liste ou creez une nouvelle conversation."
+                      label="Sélectionnez une conversation"
+                      description="Choisissez un échange dans la liste ou créez une nouvelle conversation."
                       icon={MessagesSquare}
                     />
                   </div>
@@ -1139,18 +1480,20 @@ export function MessagesPage() {
 
             <ResizablePanel defaultSize={20} minSize={18}>
               <div className="flex h-full min-h-0 flex-col">
-                <div className="border-b border-border px-4 py-4">
+                <div className="border-b border-border px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-foreground">Participants</div>
-                      <div className="text-xs text-muted-foreground">
-                        Les discussions ticket verifient maintenant l'acces reel au ticket cote ticket-service.
+                      <div className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                        Les discussions liées aux tickets respectent les droits d'accès et le
+                        périmètre des participants.
                       </div>
                     </div>
                     {selectedConversation?.type === "GROUP" && canManageSelectedParticipants ? (
                       <Button
                         size="sm"
                         variant="outline"
+                        className="shrink-0"
                         onClick={() => {
                           setParticipantMutationError(null);
                           setParticipantSearch("");
@@ -1158,37 +1501,47 @@ export function MessagesPage() {
                         }}
                       >
                         <Plus />
-                        Ajouter
+                        Ajouter un participant
                       </Button>
                     ) : null}
                   </div>
                 </div>
 
                 <ScrollArea className="min-h-0 flex-1">
-                  <div className="space-y-3 px-4 py-4">
+                  <div className="space-y-2 px-3 py-3">
                     {loadingDirectory ? (
-                      <PanelNotice label="Chargement de l'annuaire..." icon={LoaderCircle} spinning />
+                      <PanelNotice
+                        label="Chargement de l'annuaire..."
+                        icon={LoaderCircle}
+                        spinning
+                      />
                     ) : directoryError ? (
                       <PanelError message={directoryError} />
                     ) : selectedConversation ? (
                       <>
                         {selectedConversation.ticketId ? (
-                          <div className="rounded-lg border border-border bg-muted/30 px-3 py-3">
+                          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
                             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                               <Ticket className="h-4 w-4 text-primary" />
-                              Ticket lie
+                              Ticket lié
                             </div>
-                            <div className="mt-2 text-sm text-muted-foreground">
-                              {search.ticketReference && search.ticketId === selectedConversation.ticketId
-                                ? search.ticketReference
-                                : `Ticket #${selectedConversation.ticketId}`}
+                            <div className="mt-1.5 text-sm text-muted-foreground">
+                              Ticket {selectedConversation.ticketId}
                             </div>
-                            <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+                            {selectedConversation.bannette ? (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                Bannette :{" "}
+                                <span className="font-medium text-foreground/80">
+                                  {selectedConversation.bannette}
+                                </span>
+                              </div>
+                            ) : null}
+                            <Button asChild size="sm" variant="outline" className="mt-2.5 w-full">
                               <Link
                                 to="/tickets/$id"
                                 params={{ id: String(selectedConversation.ticketId) }}
                               >
-                                Ouvrir le detail
+                                Ouvrir le détail
                               </Link>
                             </Button>
                           </div>
@@ -1196,51 +1549,73 @@ export function MessagesPage() {
 
                         {selectedConversation.participants.map((participant) => {
                           const directoryUser = usersById.get(participant.userId);
+                          const businessRoleLabel = directoryUser
+                            ? getBusinessRoleLabel(directoryUser.role)
+                            : "Participant";
+                          const canRemove =
+                            selectedConversation.type === "GROUP" &&
+                            canManageSelectedParticipants &&
+                            !(
+                              participant.userId === currentUserId &&
+                              selectedConversation.createdByUserId === currentUserId
+                            );
                           return (
                             <div
                               key={participant.userId}
-                              className="rounded-lg border border-border bg-background px-3 py-3"
+                              className="rounded-lg border border-border bg-background px-3 py-2.5"
                             >
-                              <div className="flex items-start gap-3">
-                                <div className="rounded-full border border-border bg-muted p-2 text-muted-foreground">
-                                  <UserRound className="h-4 w-4" />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="truncate text-sm font-medium text-foreground">
-                                    {getUserDisplayLabel(participant.userId, usersById, currentUserId)}
+                              <div className="flex items-start gap-2.5">
+                                <ProfileAvatar
+                                  fullName={directoryUser?.fullName}
+                                  email={directoryUser?.email}
+                                  size="sm"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="truncate text-sm font-semibold text-foreground">
+                                      {getUserDisplayLabel(
+                                        participant.userId,
+                                        usersById,
+                                        currentUserId,
+                                      )}
+                                    </div>
+                                    {canRemove ? (
+                                      <button
+                                        type="button"
+                                        disabled={participantMutationPending}
+                                        onClick={() =>
+                                          void handleRemoveParticipant(participant.userId)
+                                        }
+                                        className="shrink-0 text-[11px] text-muted-foreground underline-offset-2 transition hover:text-destructive hover:underline disabled:opacity-50"
+                                      >
+                                        Retirer
+                                      </button>
+                                    ) : null}
                                   </div>
                                   <div className="truncate text-xs text-muted-foreground">
                                     {directoryUser?.email || `Utilisateur #${participant.userId}`}
                                   </div>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    <Badge variant="outline">
-                                      {directoryUser?.role ?? "Participant"}
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    <Badge variant="outline" className="text-[10px] font-medium">
+                                      {businessRoleLabel}
                                     </Badge>
+                                    {directoryUser ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="border-border bg-muted/50 text-[10px] font-medium text-muted-foreground"
+                                      >
+                                        {directoryUser.role}
+                                      </Badge>
+                                    ) : null}
                                     {participant.lastReadAt ? (
-                                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                                      <Badge
+                                        variant="outline"
+                                        className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700"
+                                      >
                                         Lu
                                       </Badge>
                                     ) : null}
                                   </div>
-                                  <div className="mt-2 text-[11px] text-muted-foreground">
-                                    Ajoute le {formatMessageDateTime(participant.joinedAt)}
-                                  </div>
-                                  {selectedConversation.type === "GROUP" && canManageSelectedParticipants ? (
-                                    <div className="mt-3">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        disabled={
-                                          participantMutationPending ||
-                                          (participant.userId === currentUserId &&
-                                            selectedConversation.createdByUserId === currentUserId)
-                                        }
-                                        onClick={() => void handleRemoveParticipant(participant.userId)}
-                                      >
-                                        Retirer
-                                      </Button>
-                                    </div>
-                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -1249,8 +1624,8 @@ export function MessagesPage() {
                       </>
                     ) : (
                       <PanelNotice
-                        label="Aucun participant affiche"
-                        description="Ouvrez une conversation pour voir les membres et le contexte ticket."
+                        label="Aucun participant affiché"
+                        description="Ouvrez une conversation pour voir les membres et le contexte du ticket."
                         icon={Users}
                       />
                     )}
@@ -1276,7 +1651,7 @@ export function MessagesPage() {
           <DialogHeader>
             <DialogTitle>Ajouter un participant</DialogTitle>
             <DialogDescription>
-              Selectionnez un utilisateur actif a ajouter a ce groupe.
+              Sélectionnez un utilisateur actif à ajouter à ce groupe.
             </DialogDescription>
           </DialogHeader>
 
@@ -1297,7 +1672,7 @@ export function MessagesPage() {
                   {availableParticipantsToAdd.length === 0 ? (
                     <PanelNotice
                       label="Aucun participant disponible"
-                      description="Tous les utilisateurs actifs eligibles sont deja presents."
+                      description="Tous les utilisateurs actifs éligibles sont déjà présents."
                       icon={Users}
                     />
                   ) : (
@@ -1305,11 +1680,16 @@ export function MessagesPage() {
                       <button
                         key={directoryUser.id}
                         type="button"
-                        className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition hover:bg-muted/40"
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-muted/40"
                         onClick={() => void handleAddParticipant(directoryUser.id)}
                         disabled={participantMutationPending}
                       >
-                        <div className="min-w-0">
+                        <ProfileAvatar
+                          fullName={directoryUser.fullName}
+                          email={directoryUser.email}
+                          size="sm"
+                        />
+                        <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-medium text-foreground">
                             {directoryUser.fullName}
                           </div>
@@ -1375,8 +1755,14 @@ export function MessagesPage() {
                           ...current,
                           mode,
                           title: mode === "GROUP" ? current.title : "",
-                          ticketId: mode === "TICKET" ? current.ticketId ?? ticketThreadContext?.ticketId ?? null : null,
-                          participantIds: mode === "DIRECT" ? current.participantIds.slice(0, 1) : current.participantIds,
+                          ticketId:
+                            mode === "TICKET"
+                              ? (current.ticketId ?? ticketThreadContext?.ticketId ?? null)
+                              : null,
+                          participantIds:
+                            mode === "DIRECT"
+                              ? current.participantIds.slice(0, 1)
+                              : current.participantIds,
                         }))
                       }
                     >
@@ -1396,14 +1782,14 @@ export function MessagesPage() {
                           onChange={(event) =>
                             setCreateForm((current) => ({ ...current, title: event.target.value }))
                           }
-                          placeholder="Ex. Equipe support"
+                          placeholder="Ex. Coordination de la bannette FO"
                           className="h-10"
                         />
                       </Field>
                     ) : null}
 
                     {createForm.mode === "TICKET" ? (
-                      <Field label="Ticket lie">
+                      <Field label="Identifiant du ticket">
                         <Input
                           value={String(createForm.ticketId ?? ticketThreadContext?.ticketId ?? "")}
                           onChange={(event) =>
@@ -1412,13 +1798,13 @@ export function MessagesPage() {
                               ticketId: event.target.value ? Number(event.target.value) : null,
                             }))
                           }
-                          placeholder="Identifiant du ticket"
+                          placeholder="Ex. 124381627"
                           className="h-10"
                         />
                         <div className="text-xs text-muted-foreground">
-                          {ticketThreadContext?.ticketReference
-                            ? `Reference ouverte depuis le ticket ${ticketThreadContext.ticketReference}.`
-                            : "Une seule discussion est autorisee par ticket dans cette version."}
+                          {ticketThreadContext?.ticketId
+                            ? `Ouverte depuis le ticket ${ticketThreadContext.ticketId}.`
+                            : "Une seule discussion est autorisée par ticket dans cette version."}
                         </div>
                       </Field>
                     ) : null}
@@ -1428,7 +1814,10 @@ export function MessagesPage() {
                         rows={4}
                         value={createForm.initialMessage}
                         onChange={(event) =>
-                          setCreateForm((current) => ({ ...current, initialMessage: event.target.value }))
+                          setCreateForm((current) => ({
+                            ...current,
+                            initialMessage: event.target.value,
+                          }))
                         }
                         placeholder="Ajoutez un contexte initial si necessaire."
                         className="min-h-[104px] resize-none"
@@ -1455,7 +1844,8 @@ export function MessagesPage() {
                     <div className="flex items-center justify-between gap-3">
                       <Label>Participants</Label>
                       <span className="text-xs text-muted-foreground">
-                        {createForm.participantIds.length} selectionne{createForm.participantIds.length > 1 ? "s" : ""}
+                        {createForm.participantIds.length} selectionne
+                        {createForm.participantIds.length > 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="relative">
@@ -1473,13 +1863,17 @@ export function MessagesPage() {
                     <ScrollArea className="h-[260px] sm:h-[300px] lg:h-[332px]">
                       <div className="space-y-1 p-2">
                         {loadingDirectory ? (
-                          <PanelNotice label="Chargement des participants..." icon={LoaderCircle} spinning />
+                          <PanelNotice
+                            label="Chargement des participants..."
+                            icon={LoaderCircle}
+                            spinning
+                          />
                         ) : directoryError ? (
                           <PanelError message="Impossible de charger les participants." />
                         ) : selectableUsers.length === 0 ? (
                           <PanelNotice
                             label="Aucun participant disponible."
-                            description="Ajustez votre recherche ou verifiez l'annuaire local."
+                            description="Ajustez votre recherche ou vérifiez l'annuaire local."
                             icon={Users}
                           />
                         ) : (
@@ -1497,6 +1891,11 @@ export function MessagesPage() {
                                   onCheckedChange={(checked) =>
                                     toggleParticipantSelection(directoryUser.id, checked === true)
                                   }
+                                />
+                                <ProfileAvatar
+                                  fullName={directoryUser.fullName}
+                                  email={directoryUser.email}
+                                  size="sm"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="truncate text-sm font-medium text-foreground">
@@ -1519,10 +1918,10 @@ export function MessagesPage() {
 
                   <p className="text-xs text-muted-foreground">
                     {createForm.mode === "DIRECT"
-                      ? "Selectionnez exactement un autre utilisateur."
+                      ? "Sélectionnez exactement un autre utilisateur."
                       : createForm.mode === "GROUP"
-                        ? "Selectionnez un ou plusieurs participants."
-                        : "Selectionnez les participants a inclure dans la discussion ticket."}
+                        ? "Sélectionnez un ou plusieurs participants."
+                        : "Sélectionnez les participants à inclure dans la discussion liée au ticket."}
                   </p>
                 </div>
               </div>
@@ -1560,6 +1959,65 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="space-y-2">
       <Label>{label}</Label>
       {children}
+    </div>
+  );
+}
+
+const conversationTypeBadgeStyles: Record<ConversationType, string> = {
+  DIRECT: "border-sky-200 bg-sky-50 text-sky-700",
+  GROUP: "border-violet-200 bg-violet-50 text-violet-700",
+  TICKET: "border-amber-200 bg-amber-50 text-amber-800",
+};
+
+function ConversationTypeBadge({ type }: { type: ConversationType }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn("text-[11px] font-medium", conversationTypeBadgeStyles[type])}
+    >
+      {getConversationTypeLabel(type)}
+    </Badge>
+  );
+}
+
+const conversationAvatarIconStyles: Record<ConversationType, string> = {
+  DIRECT: "",
+  GROUP: "bg-gradient-to-br from-violet-500 to-violet-700",
+  TICKET: "bg-gradient-to-br from-amber-500 to-amber-700",
+};
+
+function ConversationAvatar({
+  conversation,
+  currentUserId,
+  usersById,
+  size = "sm",
+}: {
+  conversation: AdminMessagesConversation;
+  currentUserId: number | null | undefined;
+  usersById: Map<number, MessagingDirectoryUser>;
+  size?: "sm" | "md";
+}) {
+  if (conversation.type === "DIRECT") {
+    const otherParticipant = conversation.participants.find(
+      (participant) => currentUserId == null || participant.userId !== currentUserId,
+    );
+    const directoryUser = otherParticipant ? usersById.get(otherParticipant.userId) : undefined;
+    return (
+      <ProfileAvatar fullName={directoryUser?.fullName} email={directoryUser?.email} size={size} />
+    );
+  }
+
+  const dimension = size === "md" ? "h-10 w-10" : "h-8 w-8";
+  const Icon = conversation.type === "GROUP" ? Users : Ticket;
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full text-white shadow-glow",
+        dimension,
+        conversationAvatarIconStyles[conversation.type],
+      )}
+    >
+      <Icon className={size === "md" ? "h-[18px] w-[18px]" : "h-3.5 w-3.5"} />
     </div>
   );
 }
@@ -1643,15 +2101,15 @@ function readMessagesError(caught: unknown, fallback: string) {
   if (caught instanceof MessagesApiError) {
     switch (caught.status) {
       case 400:
-        return caught.message || "La requete de messagerie est invalide.";
+        return caught.message || "La requête de messagerie est invalide.";
       case 401:
-        return "Votre session a expire. Reconnectez-vous.";
+        return "Votre session a expiré. Reconnectez-vous.";
       case 403:
-        return "Acces refuse a cette conversation.";
+        return "Accès refusé à cette conversation.";
       case 404:
         return "Conversation introuvable.";
       case 409:
-        return caught.message || "Une discussion existe deja pour ce ticket.";
+        return caught.message || "Une discussion existe déjà pour ce ticket.";
       case 502:
       case 503:
         return "Le service de messagerie est indisponible pour le moment.";
@@ -1667,19 +2125,19 @@ function getCreateDialogTitle(mode: CreationMode) {
     case "DIRECT":
       return "Nouvelle conversation directe";
     case "GROUP":
-      return "Nouveau groupe";
+      return "Nouvelle conversation de groupe";
     case "TICKET":
-      return "Nouvelle discussion ticket";
+      return "Nouvelle discussion liée à un ticket";
   }
 }
 
 function getCreateDialogDescription(mode: CreationMode) {
   switch (mode) {
     case "DIRECT":
-      return "Selectionnez un seul interlocuteur. Si une conversation existe deja, elle sera reutilisee.";
+      return "Sélectionnez un seul interlocuteur. Si une conversation existe déjà, elle sera réutilisée.";
     case "GROUP":
-      return "Definissez le titre du groupe et choisissez ses participants.";
+      return "Définissez le titre du groupe et choisissez ses participants.";
     case "TICKET":
-      return "Une seule discussion est autorisee par ticket dans cette version.";
+      return "Une seule discussion est autorisée par ticket dans cette version.";
   }
 }

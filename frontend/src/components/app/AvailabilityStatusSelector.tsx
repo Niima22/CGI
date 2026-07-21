@@ -16,7 +16,7 @@ import {
 import { useAuth } from "@/lib/auth-store";
 import { publishAvailabilityStatusUpdate, subscribeAvailabilityStatusUpdate } from "@/lib/availability-status-events";
 
-const OPTIONS: AvailabilityStatus[] = [
+export const AVAILABILITY_STATUS_OPTIONS: AvailabilityStatus[] = [
   "AVAILABLE",
   "BREAK",
   "IN_COMMUNICATION",
@@ -24,12 +24,20 @@ const OPTIONS: AvailabilityStatus[] = [
   "OFFLINE",
 ];
 
-const LABELS: Record<AvailabilityStatus, string> = {
+export const AVAILABILITY_STATUS_LABELS: Record<AvailabilityStatus, string> = {
   AVAILABLE: "Disponible",
   BREAK: "Pause",
   IN_COMMUNICATION: "En communication",
   LEAVE: "Congé",
   OFFLINE: "Hors ligne",
+};
+
+export const AVAILABILITY_STATUS_DOT_CLASSES: Record<AvailabilityStatus, string> = {
+  AVAILABLE: "bg-emerald-500",
+  BREAK: "bg-amber-500",
+  IN_COMMUNICATION: "bg-sky-500",
+  LEAVE: "bg-violet-500",
+  OFFLINE: "bg-slate-400",
 };
 
 export function AvailabilityStatusSelector({ compact = false }: { compact?: boolean }) {
@@ -116,13 +124,17 @@ export function AvailabilityStatusSelector({ compact = false }: { compact?: bool
       >
         <div className="flex min-w-0 items-center gap-2">
           {saving && <LoaderCircle className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-          <SelectValue>{LABELS[currentStatus]}</SelectValue>
+          <span
+            aria-hidden
+            className={`h-2 w-2 shrink-0 rounded-full ${AVAILABILITY_STATUS_DOT_CLASSES[currentStatus]}`}
+          />
+          <SelectValue>{AVAILABILITY_STATUS_LABELS[currentStatus]}</SelectValue>
         </div>
       </SelectTrigger>
       <SelectContent>
-        {OPTIONS.map((option) => (
+        {AVAILABILITY_STATUS_OPTIONS.map((option) => (
           <SelectItem key={option} value={option}>
-            {LABELS[option]}
+            {AVAILABILITY_STATUS_LABELS[option]}
           </SelectItem>
         ))}
       </SelectContent>

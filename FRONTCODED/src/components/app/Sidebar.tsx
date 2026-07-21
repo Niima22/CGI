@@ -8,10 +8,10 @@ import {
   GaugeCircle,
   LayoutGrid,
   MessageSquare,
-  Shield,
   Sparkles,
   Ticket,
   UserCog,
+  UserRound,
   Users,
 } from "lucide-react";
 import { getTicketDashboardSummary } from "@/lib/api/tickets";
@@ -25,15 +25,15 @@ type MenuItem = {
     | "/dashboard"
     | "/kpi"
     | "/tickets"
-    | "/sla/policies"
     | "/quality-lab"
     | "/employees"
     | "/planning"
     | "/planning-view"
+    | "/sla/policies"
     | "/messages"
-    | "/my-profile"
     | "/departments"
-    | "/users";
+    | "/users"
+    | "/my-profile";
   badge?: string;
 };
 
@@ -55,6 +55,9 @@ export function Sidebar() {
   const { hasRole, authenticatedFetch, isAuthenticated, isReady } = useAuth();
   const [openTickets, setOpenTickets] = useState<number | null>(null);
   const canManage = hasRole("ADMIN") || hasRole("MANAGER");
+  const isPilote = hasRole("ADMIN");
+  const isSuperviseur = hasRole("MANAGER") && !isPilote;
+  const isEmployee = hasRole("EMPLOYEE") && !isPilote && !isSuperviseur;
 
   useEffect(() => {
     if (!isReady || !isAuthenticated || !canManage) {
@@ -90,44 +93,94 @@ export function Sidebar() {
     };
   }, [authenticatedFetch, canManage, isAuthenticated, isReady]);
 
-  const nav = [
+  const employeeNav = [
     {
-      label: "PILOTAGE",
+      label: "ESPACE PERSONNEL",
       items: [
-        { icon: LayoutGrid, label: "Centre de contrôle", to: "/dashboard" },
-        { icon: BarChart3, label: "Indicateurs KPI", to: "/kpi" },
-        { icon: Ticket, label: "Tickets", to: "/tickets", badge: formatCompact(openTickets) },
-        { icon: CalendarDays, label: "Planning", to: canManage ? "/planning" : "/planning-view" },
-        { icon: GaugeCircle, label: "SLA", to: "/sla/policies" },
-        { icon: Users, label: "Équipe", to: "/employees" },
-      ],
-    },
-    {
-      label: "ADMINISTRATION",
-      items: [
-        { icon: UserCog, label: "Utilisateurs", to: "/users" },
-        { icon: Building2, label: "Départements", to: "/departments" },
-        { icon: Shield, label: "Politiques SLA", to: "/sla/policies" },
+        { icon: LayoutGrid, label: "Tableau de bord", to: "/dashboard" },
+        { icon: Ticket, label: "Mes tickets", to: "/tickets" },
+        { icon: CalendarDays, label: "Mon planning", to: "/planning-view" },
+        { icon: Bell, label: "Notifications", to: "/dashboard" },
       ],
     },
     {
       label: "OUTILS",
       items: [
         { icon: Sparkles, label: "Quality Lab IA", to: "/quality-lab" },
-        { icon: Bell, label: "Notifications", to: "/messages" },
         { icon: MessageSquare, label: "Messagerie", to: "/messages" },
+        { icon: UserRound, label: "Mon profil", to: "/my-profile" },
       ],
     },
   ] satisfies { label: string; items: MenuItem[] }[];
 
+  const staffNav = [
+    {
+      label: "PILOTAGE",
+      items: isSuperviseur
+        ? [
+            { icon: LayoutGrid, label: "Centre de controle", to: "/dashboard" },
+            { icon: BarChart3, label: "Indicateurs KPI", to: "/kpi" },
+            {
+              icon: Ticket,
+              label: "Tickets",
+              to: "/tickets",
+              badge: formatCompact(openTickets),
+            },
+            { icon: CalendarDays, label: "Planning", to: "/planning" },
+            { icon: GaugeCircle, label: "SLA", to: "/sla/policies" },
+            { icon: Users, label: "Agents", to: "/employees" },
+            { icon: Users, label: "Bannettes", to: "/employees" },
+          ]
+        : [
+            { icon: LayoutGrid, label: "Centre de controle", to: "/dashboard" },
+            { icon: BarChart3, label: "Indicateurs KPI", to: "/kpi" },
+            {
+              icon: Ticket,
+              label: "Tickets",
+              to: "/tickets",
+              badge: formatCompact(openTickets),
+            },
+            {
+              icon: CalendarDays,
+              label: "Planning",
+              to: canManage ? "/planning" : "/planning-view",
+            },
+            { icon: GaugeCircle, label: "SLA", to: "/sla/policies" },
+            { icon: Users, label: "Bannettes", to: "/employees" },
+          ],
+    },
+    ...(isSuperviseur
+      ? []
+      : [
+          {
+            label: "ADMINISTRATION",
+            items: [
+              { icon: UserCog, label: "Utilisateurs", to: "/users" },
+              { icon: Building2, label: "Departements", to: "/departments" },
+            ],
+          },
+        ]),
+    {
+      label: "OUTILS",
+      items: isPilote
+        ? [{ icon: MessageSquare, label: "Messagerie", to: "/messages" }]
+        : [
+            { icon: Bell, label: "Notifications", to: "/dashboard" },
+            { icon: Sparkles, label: "Quality Lab IA", to: "/quality-lab" },
+            { icon: MessageSquare, label: "Messagerie", to: "/messages" },
+          ],
+    },
+  ] satisfies { label: string; items: MenuItem[] }[];
+
+  const nav = isEmployee ? employeeNav : staffNav;
+
   return (
     <aside
-      className="hidden w-[248px] shrink-0 flex-col border-r border-border/60 bg-white px-4 py-5 lg:flex"
+      className="hidden w-[260px] shrink-0 flex-col border-r border-border/60 bg-white px-4 py-5 lg:flex"
       style={sidebarTheme}
     >
-      <div className="flex items-center gap-2 px-2">
-        <img src={cgiLogo} alt="CGI" className="h-9 w-9 rounded-lg object-contain" />
-        <span className="text-lg font-semibold tracking-tight">CGI-Intranet</span>
+      <div className="flex justify-center px-2">
+        <img src={cgiLogo} alt="CGI" className="h-20 w-36 object-contain" />
       </div>
 
       <nav className="mt-6 flex-1 space-y-6 overflow-hidden pr-1">
@@ -163,9 +216,7 @@ export function Sidebar() {
                         <span
                           className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
                           style={{
-                            background: active
-                              ? "rgba(255,255,255,0.22)"
-                              : "rgba(82,54,152,0.1)",
+                            background: active ? "rgba(255,255,255,0.22)" : "rgba(82,54,152,0.1)",
                             color: active ? "#fff" : "var(--cgi-purple)",
                           }}
                         >
@@ -180,7 +231,6 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-
     </aside>
   );
 }
@@ -189,7 +239,7 @@ function isActive(pathname: string, item: MenuItem) {
   if (!item.to) {
     return false;
   }
-  if (item.label === "Politiques SLA") {
+  if (item.label === "Notifications") {
     return false;
   }
   return pathname === item.to || pathname.startsWith(`${item.to}/`);

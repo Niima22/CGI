@@ -15,16 +15,25 @@ import type {
 export const bannetteOptions = [
   "FO",
   "BO",
-  "SCO",
-  "Supply",
+  "PROXI-PMC",
   "Partenaire",
-  "VUS",
-  "Proxi & Promocash",
+  "Supply",
+  "DS-Magasin",
+];
+
+export const availabilityOptions: Array<{
+  value: AvailabilityStatus;
+  label: string;
+}> = [
+  { value: "AVAILABLE", label: "Disponible" },
+  { value: "IN_COMMUNICATION", label: "Occupé" },
+  { value: "OFFLINE", label: "Indisponible" },
+  { value: "LEAVE", label: "En congé" },
 ];
 
 export const emptyEmployeeForm: EmployeePayload = {
   fullName: "",
-  department: "DS Magasin",
+  department: "",
   bannette: "",
   operationalStatus: "",
   activityStatus: "",
@@ -80,7 +89,7 @@ export function AccessDenied({ message }: { message: string }) {
       <div className="mx-auto flex min-h-[60vh] max-w-xl items-center justify-center">
         <div className="w-full rounded-xl border border-border/80 bg-card p-8 text-center shadow-card">
           <ShieldAlert className="mx-auto h-10 w-10 text-destructive" />
-          <h1 className="mt-4 text-xl font-semibold">Acces refuse</h1>
+          <h1 className="mt-4 text-xl font-semibold">Accès refusé</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{message}</p>
           <Button asChild className="mt-6">
             <Link to="/dashboard">Retour au dashboard</Link>
@@ -112,7 +121,7 @@ export function StatusBadge({ employee }: { employee: Employee }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       <Badge variant={employee.userKeycloakId ? "secondary" : "outline"}>
-        {employee.userKeycloakId ? "Compte lie" : "Non lie"}
+        {employee.userKeycloakId ? "Compte lié" : "Non lié"}
       </Badge>
       {employee.status && <Badge variant="outline">{formatStatus(employee.status)}</Badge>}
       {employee.availabilityStatus && (
@@ -166,7 +175,7 @@ export function formatStatus(status: EmployeeStatus) {
   const labels: Record<EmployeeStatus, string> = {
     ACTIVE: "Actif",
     INACTIVE: "Inactif",
-    ON_LEAVE: "En pause",
+    ON_LEAVE: "En congé",
   };
   return labels[status];
 }
@@ -174,10 +183,10 @@ export function formatStatus(status: EmployeeStatus) {
 export function formatAvailabilityStatus(status: AvailabilityStatus) {
   const labels: Record<AvailabilityStatus, string> = {
     AVAILABLE: "Disponible",
-    BREAK: "Pause",
-    IN_COMMUNICATION: "En communication",
-    LEAVE: "Congé",
-    OFFLINE: "Hors ligne",
+    BREAK: "Indisponible",
+    IN_COMMUNICATION: "Occupé",
+    LEAVE: "En congé",
+    OFFLINE: "Indisponible",
   };
   return labels[status];
 }

@@ -15,9 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Configuration
 public class SecurityConfig {
+
+    private static final Set<String> BUSINESS_ROLES = Set.of("ADMIN", "MANAGER", "EMPLOYEE");
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -49,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/employees").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/employees/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/employees/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/employees/*/availability-status").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/employees/*/department").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/employees/*/link-user").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/employees/*/manager").hasRole("ADMIN")
@@ -78,6 +82,7 @@ public class SecurityConfig {
         return roles.stream()
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
+                .filter(BUSINESS_ROLES::contains)
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .map(GrantedAuthority.class::cast)
                 .toList();

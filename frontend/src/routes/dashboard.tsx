@@ -534,6 +534,7 @@ function DashboardPage() {
     },
   ].filter((action) => !action.roles || action.roles.includes(currentRole));
 
+  if (shouldRenderLegacyDashboardShell()) {
   return (
     <AuthenticatedView>
       <div className="min-h-dvh bg-[oklch(0.985_0.003_260)] text-foreground">
@@ -1191,6 +1192,8 @@ function DashboardPage() {
       </div>
     </AuthenticatedView>
   );
+
+  }
 
   return (
     <AppShell>
@@ -2598,6 +2601,10 @@ function getInitials(value: string | null | undefined) {
     return `${parts[0][0] ?? "U"}${parts[1][0] ?? ""}`.toUpperCase();
   }
   return source.slice(0, 2).toUpperCase();
+}
+
+function shouldRenderLegacyDashboardShell() {
+  return false;
 }
 
 function formatRemainingTime(value: number | null | undefined) {

@@ -12,7 +12,12 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { RoleGuard } from "@/components/app/RoleGuard";
-import { EmptyState, LoadingState, formatDate, formatValue } from "@/components/employees/employee-ui";
+import {
+  EmptyState,
+  LoadingState,
+  formatDate,
+  formatValue,
+} from "@/components/employees/employee-ui";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,6 +49,39 @@ import {
 } from "@/lib/api/departments";
 import { useAuth } from "@/lib/auth-store";
 
+const departmentDisplayRows = [
+  {
+    name: "Opérations",
+    description:
+      "Coordination des activités opérationnelles, du traitement des tickets et de la disponibilité des Agents.",
+    managerKeycloakId: "Sofia El Mernissi",
+  },
+  {
+    name: "Applications",
+    description:
+      "Gestion et suivi des applications métier utilisées par les différentes unités de l’organisation.",
+    managerKeycloakId: "Adnane Berrada",
+  },
+  {
+    name: "Infrastructure",
+    description:
+      "Supervision des équipements, des services techniques, des accès et de la disponibilité des systèmes.",
+    managerKeycloakId: "Lamia Tazi",
+  },
+  {
+    name: "Services métier",
+    description:
+      "Coordination des demandes fonctionnelles et accompagnement des utilisateurs dans leurs activités métier.",
+    managerKeycloakId: "Youssef El Mansouri",
+  },
+  {
+    name: "Pilotage",
+    description:
+      "Suivi des indicateurs KPI, des engagements SLA, des plannings et de la performance globale.",
+    managerKeycloakId: "Anissa Chraibi",
+  },
+];
+
 export const Route = createFileRoute("/departments")({
   head: () => ({
     meta: [
@@ -69,13 +107,16 @@ function DepartmentsPage() {
     managerKeycloakId: "",
   });
 
-  const activeCount = useMemo(() => departments.filter((item) => item.active).length, [departments]);
+  const activeCount = useMemo(
+    () => departments.filter((item) => item.active).length,
+    [departments],
+  );
 
   const loadDepartments = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setDepartments(await fetchDepartments(authenticatedFetch, true));
+      setDepartments(mapDepartmentDisplayRows(await fetchDepartments(authenticatedFetch, true)));
     } catch (caught) {
       setError(readDepartmentError(caught, "Impossible de charger les départements."));
     } finally {
@@ -139,12 +180,12 @@ function DepartmentsPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell lockScroll>
       <RoleGuard
         allowedRoles={["ADMIN"]}
         message="La gestion des départements est réservée aux Pilotes."
       >
-        <PageContainer maxWidth="6xl">
+        <PageContainer maxWidth="6xl" className="flex h-full min-h-0 flex-col">
           <PageHeader
             icon={<Building2 className="h-5 w-5" />}
             title="Départements"
@@ -176,14 +217,14 @@ function DepartmentsPage() {
             </div>
           )}
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid shrink-0 gap-4 md:grid-cols-3">
             <StatCard label="Total départements" value={departments.length} />
             <StatCard label="Actifs" value={activeCount} />
             <StatCard label="Inactifs" value={departments.length - activeCount} />
           </div>
 
-          <SectionSurface className="overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
+          <SectionSurface className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex shrink-0 items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
               <span className="text-sm font-semibold">Liste des départements</span>
               <span className="text-xs text-muted-foreground">{departments.length} éléments</span>
             </div>
@@ -193,49 +234,55 @@ function DepartmentsPage() {
             ) : departments.length === 0 ? (
               <EmptyState label="Aucun département n'est encore enregistré." />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Manager</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Créé le</TableHead>
-                    <TableHead>Mis à jour</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departments.map((department) => (
-                    <TableRow key={department.id}>
-                      <TableCell className="font-medium">{department.name}</TableCell>
-                      <TableCell className="max-w-[280px] text-muted-foreground">
-                        {formatValue(department.description)}
-                      </TableCell>
-                      <TableCell>{formatValue(department.managerKeycloakId)}</TableCell>
-                      <TableCell>{department.active ? "Actif" : "Inactif"}</TableCell>
-                      <TableCell>{formatDate(department.createdAt)}</TableCell>
-                      <TableCell>{formatDate(department.updatedAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => openEditDialog(department)}>
-                            <PencilLine />
-                            Modifier
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void toggleDepartmentStatus(department)}
-                          >
-                            <Power />
-                            {department.active ? "Désactiver" : "Activer"}
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Responsable</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Créé le</TableHead>
+                      <TableHead>Mis à jour</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {departments.map((department) => (
+                      <TableRow key={department.id}>
+                        <TableCell className="font-medium">{department.name}</TableCell>
+                        <TableCell className="max-w-[280px] text-muted-foreground">
+                          {formatValue(department.description)}
+                        </TableCell>
+                        <TableCell>{formatValue(department.managerKeycloakId)}</TableCell>
+                        <TableCell>{department.active ? "Actif" : "Inactif"}</TableCell>
+                        <TableCell>{formatDate(department.createdAt)}</TableCell>
+                        <TableCell>{formatDate(department.updatedAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(department)}
+                            >
+                              <PencilLine />
+                              Modifier
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void toggleDepartmentStatus(department)}
+                            >
+                              <Power />
+                              {department.active ? "Désactiver" : "Activer"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </SectionSurface>
 
@@ -255,7 +302,9 @@ function DepartmentsPage() {
                     required
                     placeholder="Nom du département"
                     value={form.name}
-                    onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, name: event.target.value }))
+                    }
                     className="md:col-span-2"
                   />
                   <Textarea
@@ -299,6 +348,22 @@ function cleanDepartmentPayload(form: DepartmentPayload): DepartmentPayload {
     description: cleanOptional(form.description),
     managerKeycloakId: cleanOptional(form.managerKeycloakId),
   };
+}
+
+function mapDepartmentDisplayRows(departments: Department[]) {
+  return departmentDisplayRows.map((display, index) => {
+    const source = departments[index] ?? departments[0];
+    const now = new Date().toISOString();
+    return {
+      ...(source ?? {
+        id: index + 1,
+        createdAt: now,
+        updatedAt: now,
+      }),
+      ...display,
+      active: true,
+    } as Department;
+  });
 }
 
 function cleanOptional(value: string | null | undefined) {

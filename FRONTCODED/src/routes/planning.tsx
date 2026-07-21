@@ -1,12 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   AlertTriangle,
+  Bell,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -27,6 +23,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -338,7 +335,9 @@ function PlanningPage() {
         );
       }
     } catch (cause) {
-      setError(formatPlanningLoadError(cause, "Impossible de charger le planning de cette semaine."));
+      setError(
+        formatPlanningLoadError(cause, "Impossible de charger le planning de cette semaine."),
+      );
     }
   }
 
@@ -558,7 +557,9 @@ function PlanningPage() {
       await loadWeekendStatistics();
       setNotice(`${payload.deletedPlanningWeeks ?? 0} ancien(s) planning(s) supprime(s).`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Impossible de supprimer l'historique planning.");
+      setError(
+        cause instanceof Error ? cause.message : "Impossible de supprimer l'historique planning.",
+      );
     } finally {
       setResettingHistory(false);
     }
@@ -631,7 +632,9 @@ function PlanningPage() {
       setRedoStack((stack) => [cloneAssignments(assignments), ...stack].slice(0, 30));
       setAssignments(cloneAssignments(previous));
       setPlanning((currentPlanning) =>
-        currentPlanning ? { ...currentPlanning, assignments: cloneAssignments(previous) } : currentPlanning,
+        currentPlanning
+          ? { ...currentPlanning, assignments: cloneAssignments(previous) }
+          : currentPlanning,
       );
       return nextUndoStack;
     });
@@ -645,7 +648,9 @@ function PlanningPage() {
       setUndoStack((stack) => [...stack, cloneAssignments(assignments)].slice(-30));
       setAssignments(cloneAssignments(next));
       setPlanning((currentPlanning) =>
-        currentPlanning ? { ...currentPlanning, assignments: cloneAssignments(next) } : currentPlanning,
+        currentPlanning
+          ? { ...currentPlanning, assignments: cloneAssignments(next) }
+          : currentPlanning,
       );
       return nextRedoStack;
     });
@@ -729,7 +734,9 @@ function PlanningPage() {
           : item,
       ),
     );
-    setNotice(roundedMinutes > 0 ? `Retard de ${roundedMinutes} min enregistre.` : "Retard retire.");
+    setNotice(
+      roundedMinutes > 0 ? `Retard de ${roundedMinutes} min enregistre.` : "Retard retire.",
+    );
     setPendingLateness(null);
   }
 
@@ -847,12 +854,9 @@ function PlanningPage() {
           </div>
         )}
 
-        <div className="grid items-start gap-3 xl:grid-cols-[190px_minmax(0,1fr)]">
-          <div className="space-y-3 xl:sticky xl:top-3">
-            <MonthCalendar weekStart={weekStart} onWeekChange={setWeekStart} />
-          </div>
+        <div className="flex flex-col gap-3">
+          <MonthCalendar weekStart={weekStart} onWeekChange={setWeekStart} problems={problems} />
           <div className="min-w-0 space-y-3">
-            {hasPlanningContent && planning && <ProblemPanel problems={problems} />}
             {hasPlanningContent && planning && (
               <PlanningGrid
                 agents={agents}
@@ -1084,7 +1088,10 @@ function LeavePeriodDialog({
           <div className="font-medium text-foreground">{pendingLeavePeriod.agent.fullName}</div>
           <div>Debut: {formatter.format(startDate)}</div>
         </div>
-        <label className="mt-4 block text-sm font-medium text-muted-foreground" htmlFor="leave-period-end">
+        <label
+          className="mt-4 block text-sm font-medium text-muted-foreground"
+          htmlFor="leave-period-end"
+        >
           Date de fin
         </label>
         <input
@@ -1104,7 +1111,11 @@ function LeavePeriodDialog({
           <Button variant="outline" onClick={onCancel}>
             Annuler
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={onConfirm} disabled={isInvalid}>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={onConfirm}
+            disabled={isInvalid}
+          >
             Confirmer le conge
           </Button>
         </div>
@@ -1137,7 +1148,10 @@ function LatenessDialog({
           <div className="font-medium text-foreground">{pendingLateness.agent.fullName}</div>
           <div>{new Intl.DateTimeFormat("fr-FR").format(parseLocalDate(pendingLateness.date))}</div>
         </div>
-        <label className="mt-4 block text-sm font-medium text-muted-foreground" htmlFor="lateness-minutes">
+        <label
+          className="mt-4 block text-sm font-medium text-muted-foreground"
+          htmlFor="lateness-minutes"
+        >
           Minutes de retard
         </label>
         <input
@@ -1146,7 +1160,9 @@ function LatenessDialog({
           min={0}
           step={1}
           value={String(pendingLateness.minutes)}
-          onChange={(event) => onChange(event.target.value === "" ? Number.NaN : Number(event.target.value))}
+          onChange={(event) =>
+            onChange(event.target.value === "" ? Number.NaN : Number(event.target.value))
+          }
           className="mt-2 h-10 w-full rounded-xl border border-border/60 px-3 text-sm text-foreground outline-none transition focus:border-cgi-purple focus:ring-2 focus:ring-cgi-purple/10"
         />
         <div className="mt-3 flex flex-wrap gap-2">
@@ -1174,7 +1190,11 @@ function LatenessDialog({
           <Button variant="outline" onClick={onCancel}>
             Annuler
           </Button>
-          <Button className="bg-amber-600 hover:bg-amber-700" onClick={onConfirm} disabled={isInvalid}>
+          <Button
+            className="bg-amber-600 hover:bg-amber-700"
+            onClick={onConfirm}
+            disabled={isInvalid}
+          >
             Confirmer
           </Button>
         </div>
@@ -1286,7 +1306,9 @@ function SaveConfirmationDialog({
           </Button>
           <Button
             className={
-              requiresOverride ? "bg-amber-600 hover:bg-amber-700" : "bg-gradient-cgi hover:brightness-110"
+              requiresOverride
+                ? "bg-amber-600 hover:bg-amber-700"
+                : "bg-gradient-cgi hover:brightness-110"
             }
             onClick={onConfirm}
             disabled={saving}
@@ -1303,9 +1325,11 @@ function SaveConfirmationDialog({
 function MonthCalendar({
   weekStart,
   onWeekChange,
+  problems,
 }: {
   weekStart: string;
   onWeekChange: (value: string) => void;
+  problems: PlanningProblem[];
 }) {
   const selected = parseLocalDate(weekStart);
   const [visibleMonth, setVisibleMonth] = useState(
@@ -1324,42 +1348,50 @@ function MonthCalendar({
   const cells = Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 
   return (
-    <aside className="rounded-2xl border border-border/60 bg-white p-2.5 shadow-card">
-      <div className="flex items-center justify-between">
+    <div className="w-full rounded-2xl border border-border/60 bg-white p-1.5 shadow-card">
+      <div className="flex items-center justify-between gap-2">
         <button
           type="button"
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+          className="rounded-md p-1 text-muted-foreground hover:bg-muted"
           onClick={() =>
             setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))
           }
           aria-label="Mois précédent"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
         </button>
-        <div className="text-sm font-semibold capitalize text-foreground">
-          {new Intl.DateTimeFormat("fr-FR", {
-            month: "long",
-            year: "numeric",
-          }).format(visibleMonth)}
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-semibold capitalize text-foreground">
+            {new Intl.DateTimeFormat("fr-FR", {
+              month: "long",
+              year: "numeric",
+            }).format(visibleMonth)}
+          </div>
+          <div className="rounded-lg bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            Semaine du <strong>{new Intl.DateTimeFormat("fr-FR").format(selected)}</strong>
+          </div>
         </div>
-        <button
-          type="button"
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
-          onClick={() =>
-            setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))
-          }
-          aria-label="Mois suivant"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <AlertsBell problems={problems} />
+          <button
+            type="button"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+            onClick={() =>
+              setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))
+            }
+            aria-label="Mois suivant"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[9px] font-medium uppercase text-muted-foreground">
-        {["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"].map((day) => (
+      <div className="mt-1 grid grid-cols-7 gap-0.5 text-center text-[9px] font-medium uppercase text-muted-foreground">
+        {["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"].map((day) => (
           <span key={day}>{day}</span>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-0.5">
+      <div className="mt-0.5 grid grid-cols-7 gap-0.5">
         {cells.map((date) => {
           const value = formatDateInput(date);
           const inMonth = date.getMonth() === visibleMonth.getMonth();
@@ -1370,7 +1402,7 @@ function MonthCalendar({
               key={value}
               type="button"
               onClick={() => onWeekChange(getMondayInputValue(date))}
-              className={`flex h-6 items-center justify-center rounded-md text-[10px] transition ${
+              className={`flex h-5 items-center justify-center rounded text-[10px] transition ${
                 inSelectedWeek
                   ? monday
                     ? "bg-gradient-cgi font-semibold text-white"
@@ -1385,10 +1417,61 @@ function MonthCalendar({
           );
         })}
       </div>
-      <div className="mt-2 rounded-lg bg-muted/40 px-2 py-1.5 text-[10px] text-muted-foreground">
-        Semaine du <strong>{new Intl.DateTimeFormat("fr-FR").format(selected)}</strong>
-      </div>
-    </aside>
+    </div>
+  );
+}
+
+function AlertsBell({ problems }: { problems: PlanningProblem[] }) {
+  const errorCount = problems.filter((problem) => problem.severity === "ERROR").length;
+  const count = problems.length;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="relative rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+          aria-label={count > 0 ? `${count} alerte(s) planning` : "Aucune alerte planning"}
+          disabled={count === 0}
+        >
+          <Bell className="h-4 w-4" />
+          {count > 0 && (
+            <span
+              className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-semibold text-white ${
+                errorCount > 0 ? "bg-destructive" : "bg-amber-500"
+              }`}
+            >
+              {count > 9 ? "9+" : count}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      {count > 0 && (
+        <PopoverContent align="end" className="w-80 p-3">
+          <div className="mb-2 text-sm font-semibold text-foreground">
+            Alertes du planning ({count})
+          </div>
+          <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+            {problems.map((rawProblem, index) => {
+              const translated = formatProblemForSupervisor(rawProblem);
+              return (
+                <div
+                  key={`${rawProblem.code}-${index}`}
+                  className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                    rawProblem.severity === "ERROR"
+                      ? "border-destructive/30 bg-destructive/5 text-destructive"
+                      : "border-amber-200 bg-amber-50 text-amber-900"
+                  }`}
+                >
+                  <span className="font-semibold">{translated.title}</span> ·{" "}
+                  {translated.description}
+                </div>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 }
 
@@ -1735,9 +1818,7 @@ function PlanningGrid({
                           index >= 5 ? "bg-muted/30" : ""
                         }`}
                         title={
-                          readOnly
-                            ? undefined
-                            : "R=retard, T=teletravail, L=figer, Suppr=OFF."
+                          readOnly ? undefined : "R=retard, T=teletravail, L=figer, Suppr=OFF."
                         }
                       >
                         <ShiftCell
@@ -1802,13 +1883,16 @@ function ShiftCell({
   const unavailableLabel = unavailability ? unavailabilityLabel(unavailability.reason) : null;
   const isTelework = unavailability?.reason === "TELETRAVAIL";
   const mainLabel = cellShiftLabel(assignment, unavailability);
-  const value = unavailableLabel && !isTelework
-    ? unavailabilityValue(unavailability?.reason)
-    : assignment
-      ? String(assignment.shiftId)
-      : "OFF";
-  const canToggleTelework = !readOnly && !isLocked && (isTelework || (Boolean(assignment) && !unavailability));
-  const canSetLateness = Boolean(assignment) && !readOnly && !isLocked && (!unavailability || isTelework);
+  const value =
+    unavailableLabel && !isTelework
+      ? unavailabilityValue(unavailability?.reason)
+      : assignment
+        ? String(assignment.shiftId)
+        : "OFF";
+  const canToggleTelework =
+    !readOnly && !isLocked && (isTelework || (Boolean(assignment) && !unavailability));
+  const canSetLateness =
+    Boolean(assignment) && !readOnly && !isLocked && (!unavailability || isTelework);
   const latenessMinutes = assignment?.latenessMinutes ?? 0;
   const latenessAccent =
     latenessMinutes > 0
@@ -1924,7 +2008,11 @@ function CellStatusCluster({
           <button
             type="button"
             aria-label="Declarer un retard"
-            title={latenessMinutes > 0 ? `Retard ${formatLateness(latenessMinutes)}` : "Declarer un retard"}
+            title={
+              latenessMinutes > 0
+                ? `Retard ${formatLateness(latenessMinutes)}`
+                : "Declarer un retard"
+            }
             onClick={onSetLateness}
             disabled={!canSetLateness}
             className={`flex h-4 min-w-4 items-center justify-center rounded-full border px-0.5 text-[7px] font-bold leading-none transition ${
@@ -2111,38 +2199,6 @@ function OldWeekendOffPanel({ statistics }: { statistics: WeekendOffStatistic[] 
 
 void OldWeekendOffPanel;
 
-function ProblemPanel({ problems }: { problems: PlanningProblem[] }) {
-  if (problems.length === 0) {
-    return null;
-  }
-  return (
-    <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 px-4 py-3">
-      <div className="flex flex-wrap gap-2">
-        {problems.slice(0, 4).map((rawProblem, index) => {
-          const translated = formatProblemForSupervisor(rawProblem);
-          const problem = {
-            ...rawProblem,
-            code: translated.title,
-            message: translated.description,
-          };
-          return (
-            <div
-              key={`${problem.code}-${index}`}
-              className={`rounded-lg border px-2.5 py-1.5 text-xs ${
-                problem.severity === "ERROR"
-                  ? "border-destructive/30 bg-destructive/5 text-destructive"
-                  : "border-amber-200 bg-amber-50 text-amber-900"
-              }`}
-            >
-              <span className="font-semibold">{problem.code}</span> · {problem.message}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function ShiftLegend({ color, label }: { color: string; label: string }) {
   return (
     <span className="flex items-center gap-1.5">
@@ -2288,7 +2344,8 @@ function enrichWeekendStatsWithCurrentPlanning(
     return statistics;
   }
   const hasCurrentWeekendData = assignments.some(
-    (assignment) => assignment.assignmentDate === saturdayKey || assignment.assignmentDate === sundayKey,
+    (assignment) =>
+      assignment.assignmentDate === saturdayKey || assignment.assignmentDate === sundayKey,
   );
   if (!hasCurrentWeekendData) {
     return statistics;

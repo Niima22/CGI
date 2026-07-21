@@ -133,6 +133,14 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.updateEmployeeStatus(id, request));
     }
 
+    @PatchMapping("/{id}/availability-status")
+    public ResponseEntity<EmployeeResponse> updateEmployeeAvailabilityStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMyAvailabilityStatusRequest request
+    ) {
+        return ResponseEntity.ok(employeeService.updateEmployeeAvailabilityStatus(id, request));
+    }
+
     @PatchMapping("/{id}/bannette")
     public ResponseEntity<EmployeeResponse> updateEmployeeBannette(
             @PathVariable Long id,

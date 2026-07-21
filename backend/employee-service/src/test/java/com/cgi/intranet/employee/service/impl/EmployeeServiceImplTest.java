@@ -5,6 +5,7 @@ import com.cgi.intranet.employee.dto.request.UpdateMyProfileRequest;
 import com.cgi.intranet.employee.dto.request.UpdateMyAvailabilityStatusRequest;
 import com.cgi.intranet.employee.dto.request.UpdateEmployeeBannetteRequest;
 import com.cgi.intranet.employee.dto.request.UpdateEmployeeDepartmentRequest;
+import com.cgi.intranet.employee.dto.request.UpdateEmployeeRequest;
 import com.cgi.intranet.employee.dto.response.EmployeeResponse;
 import com.cgi.intranet.employee.entity.Department;
 import com.cgi.intranet.employee.entity.Employee;
@@ -94,6 +95,31 @@ class EmployeeServiceImplTest {
     }
 
     @Test
+    void createEmployeeRejectsInvalidBannette() {
+        CreateEmployeeRequest request = new CreateEmployeeRequest(
+                "keycloak-2",
+                "Second Employee",
+                "second@test.com",
+                "Developer",
+                "Engineering",
+                "INVALID-BANNETTE",
+                null,
+                null,
+                "manager-1",
+                "123 Main St",
+                33.5731,
+                -7.5898,
+                EmployeeStatus.ACTIVE
+        );
+        when(employeeRepository.existsByUserKeycloakId("keycloak-2")).thenReturn(false);
+        when(employeeRepository.existsByEmail("second@test.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> employeeService.createEmployee(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Invalid bannette assignment");
+    }
+
+    @Test
     void supervisorCannotUpdateBannetteOutsideScope() {
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee()));
 
@@ -105,6 +131,45 @@ class EmployeeServiceImplTest {
         ))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Employee is outside supervisor scope");
+    }
+
+    @Test
+    void invalidBannetteAssignmentIsRejected() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee()));
+
+        assertThatThrownBy(() -> employeeService.updateEmployeeBannette(
+                1L,
+                new UpdateEmployeeBannetteRequest("INVALID-BANNETTE"),
+                "manager-1",
+                true
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Invalid bannette assignment");
+    }
+
+    @Test
+    void updateEmployeeRejectsInvalidBannette() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee()));
+        when(employeeRepository.findByEmail("employee@test.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> employeeService.updateEmployee(
+                1L,
+                new UpdateEmployeeRequest(
+                        "Employee User",
+                        "employee@test.com",
+                        "Developer",
+                        "Engineering",
+                        "INVALID-BANNETTE",
+                        null,
+                        null,
+                        "manager-1",
+                        "123 Main St",
+                        33.5731,
+                        -7.5898
+                )
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Invalid bannette assignment");
     }
 
     @Test
@@ -123,6 +188,20 @@ class EmployeeServiceImplTest {
     }
 
     @Test
+    void adminCanUpdateEmployeeAvailabilityStatus() {
+        Employee employee = employee();
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EmployeeResponse response = employeeService.updateEmployeeAvailabilityStatus(
+                1L,
+                new UpdateMyAvailabilityStatusRequest(AvailabilityStatus.IN_COMMUNICATION)
+        );
+
+        assertThat(response.availabilityStatus()).isEqualTo(AvailabilityStatus.IN_COMMUNICATION);
+    }
+
+    @Test
     void currentUserCanUpdateOwnSafeProfileFieldsOnly() {
         Employee employee = employee();
         when(employeeRepository.findByUserKeycloakId("keycloak-1")).thenReturn(Optional.of(employee));
@@ -134,14 +213,14 @@ class EmployeeServiceImplTest {
                 new UpdateMyProfileRequest(
                         "+212600000000",
                         "456 New Street",
-                        "Support specialist",
+                        "Profile specialist",
                         "https://example.com/avatar.jpg"
                 )
         );
 
         assertThat(response.phone()).isEqualTo("+212600000000");
         assertThat(response.address()).isEqualTo("456 New Street");
-        assertThat(response.bio()).isEqualTo("Support specialist");
+        assertThat(response.bio()).isEqualTo("Profile specialist");
         assertThat(response.profilePhotoUrl()).isEqualTo("https://example.com/avatar.jpg");
         assertThat(response.jobTitle()).isEqualTo("Developer");
         assertThat(response.department()).isEqualTo("Engineering");
@@ -153,8 +232,8 @@ class EmployeeServiceImplTest {
         Employee employee = employee();
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(departmentRepository.findById(5L)).thenReturn(Optional.of(new Department(
-                "Support",
-                "Support department",
+                "Operations",
+                "Operations department",
                 true,
                 "manager-1"
         )));
@@ -165,7 +244,7 @@ class EmployeeServiceImplTest {
                 new UpdateEmployeeDepartmentRequest(5L)
         );
 
-        assertThat(response.department()).isEqualTo("Support");
+        assertThat(response.department()).isEqualTo("Operations");
     }
 
     @Test

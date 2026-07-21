@@ -1,13 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import {
-  AlertCircle,
-  Clock,
-  LoaderCircle,
-  Pencil,
-  Plus,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, Clock, LoaderCircle, Pencil, Plus, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { RoleGuard } from "@/components/app/RoleGuard";
 import { formatDate } from "@/components/employees/employee-ui";
@@ -47,11 +40,7 @@ import {
   type SlaPolicyPayload,
   type SlaPolicyResponse,
 } from "@/lib/api/sla";
-import {
-  type TicketCriticality,
-  type TicketPriority,
-  type TicketType,
-} from "@/lib/api/tickets";
+import { type TicketCriticality, type TicketPriority, type TicketType } from "@/lib/api/tickets";
 import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/sla/policies")({
@@ -206,20 +195,22 @@ function SlaPoliciesPage() {
       setNotice(`Règle SLA ${!policy.active ? "activée" : "désactivée"}.`);
       await loadPolicies();
     } catch (caught) {
-      setError(readSlaPolicyError(caught, "Impossible de mettre à jour le statut de la règle SLA."));
+      setError(
+        readSlaPolicyError(caught, "Impossible de mettre à jour le statut de la règle SLA."),
+      );
     } finally {
       setPendingPolicyId(null);
     }
   }
 
   return (
-    <AppShell>
+    <AppShell lockScroll>
       <RoleGuard
         allowedRoles={["ADMIN", "MANAGER"]}
         message="Le suivi des SLA est réservé aux Pilotes et aux Superviseurs."
       >
-        <div className="mx-auto w-full max-w-[1500px] space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="mx-auto flex h-full w-full max-w-[1500px] min-h-0 flex-col space-y-4">
+          <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
@@ -244,37 +235,46 @@ function SlaPoliciesPage() {
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="flex shrink-0 items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
           )}
           {notice && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               {notice}
             </div>
           )}
 
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid shrink-0 gap-3 md:grid-cols-4">
             <SummaryCard label="Règles total" value={String(policies.length)} />
-            <SummaryCard label="Actives" value={String(policies.filter((policy) => policy.active).length)} />
-            <SummaryCard label="Inactives" value={String(policies.filter((policy) => !policy.active).length)} />
+            <SummaryCard
+              label="Actives"
+              value={String(policies.filter((policy) => policy.active).length)}
+            />
+            <SummaryCard
+              label="Inactives"
+              value={String(policies.filter((policy) => !policy.active).length)}
+            />
             <SummaryCard
               label="Seuil moyen"
               value={
                 policies.length === 0
                   ? "0 %"
                   : `${Math.round(
-                      policies.reduce((sum, policy) => sum + policy.warningThresholdPercent, 0) / policies.length,
+                      policies.reduce((sum, policy) => sum + policy.warningThresholdPercent, 0) /
+                        policies.length,
                     )} %`
               }
             />
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
-            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-white shadow-card">
+            <div className="flex shrink-0 items-center justify-between border-b border-border/70 px-4 py-3.5 sm:px-5">
               <span className="text-sm font-semibold">Liste des règles</span>
-              <span className="text-xs text-muted-foreground">{sortedPolicies.length} élément(s)</span>
+              <span className="text-xs text-muted-foreground">
+                {sortedPolicies.length} élément(s)
+              </span>
             </div>
 
             {loading ? (
@@ -286,70 +286,76 @@ function SlaPoliciesPage() {
                 Aucune règle SLA définie.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Type d&apos;incident</TableHead>
-                    <TableHead>Priorité</TableHead>
-                    <TableHead>Criticité</TableHead>
-                    <TableHead>Prise en charge</TableHead>
-                    <TableHead>Résolution</TableHead>
-                    <TableHead>Seuil d&apos;alerte</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedPolicies.map((policy) => {
-                    const pending = pendingPolicyId === policy.id;
-                    return (
-                      <TableRow key={policy.id}>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium text-foreground">{policy.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Créée le {formatDate(policy.createdAt)}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Type d&apos;incident</TableHead>
+                      <TableHead>Priorité</TableHead>
+                      <TableHead>Criticité</TableHead>
+                      <TableHead>Prise en charge</TableHead>
+                      <TableHead>Résolution</TableHead>
+                      <TableHead>Seuil d&apos;alerte</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedPolicies.map((policy) => {
+                      const pending = pendingPolicyId === policy.id;
+                      return (
+                        <TableRow key={policy.id}>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-medium text-foreground">{policy.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Créée le {formatDate(policy.createdAt)}
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{policy.incidentTypeLabel}</TableCell>
-                        <TableCell>{policy.priorityLabel}</TableCell>
-                        <TableCell>{policy.criticalityLabel}</TableCell>
-                        <TableCell>{policy.responseTimeMinutes} min</TableCell>
-                        <TableCell>{policy.resolutionTimeMinutes} min</TableCell>
-                        <TableCell>{policy.warningThresholdPercent} %</TableCell>
-                        <TableCell>
-                          <Badge variant={policy.active ? "secondary" : "outline"}>
-                            {policy.active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {isAdmin && (
-                              <>
-                                <Button size="sm" variant="outline" onClick={() => openEditDialog(policy)}>
-                                  <Pencil />
-                                  Modifier
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={policy.active ? "outline" : "secondary"}
-                                  disabled={pending}
-                                  onClick={() => void togglePolicyStatus(policy)}
-                                >
-                                  {pending && <LoaderCircle className="animate-spin" />}
-                                  {policy.active ? "Désactiver" : "Activer"}
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell>{policy.incidentTypeLabel}</TableCell>
+                          <TableCell>{policy.priorityLabel}</TableCell>
+                          <TableCell>{policy.criticalityLabel}</TableCell>
+                          <TableCell>{policy.responseTimeMinutes} min</TableCell>
+                          <TableCell>{policy.resolutionTimeMinutes} min</TableCell>
+                          <TableCell>{policy.warningThresholdPercent} %</TableCell>
+                          <TableCell>
+                            <Badge variant={policy.active ? "secondary" : "outline"}>
+                              {policy.active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              {isAdmin && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openEditDialog(policy)}
+                                  >
+                                    <Pencil />
+                                    Modifier
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={policy.active ? "outline" : "secondary"}
+                                    disabled={pending}
+                                    onClick={() => void togglePolicyStatus(policy)}
+                                  >
+                                    {pending && <LoaderCircle className="animate-spin" />}
+                                    {policy.active ? "Désactiver" : "Activer"}
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </div>
@@ -377,7 +383,9 @@ function SlaPoliciesPage() {
                     required
                     maxLength={180}
                     value={form.name}
-                    onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, name: event.target.value }))
+                    }
                   />
                 </Field>
 
@@ -415,7 +423,10 @@ function SlaPoliciesPage() {
                     type="number"
                     value={form.responseTimeMinutes}
                     onChange={(event) =>
-                      setForm((current) => ({ ...current, responseTimeMinutes: Number(event.target.value) }))
+                      setForm((current) => ({
+                        ...current,
+                        responseTimeMinutes: Number(event.target.value),
+                      }))
                     }
                   />
                 </Field>
@@ -427,7 +438,10 @@ function SlaPoliciesPage() {
                     type="number"
                     value={form.resolutionTimeMinutes}
                     onChange={(event) =>
-                      setForm((current) => ({ ...current, resolutionTimeMinutes: Number(event.target.value) }))
+                      setForm((current) => ({
+                        ...current,
+                        resolutionTimeMinutes: Number(event.target.value),
+                      }))
                     }
                   />
                 </Field>

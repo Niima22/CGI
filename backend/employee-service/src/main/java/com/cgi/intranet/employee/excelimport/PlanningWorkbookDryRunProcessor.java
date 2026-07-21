@@ -81,6 +81,7 @@ class PlanningWorkbookDryRunProcessor {
                         support.ignored("planning");
                     } else {
                         ambiguousRows++;
+                        support.error("INVALID_SHIFT_TEXT", "shift", "Planning cell value is not a recognized shift, absence, leave, or rest day", raw, support.source(sheet, row, columnName(entry.getKey()), null));
                         support.planningUnknown(raw, sheet, row);
                     }
                     continue;

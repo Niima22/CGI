@@ -153,7 +153,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 clean(request.email()),
                 clean(request.jobTitle()),
                 clean(request.department()),
-                clean(request.bannette()),
+                cleanAllowedBannette(request.bannette()),
                 clean(request.operationalStatus()),
                 clean(request.activityStatus()),
                 clean(request.managerKeycloakId()),
@@ -184,7 +184,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmail(clean(request.email()));
         employee.setJobTitle(clean(request.jobTitle()));
         employee.setDepartment(clean(request.department()));
-        employee.setBannette(clean(request.bannette()));
+        employee.setBannette(cleanAllowedBannette(request.bannette()));
         employee.setOperationalStatus(clean(request.operationalStatus()));
         employee.setActivityStatus(clean(request.activityStatus()));
         employee.setManagerKeycloakId(clean(request.managerKeycloakId()));
@@ -204,6 +204,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
+    public EmployeeResponse updateEmployeeAvailabilityStatus(Long id, UpdateMyAvailabilityStatusRequest request) {
+        Employee employee = findEmployeeById(id);
+        employee.setAvailabilityStatus(request.availabilityStatus());
+        return toResponse(employeeRepository.save(employee));
+    }
+
+    @Override
+    @Transactional
     public EmployeeResponse updateEmployeeBannette(
             Long id,
             UpdateEmployeeBannetteRequest request,
@@ -214,7 +222,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!globalAccess && !requesterKeycloakId.equals(employee.getManagerKeycloakId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Employee is outside supervisor scope");
         }
-        employee.setBannette(clean(request.bannette()));
+        employee.setBannette(cleanAllowedBannette(request.bannette()));
         return toResponse(employeeRepository.save(employee));
     }
 
@@ -357,7 +365,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                     clean(item.email()),
                     null,
                     clean(item.department()),
-                    clean(item.bannette()),
+                    cleanAllowedBannette(item.bannette()),
                     clean(item.operationalStatus()),
                     clean(item.activityStatus()),
                     clean(item.managerKeycloakId()),
@@ -372,7 +380,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         } else {
             employee.setFullName(fullName);
             employee.setDepartment(clean(item.department()));
-            employee.setBannette(clean(item.bannette()));
+            employee.setBannette(cleanAllowedBannette(item.bannette()));
             employee.setOperationalStatus(clean(item.operationalStatus()));
             employee.setActivityStatus(clean(item.activityStatus()));
         }
@@ -513,6 +521,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private String cleanAllowedBannette(String value) {
+        String bannette = clean(value);
+        if (bannette == null) {
+            return null;
+        }
+        if (!BANNETTES.contains(bannette)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid bannette assignment");
+        }
+        return bannette;
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
@@ -520,12 +539,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     private static final Set<String> BANNETTES = Set.of(
             "FO",
             "BO",
-            "SCO",
-            "Supply",
+            "PROXI-PMC",
             "Partenaire",
-            "VUS",
-            "Proxi & Promocash",
-            "KM"
+            "Supply",
+            "DS-Magasin"
     );
 
     private static final Set<String> SKIP_TOKENS = Set.of(

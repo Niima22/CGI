@@ -1,7 +1,12 @@
+param(
+    [ValidateRange(1, 65535)]
+    [int]$FrontendPort = 5173
+)
+
 $ErrorActionPreference = "Continue"
 
 $checks = @(
-    @{ Name = "frontend"; Url = "http://127.0.0.1:5173/" },
+    @{ Name = "frontend"; Url = "http://127.0.0.1:$FrontendPort/" },
     @{ Name = "ai-service"; Url = "http://127.0.0.1:8001/health" },
     @{ Name = "eureka"; Url = "http://127.0.0.1:8761/" },
     @{ Name = "auth-user-service"; Url = "http://127.0.0.1:8081/api/auth/health" },
