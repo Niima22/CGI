@@ -517,6 +517,7 @@ services:
       VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-cgi-flow-web}
       VITE_PLANNING_DEV_ADMIN_BYPASS: ${VITE_PLANNING_DEV_ADMIN_BYPASS:-false}
       VITE_KPI_MODULE_URL: ${VITE_KPI_MODULE_URL:-http://localhost:5180/kpi-app/}
+      VITE_KPI_APP_PROXY_TARGET: http://kpi-platform-frontend
     ports:
       - "5173:5173"
     healthcheck:
