@@ -91,5 +91,9 @@ frontend-old/
 ### Local development runtime files ###
 .run/
 
+### JMeter generated reports ###
+jmeter/reports/
+jmeter/jmeter-local.properties
+
 ### External source inspection ###
 external-sources/

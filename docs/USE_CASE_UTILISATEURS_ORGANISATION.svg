@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="640" viewBox="0 0 860 640">
+  <defs>
+    <linearGradient id="header" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#eaf5ff"/>
+      <stop offset="1" stop-color="#d7eaff"/>
+    </linearGradient>
+    <linearGradient id="systemBg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fcff"/>
+      <stop offset="1" stop-color="#e9f6ff"/>
+    </linearGradient>
+    <linearGradient id="usecase" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8ee0fb"/>
+      <stop offset="1" stop-color="#50c3e9"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/>
+    </marker>
+    <style>
+      .title { font: 700 20px Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .system-title { font: 700 16px Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .actor-name { font: 14px Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .actor-line { stroke: #000; stroke-width: 1.5; fill: none; stroke-linecap: round; }
+      .usecase { fill: url(#usecase); stroke: #000; stroke-width: 1; }
+      .usecase-text { font: 13px Arial, sans-serif; fill: #111; text-anchor: middle; dominant-baseline: middle; }
+      .association { stroke: #000; stroke-width: 1.2; fill: none; }
+      .include { stroke: #000; stroke-width: 1.1; fill: none; stroke-dasharray: 4 4; marker-end: url(#arrow); }
+      .include-text { font: 12px Arial, sans-serif; fill: #111; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="860" height="640" fill="#ffffff"/>
+  <rect x="28" y="28" width="804" height="32" fill="url(#header)" stroke="#000"/>
+  <text class="title" x="430" y="50">Diagramme de cas d'utilisation — Utilisateurs et organisation</text>
+
+  <rect x="152" y="75" width="681" height="542" fill="url(#systemBg)" stroke="#000"/>
+  <text class="system-title" x="492" y="96">CGI-Intranet</text>
+
+  <circle cx="71" cy="148" r="9" fill="#61c9eb" stroke="#000" stroke-width="1.2"/>
+  <path class="actor-line" d="M71 157 L71 200 M56 168 L86 168 M71 200 L56 225 M71 200 L86 225"/>
+  <text class="actor-name" x="71" y="232">Pilote</text>
+
+  <circle cx="72" cy="304" r="9" fill="#61c9eb" stroke="#000" stroke-width="1.2"/>
+  <path class="actor-line" d="M72 313 L72 356 M57 324 L87 324 M72 356 L57 381 M72 356 L87 381"/>
+  <text class="actor-name" x="72" y="388">Superviseur</text>
+
+  <circle cx="71" cy="455" r="9" fill="#61c9eb" stroke="#000" stroke-width="1.2"/>
+  <path class="actor-line" d="M71 464 L71 507 M56 475 L86 475 M71 507 L56 532 M71 507 L86 532"/>
+  <text class="actor-name" x="71" y="539">Employé</text>
+
+  <ellipse class="usecase" cx="408" cy="139" rx="107" ry="26"/>
+  <text class="usecase-text" x="408" y="139">Créer et gérer un utilisateur</text>
+
+  <ellipse class="usecase" cx="408" cy="207" rx="107" ry="26"/>
+  <text class="usecase-text" x="408" y="207">Attribuer un rôle</text>
+
+  <ellipse class="usecase" cx="408" cy="275" rx="107" ry="26"/>
+  <text class="usecase-text" x="408" y="275">Gérer les départements</text>
+
+  <ellipse class="usecase" cx="408" cy="344" rx="107" ry="26"/>
+  <text class="usecase-text" x="408" y="344">Consulter et gérer les employés</text>
+
+  <ellipse class="usecase" cx="408" cy="414" rx="107" ry="26"/>
+  <text class="usecase-text" x="408" y="414">Générer et consulter un planning</text>
+
+  <ellipse class="usecase" cx="408" cy="491" rx="107" ry="30"/>
+  <text class="usecase-text" x="408" y="482">
+    <tspan x="408" dy="0">Demander ou valider un</tspan>
+    <tspan x="408" dy="17">congé/échange de créneau</tspan>
+  </text>
+
+  <ellipse class="usecase" cx="408" cy="558" rx="107" ry="28"/>
+  <text class="usecase-text" x="408" y="558">Gérer son profil</text>
+
+  <ellipse class="usecase" cx="746" cy="344" rx="68" ry="32"/>
+  <text class="usecase-text" x="746" y="344">S'authentifier</text>
+
+  <path class="association" d="M104 179 L302 139"/>
+  <path class="association" d="M104 179 L302 207"/>
+  <path class="association" d="M104 179 L302 275"/>
+  <path class="association" d="M104 179 L302 414"/>
+  <path class="association" d="M104 179 L302 491"/>
+  <path class="association" d="M104 179 L302 558"/>
+
+  <path class="association" d="M105 344 L301 344"/>
+  <path class="association" d="M105 344 L302 414"/>
+  <path class="association" d="M105 344 L302 491"/>
+  <path class="association" d="M105 344 L302 558"/>
+
+  <path class="association" d="M104 490 L302 491"/>
+  <path class="association" d="M104 490 L302 558"/>
+
+  <path class="include" d="M515 139 C580 170 650 235 713 312"/>
+  <text class="include-text" x="605" y="175">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 207 C582 232 649 273 704 318"/>
+  <text class="include-text" x="596" y="229">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 275 C582 291 645 309 683 327"/>
+  <text class="include-text" x="596" y="284">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 344 L678 344"/>
+  <text class="include-text" x="595" y="335">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 414 C584 395 648 374 690 358"/>
+  <text class="include-text" x="596" y="386">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 491 C589 454 661 396 713 371"/>
+  <text class="include-text" x="598" y="437">&lt;&lt;include&gt;&gt;</text>
+
+  <path class="include" d="M515 558 C593 510 667 415 733 376"/>
+  <text class="include-text" x="600" y="495">&lt;&lt;include&gt;&gt;</text>
+</svg>

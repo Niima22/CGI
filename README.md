@@ -109,6 +109,46 @@ Main URLs:
 - Eureka: `http://127.0.0.1:8761/`
 - AI health: `http://127.0.0.1:8001/health`
 
+## JMeter Load Tests
+
+The JMeter plans are in `jmeter/`:
+
+- `test-plan-tickets.jmx`: gets a Keycloak password-grant token, extracts `access_token` with a JSON Extractor, then runs 50 concurrent users against `POST /api/tickets` through the API Gateway.
+- `test-plan-quality-lab.jmx`: runs 20 concurrent users against the Quality Lab FastAPI endpoint `POST /generate-resolution-frame`.
+
+Before running the tests, start the local stack and seed the development users:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1 -SeedUsers
+```
+
+The seed script writes the generated passwords to `.run/dev-credentials.txt`. Do not put credentials in the `.jmx` files. Create a local JMeter properties file from the example, then fill it with a test Keycloak account:
+
+```powershell
+Copy-Item jmeter\jmeter-local.properties.example jmeter\jmeter-local.properties
+notepad jmeter\jmeter-local.properties
+```
+
+Run the one-user smoke test first:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File jmeter\run-ticket-load-test.ps1 -Mode Smoke
+```
+
+If the smoke test succeeds, run the 50-user ticket load test:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File jmeter\run-ticket-load-test.ps1 -Mode Load
+```
+
+Reports are generated under `jmeter/reports/`. The HTML dashboards and `.jtl` files include KPI metrics such as response time percentiles, throughput, error rate, latency, connect time, received/sent bytes, and the configured duration assertions. The ticket duration assertion defaults to `ticket.kpi.max_ms=60000` for local smoke stability and can be overridden with `-TicketKpiMaxMs`.
+
+By default the ticket plan targets the gateway at `localhost:8080/api/tickets`, Keycloak at `localhost:8085/realms/cgi-flow`, and Quality Lab directly at `localhost:8001/generate-resolution-frame`. To test Quality Lab through the gateway route configured in `backend/api-gateway`, run with:
+
+```bash
+QUALITY_HOST=localhost QUALITY_PORT=8080 QUALITY_PATH=/api/ai/generate-resolution-frame bash jmeter/run-jmeter-tests.sh
+```
+
 Seed local Keycloak role accounts:
 
 ```powershell

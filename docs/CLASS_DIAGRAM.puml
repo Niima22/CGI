@@ -1,0 +1,103 @@
+@startuml CLASS_DIAGRAM
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide circle
+skinparam linetype ortho
+top to bottom direction
+
+' ==========================================================
+' CLASSES PRINCIPALES (une colonne, vertical)
+' ==========================================================
+
+package "employee-service" {
+  class Department {
+    -id: Long
+    -name: String
+    -active: boolean
+  }
+
+  class Employee {
+    -id: Long
+    -userKeycloakId: String
+    -fullName: String
+    -email: String
+    -department: String
+    -status: EmployeeStatus
+    -availabilityStatus: AvailabilityStatus
+  }
+
+  Employee ..> Department : department (logical link)
+}
+
+package "auth-user-service" {
+  class UserProfile {
+    -id: Long
+    -keycloakId: String
+    -fullName: String
+    -email: String
+    -role: Role
+    -active: boolean
+  }
+}
+
+UserProfile ..> Employee : userKeycloakId (logical link)
+
+package "kpi-platform.agent-service" {
+  class EquipeDs {
+    -id: UUID
+    -nom: String
+  }
+
+  class Agent {
+    -id: UUID
+    -matricule: String
+    -nom: String
+    -prenom: String
+    -codeGdi: String
+    -email: String
+  }
+
+  class ActionPlan {
+    -id: UUID
+    -description: String
+    -status: String
+  }
+
+  EquipeDs "1" o-- "many" Agent : equipe_id
+  Agent "1" o-- "many" ActionPlan : agent_id
+}
+
+package "kpi-platform.auth-service" {
+  class Utilisateur {
+    -id: UUID
+    -login: String
+    -nom: String
+    -prenom: String
+    -role: String
+    -agentRefId: UUID
+  }
+}
+
+Utilisateur ..> Agent : agentRefId (logical link)
+
+package "kpi-platform.kpi-service" {
+  class Ticket {
+    -id: Long
+    -ticketId: Long
+    -typeTicket: String
+    -equipeDs: String
+    -agentCodeGdi: String
+  }
+}
+
+Ticket ..> Agent : agentCodeGdi (logical link)
+
+' ==========================================================
+' Empiler les packages un sous l'autre (colonne unique)
+' ==========================================================
+"employee-service" -[hidden]down-> "auth-user-service"
+"auth-user-service" -[hidden]down-> "kpi-platform.agent-service"
+"kpi-platform.agent-service" -[hidden]down-> "kpi-platform.auth-service"
+"kpi-platform.auth-service" -[hidden]down-> "kpi-platform.kpi-service"
+
+@enduml

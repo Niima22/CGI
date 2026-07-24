@@ -1,0 +1,372 @@
+title CGI-FLOW - Diagramme de classes (KPI / RH)
+
+// ==========================================================
+// GROUPE 1 : employee-service (com.cgi.intranet.employee)
+// ==========================================================
+Employee-Service [color: blue] {
+  Department [icon: building] {
+    id Long pk
+    name String
+    description String
+    active boolean
+    managerKeycloakId String
+    createdAt LocalDateTime
+    updatedAt LocalDateTime
+  }
+
+  Employee [icon: user] {
+    id Long pk
+    userKeycloakId String
+    fullName String
+    email String
+    jobTitle String
+    department String
+    bannette String
+    operationalStatus String
+    activityStatus String
+    managerKeycloakId String
+    phone String
+    address String
+    bio String
+    profilePhotoUrl String
+    latitude Double
+    longitude Double
+    status EmployeeStatus
+    availabilityStatus AvailabilityStatus
+    createdAt LocalDateTime
+    updatedAt LocalDateTime
+  }
+
+  EmployeeStatus [icon: tag] {
+    ACTIVE String
+    INACTIVE String
+    ON_LEAVE String
+  }
+
+  AvailabilityStatus [icon: tag] {
+    AVAILABLE String
+    BREAK String
+    IN_COMMUNICATION String
+    LEAVE String
+    OFFLINE String
+  }
+}
+
+// ==========================================================
+// GROUPE 2 : auth-user-service (com.cgi.intranet.authuser)
+// ==========================================================
+Auth-User-Service [color: green] {
+  UserProfile [icon: user-check] {
+    id Long pk
+    keycloakId String
+    fullName String
+    email String
+    role Role
+    active boolean
+    createdAt LocalDateTime
+    updatedAt LocalDateTime
+  }
+
+  AuditLog [icon: file-text] {
+    id Long pk
+    action AuditAction
+    performedBy String
+    targetUser String
+    oldValue String
+    newValue String
+    module String
+    timestamp LocalDateTime
+  }
+
+  Role [icon: tag] {
+    EMPLOYEE String
+    MANAGER String
+    ADMIN String
+  }
+
+  AuditAction [icon: tag] {
+    USER_CREATED String
+    USER_ROLE_CHANGED String
+    USER_STATUS_CHANGED String
+    USER_PASSWORD_RESET String
+    USER_SYNC_TRIGGERED String
+  }
+
+  AccountStatus [icon: tag] {
+    ACTIVE String
+    INACTIVE String
+  }
+}
+
+// ==========================================================
+// GROUPE 3 : kpi-platform.agent-service (com.support.kpi.agent_service)
+// ==========================================================
+Kpi-Agent-Service [color: orange] {
+  EquipeDs [icon: users] {
+    id UUID pk
+    nom String
+  }
+
+  Agent [icon: user] {
+    id UUID pk
+    matricule String
+    nom String
+    prenom String
+    codeGdi String
+    loginGrafana String
+    logCare String
+    nomNormalise String
+    email String
+    location String
+    svi String
+    licence String
+    equipe_id UUID fk
+  }
+
+  ActionPlan [icon: check-square] {
+    id UUID pk
+    description String
+    status String
+    createdAt LocalDateTime
+    agent_id UUID fk
+  }
+}
+
+// ==========================================================
+// GROUPE 4 : kpi-platform.auth-service (com.support.kpi.auth_service)
+// ==========================================================
+Kpi-Auth-Service [color: orange] {
+  Utilisateur [icon: lock] {
+    id UUID pk
+    login String
+    passwordHash String
+    nom String
+    prenom String
+    role String
+    agentRefId UUID
+    actif boolean
+    derniereConnexion LocalDateTime
+    createdAt LocalDateTime
+    updatedAt LocalDateTime
+  }
+}
+
+// ==========================================================
+// GROUPE 5 : kpi-platform.kpi-service (com.support.kpi.kpi_service)
+// ==========================================================
+Kpi-Service [color: purple] {
+  ActionTicket [icon: ticket] {
+    id Long pk
+    ticketId Long
+    agentCodeGdi String
+    dateAction LocalDate
+    dateHeure OffsetDateTime
+    resol Short
+    esc Short
+    trfInt Short
+    trfExt Short
+    affInc Short
+    eat Short
+    bannetteGrafana String
+    equipeDs String
+    createdAt OffsetDateTime
+  }
+
+  AgentScore [icon: bar-chart] {
+    id Integer pk
+    agentCodeGdi String
+    agentNomComplet String
+    equipeDs String
+    periodeDebut LocalDate
+    periodeFin LocalDate
+    typePeriod String
+    scoreResolution BigDecimal
+    scoreQs BigDecimal
+    scoreNps BigDecimal
+    scoreVolume BigDecimal
+    scoreGlobal BigDecimal
+    classementEquipe Integer
+    classementGlobal Integer
+    createdAt LocalDateTime
+  }
+
+  Alerte [icon: alert-triangle] {
+    id Long pk
+    typeAlerte String
+    agentCodeGdi String
+    equipeDs String
+    valeurActuelle BigDecimal
+    seuilAlerte BigDecimal
+    niveau String
+    message String
+    dateAlerte LocalDate
+    resolue Boolean
+    dateResolution LocalDate
+    resoluePar UUID
+    createdAt LocalDateTime
+  }
+
+  KpiAppelsDaily [icon: phone-call] {
+    id Long pk
+    equipeDs String
+    sourceAppels String
+    dateKpi LocalDate
+    semaine String
+    appelsComptabilises Integer
+    appelsRepondus Integer
+    appelsPerdus Integer
+    appelsAbandonnes Integer
+    tauxDecroche BigDecimal
+    tauxPerdus BigDecimal
+    dureeAttenteMoySec Integer
+    dureeTraitementMoySec Integer
+    createdAt LocalDateTime
+  }
+
+  KpiDaily [icon: activity] {
+    id Long pk
+    agentNomComplet String
+    agentNomNormalise String
+    agentCodeGdi String
+    dateKpi LocalDate
+    semaine String
+    ticketsResolus Integer
+    ticketsEscalades Integer
+    ticketsTraites Integer
+    transfertsInternes Integer
+    transfertsExternes Integer
+    totalTickets Integer
+    appelsRecus Integer
+    appelsRepondus Integer
+    qs BigDecimal
+    qsSourceBrute String
+    tauxResolution BigDecimal
+    tauxEscalade BigDecimal
+    tauxTransfert BigDecimal
+    createdAt LocalDateTime
+  }
+
+  KpiWmProd [icon: trending-up] {
+    id Integer pk
+    agentNomComplet String
+    agentCodeGdi String
+    mois String
+    annee Short
+    moisNum Short
+    pctResolution BigDecimal
+    pctEscalade BigDecimal
+    pctTransfert BigDecimal
+    totalTickets Integer
+    appelsRecus BigDecimal
+    appelsRepondus BigDecimal
+    qsMensuel BigDecimal
+    createdAt LocalDateTime
+  }
+
+  Ticket [icon: ticket] {
+    id Long pk
+    ticketId Long
+    typeTicket String
+    typeCategorie String
+    digitalSupport String
+    bannetteGrafana String
+    equipeDs String
+    domaine String
+    prioriteInitiale String
+    priorite String
+    equipeTraitante String
+    dateCreation LocalDate
+    dateHeureAction OffsetDateTime
+    agentCodeGdi String
+    createdAt LocalDateTime
+  }
+}
+
+// ==========================================================
+// GROUPE 6 : kpi-platform.nps-service (com.support.kpi.nps_service)
+// ==========================================================
+Nps-Service [color: purple] {
+  NpsBanetteHebdo [icon: pie-chart] {
+    id Integer pk
+    bannetteGrafana String
+    equipeDs String
+    semaine String
+    moisNum Short
+    annee Short
+    nbPromoteurs Integer
+    nbNeutres Integer
+    nbDetracteurs Integer
+    npsBanette BigDecimal
+    createdAt LocalDateTime
+  }
+
+  NpsRetour [icon: message-square] {
+    id Long pk
+    dateRetourNps LocalDate
+    ticketId Long
+    typeTicket String
+    serviceImpactant String
+    serviceImpacte String
+    digitalSupport String
+    categorisation String
+    partenaire String
+    bannetteGrafana String
+    equipeDs String
+    domaine String
+    resoluParGrafana String
+    agentCodeGdi String
+    nps Short
+    categorieNps String
+    commentaire String
+    repondant String
+    emplacementRepondant String
+    reponseCommentaire String
+    etatCiblageTtr String
+    etatTtr String
+    reaffectations Short
+    relances Short
+    reouvertures Short
+    idOdm Long
+    etatPlanAction String
+    categorisationNps String
+    suiviRunManager String
+    planActionDetail String
+    createdAt LocalDateTime
+  }
+
+  NpsWm [icon: bar-chart-2] {
+    id Integer pk
+    equipeDsLabel String
+    equipeDsCode String
+    mois String
+    annee Short
+    moisNum Short
+    nbPromoteurs Integer
+    nbNeutres Integer
+    nbDetracteurs Integer
+    npsNet BigDecimal
+    createdAt LocalDateTime
+  }
+}
+
+// ==========================================================
+// RELATIONS REELLES (JPA @OneToMany / @ManyToOne)
+// ==========================================================
+EquipeDs.id <> Agent.equipe_id
+Agent.id <> ActionPlan.agent_id
+
+// ==========================================================
+// LIENS LOGIQUES (cle metier, pas de FK JPA - microservices distincts)
+// ==========================================================
+Employee.department - Department.name
+UserProfile.keycloakId - Employee.userKeycloakId
+Utilisateur.agentRefId - Agent.id
+ActionTicket.agentCodeGdi - Agent.codeGdi
+AgentScore.agentCodeGdi - Agent.codeGdi
+Alerte.agentCodeGdi - Agent.codeGdi
+KpiDaily.agentCodeGdi - Agent.codeGdi
+KpiWmProd.agentCodeGdi - Agent.codeGdi
+Ticket.agentCodeGdi - Agent.codeGdi
+KpiAppelsDaily.equipeDs - EquipeDs.nom
+NpsRetour.agentCodeGdi - Agent.codeGdi
+NpsRetour.ticketId - Ticket.ticketId

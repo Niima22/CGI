@@ -1,0 +1,92 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Employe" as Employe
+actor "Superviseur" as Superviseur
+actor "Pilote" as Pilote
+actor "Moteur IA" as AI
+
+rectangle "CGI-FLOW" {
+  package "Fonctionnalites communes" {
+    usecase "Consulter son profil\nauthentifie" as UC01
+    usecase "Creer un ticket" as UC02
+    usecase "Consulter les tickets" as UC03
+    usecase "Discuter sur un ticket" as UC04
+    usecase "Consulter le statut SLA\nd'un ticket" as UC05
+    usecase "Gerer ses notifications" as UC06
+    usecase "Consulter son planning" as UC07
+    usecase "Soumettre une demande\n(conge ou echange)" as UC08
+  }
+
+  package "Pilotage et supervision" {
+    usecase "Consulter le dashboard\net les KPI" as UC09
+    usecase "Exporter un rapport PDF" as UC10
+    usecase "Affecter / reaffecter\nun ticket" as UC11
+    usecase "Statuer sur une demande\nde planning" as UC12
+    usecase "Gerer les shifts\ndu planning" as UC13
+  }
+
+  package "Administration Pilote" {
+    usecase "Creer un utilisateur" as UC14
+    usecase "Gerer les roles" as UC15
+    usecase "Gerer les departements\net affectations" as UC16
+  }
+
+  package "Assistance IA" {
+    usecase "Obtenir une assistance IA\na la resolution" as UC17
+  }
+}
+
+Employe --> UC01
+Employe --> UC02
+Employe --> UC03
+Employe --> UC04
+Employe --> UC05
+Employe --> UC06
+Employe --> UC07
+Employe --> UC08
+Employe --> UC17
+
+Superviseur --> UC01
+Superviseur --> UC02
+Superviseur --> UC03
+Superviseur --> UC04
+Superviseur --> UC05
+Superviseur --> UC06
+Superviseur --> UC07
+Superviseur --> UC08
+Superviseur --> UC09
+Superviseur --> UC10
+Superviseur --> UC11
+Superviseur --> UC12
+Superviseur --> UC13
+Superviseur --> UC17
+
+Pilote --> UC01
+Pilote --> UC02
+Pilote --> UC03
+Pilote --> UC04
+Pilote --> UC05
+Pilote --> UC06
+Pilote --> UC07
+Pilote --> UC08
+Pilote --> UC09
+Pilote --> UC10
+Pilote --> UC11
+Pilote --> UC12
+Pilote --> UC13
+Pilote --> UC14
+Pilote --> UC15
+Pilote --> UC16
+
+AI --> UC17
+
+UC04 ..> UC03 : <<include>>
+UC05 ..> UC03 : <<include>>
+UC10 ..> UC09 : <<extend>>
+UC12 ..> UC08 : <<include>>
+UC17 ..> UC03 : <<include>>
+
+@enduml
