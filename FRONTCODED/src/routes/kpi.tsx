@@ -100,7 +100,8 @@ const KPI_CARD_CLASS = "rounded-2xl border border-border/60 bg-white p-2.5";
 const KPI_DETAIL_CARD_CLASS = "rounded-2xl border border-border/60 bg-white p-2";
 const KPI_CARD_SHADOW = { boxShadow: "var(--cgi-shadow-card)" } as const;
 
-const CHART_HEIGHT = 120;
+// The evolution chart fills its grid row instead of using a fixed height, so that
+// the dashboard scales with the viewport rather than overflowing onto the row below.
 const BAR_CHART_HEIGHT = 88;
 const NPS_CHART_HEIGHT = 72;
 const CHART_MARGIN = { top: 6, right: 10, left: 2, bottom: 2 };
@@ -455,7 +456,7 @@ function AdminKpiPage() {
   }, [apiData?.agentPerformance, bannette, demoMode, isManager]);
 
   return (
-    <AppShell lockScroll compactTopbar>
+    <AppShell compactTopbar>
       <RoleGuard
         allowedRoles={["ADMIN", "MANAGER"]}
         message="Les indicateurs KPI sont reserves aux Pilotes et aux Superviseurs."
@@ -480,7 +481,7 @@ function AdminKpiPage() {
           />
 
           <div
-            className={`grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto_minmax(0,1fr)] ${KPI_SECTION_GAP}`}
+            className={`grid min-h-[34rem] flex-1 grid-rows-[auto_minmax(0,1fr)_auto_minmax(0,1fr)] ${KPI_SECTION_GAP}`}
           >
             <MainCardsRow loading={isLoading} cards={data?.mainCards ?? []} demoMode={demoMode} />
 
@@ -837,15 +838,15 @@ function EvolutionChartCard({
 
   return (
     <div
-      className={`flex h-full min-h-0 flex-col ${KPI_CARD_CLASS} xl:col-span-8`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden ${KPI_CARD_CLASS} xl:col-span-8`}
       style={KPI_CARD_SHADOW}
     >
       <div className="shrink-0 text-[12px] font-semibold">Évolution des performances</div>
-      <div className="mt-1.5 flex min-h-0 w-full flex-1 flex-col" style={{ minHeight: CHART_HEIGHT }}>
+      <div className="mt-1.5 flex min-h-0 w-full flex-1 flex-col">
         {loading ? (
-          <ChartEmptyState label="Chargement..." height={CHART_HEIGHT} />
+          <ChartEmptyState label="Chargement..." />
         ) : showEmpty ? (
-          <ChartEmptyState label="Historique non disponible via l'API." height={CHART_HEIGHT} />
+          <ChartEmptyState label="Historique non disponible via l'API." />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={CHART_MARGIN}>
@@ -916,7 +917,7 @@ function BannetteChartCard({
 
   return (
     <div
-      className={`flex h-full min-h-0 flex-col ${KPI_DETAIL_CARD_CLASS} xl:col-span-4`}
+      className={`flex h-full min-h-0 flex-col overflow-hidden ${KPI_DETAIL_CARD_CLASS} xl:col-span-4`}
       style={KPI_CARD_SHADOW}
     >
       <div className="shrink-0 text-[11px] font-semibold leading-tight">Performance par bannette</div>
@@ -1350,11 +1351,13 @@ function CompactPagination({
   );
 }
 
-function ChartEmptyState({ label, height = 88 }: { label: string; height?: number }) {
+function ChartEmptyState({ label, height }: { label: string; height?: number }) {
   return (
     <div
-      className="grid w-full place-items-center rounded-xl bg-muted/50 text-center text-[10px] text-muted-foreground"
-      style={{ height }}
+      className={`grid w-full min-h-0 place-items-center rounded-xl bg-muted/50 text-center text-[10px] text-muted-foreground ${
+        height === undefined ? "h-full flex-1" : ""
+      }`}
+      style={height === undefined ? undefined : { height }}
     >
       <span className="flex items-center gap-1 px-2">
         <BarChart3 className="h-3 w-3" /> {label}

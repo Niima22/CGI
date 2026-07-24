@@ -97,3 +97,6 @@ jmeter/jmeter-local.properties
 
 ### External source inspection ###
 external-sources/
+
+# Local-only compose override (machine-specific)
+docker-compose.override.yml

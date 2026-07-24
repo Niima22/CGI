@@ -137,7 +137,7 @@ function DashboardRoute() {
     return <EmployeeDashboard />;
   }
   return (
-    <AppShell lockScroll compactTopbar>
+    <AppShell compactTopbar>
       <RoleGuard
         allowedRoles={["ADMIN", "MANAGER", "EMPLOYEE"]}
         message="Votre session ne permet pas d'accéder au centre de contrôle."
@@ -284,7 +284,7 @@ function PiloteDashboard() {
   }
 
   return (
-    <AppShell lockScroll compactTopbar>
+    <AppShell compactTopbar>
       <>
         <div
           className="mx-auto flex h-full w-full max-w-[1500px] min-h-0 flex-col gap-2"
@@ -297,7 +297,7 @@ function PiloteDashboard() {
             onExport={handleExport}
           />
           {loadError ? <EmptyPanel message={loadError} /> : null}
-          <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr_1fr] gap-2">
+          <div className="grid min-h-[40rem] flex-1 grid-rows-[auto_1fr_1fr] gap-2">
             <KpiRow
               loading={loading}
               users={users}
@@ -338,7 +338,7 @@ function ManagerDashboard() {
   );
 
   return (
-    <AppShell lockScroll compactTopbar>
+    <AppShell compactTopbar>
       <RoleGuard
         allowedRoles={["MANAGER"]}
         message="Ce centre de controle est reserve aux Superviseurs CGI."
@@ -351,7 +351,7 @@ function ManagerDashboard() {
           {!useMock ? (
             <EmptyPanel message="Les données réelles Superviseur seront chargées depuis les API opérationnelles." />
           ) : null}
-          <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr_1fr] gap-2">
+          <div className="grid min-h-[40rem] flex-1 grid-rows-[auto_1fr_1fr] gap-2">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-6">
               {data.kpis.map((kpi, index) => (
                 <KpiCard
@@ -377,7 +377,7 @@ function EmployeeDashboard() {
   const priorityTicketPath = "/tickets/$id";
 
   return (
-    <AppShell lockScroll compactTopbar>
+    <AppShell compactTopbar>
       <RoleGuard allowedRoles={["EMPLOYEE"]} message="Ce dashboard est réservé à Meryem Zerktouni.">
         <div
           className="mx-auto flex h-full w-full max-w-[1500px] min-h-0 flex-col gap-2"
@@ -405,7 +405,7 @@ function EmployeeDashboard() {
             </div>
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr_1fr] gap-2">
+          <div className="grid min-h-[40rem] flex-1 grid-rows-[auto_1fr_1fr] gap-2">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-6">
               {data.metrics.map((metric, index) => (
                 <KpiCard
@@ -681,8 +681,8 @@ function ManagerMiddleRow({
         className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-6"
         style={{ boxShadow: "var(--cgi-shadow-card)" }}
       >
-        <div className="text-[13px] font-semibold">Répartition des tickets par statut</div>
-        <div className="mt-1 h-[100px] flex-1">
+        <div className="shrink-0 text-[13px] font-semibold">Répartition des tickets par statut</div>
+        <div className="mt-1 min-h-[100px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={statusChartData} barCategoryGap={14} margin={{ top: 14, left: 0, right: 0, bottom: 0 }}>
               <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#8a83a3" }} />
@@ -778,16 +778,16 @@ function ManagerPlanningCard() {
 function ManagerPriorityTickets() {
   return (
     <div
-      className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-3"
+      className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-3"
       style={{ boxShadow: "var(--cgi-shadow-card)" }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="text-[13px] font-semibold">Tickets prioritaires</div>
         <Link to="/tickets" className="rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-medium text-foreground/70">
           Voir tout
         </Link>
       </div>
-      <ul className="mt-1.5 flex-1 space-y-1.5 overflow-hidden">
+      <ul className="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
         {managerDashboardMock.priorityTickets.map((ticket) => (
           <li key={ticket.reference} className="flex items-start gap-2">
             <TicketBadge tone={ticket.sla === "Dépassé" ? "red" : "purple"} />
@@ -820,11 +820,14 @@ function ManagerBottomRow() {
     <div className="grid min-h-0 grid-cols-1 gap-2 lg:grid-cols-12">
       <ManagerAgentWorkload />
       <div
-        className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-2"
+        className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-2"
         style={{ boxShadow: "var(--cgi-shadow-card)" }}
       >
-        <div className="text-[13px] font-semibold">Respect des SLA</div>
-        <div className="relative mx-auto mt-1 h-[95px] w-full flex-1">
+        <div className="shrink-0 text-[13px] font-semibold">Respect des SLA</div>
+        {/* The radial gauge uses fixed pixel radii, so this box must keep at least the
+            arc's height: without the floor it shrinks and the arc plus the centred
+            percentage overflow upward onto the card title. */}
+        <div className="relative mx-auto mt-1 min-h-[95px] w-full flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
               cx="50%"
@@ -851,7 +854,7 @@ function ManagerBottomRow() {
             <div className="text-[10px] text-muted-foreground">SLA respectés</div>
           </div>
         </div>
-        <div className="mt-1.5 grid grid-cols-1 gap-1 text-[10px]">
+        <div className="mt-1.5 grid shrink-0 grid-cols-1 gap-1 text-[10px]">
           <AccountMiniStat label="Respectés" value={String(sla.respected)} />
           <AccountMiniStat label="En risque" value={String(sla.atRisk)} />
           <AccountMiniStat label="Dépassés" value={String(sla.breached)} />
@@ -886,21 +889,21 @@ function ManagerAgentWorkload() {
     .reduce((total, entry) => total + entry.count, 0);
   return (
     <div
-      className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-4"
+      className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-4"
       style={{ boxShadow: "var(--cgi-shadow-card)" }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="text-[13px] font-semibold">Charge des Agents</div>
         <Link to="/employees" className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white px-2.5 py-1 text-[10px] font-semibold text-foreground/80">
           <Plus className="h-3 w-3" /> Voir les Agents
         </Link>
       </div>
-      <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+      <div className="mt-1.5 grid shrink-0 grid-cols-3 gap-1.5">
         <AccountMiniStat label="Bannettes" value="BO, FO" />
         <AccountMiniStat label="Agents" value="6" />
         <AccountMiniStat label="Tickets actifs" value={String(activeTickets)} />
       </div>
-      <ul className="mt-1.5 flex-1 space-y-1.5 overflow-hidden">
+      <ul className="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
         {managerDashboardMock.agentWorkload.map((agent) => (
           <li key={agent.name} className="flex items-center gap-2">
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold text-white" style={{ background: "var(--cgi-gradient)" }}>
@@ -924,10 +927,10 @@ function ManagerOperationsCard() {
   const planning = managerDashboardMock.planning;
   return (
     <div
-      className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-3"
+      className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-3"
       style={{ boxShadow: "var(--cgi-shadow-card)" }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="text-[13px] font-semibold">Planning et disponibilités</div>
         <Link
           to="/planning"
@@ -936,15 +939,17 @@ function ManagerOperationsCard() {
           Consulter le planning
         </Link>
       </div>
-      <div className="mt-1.5 grid grid-cols-2 gap-1">
+      {/* 3 columns, not 2: five stats then fit on two rows instead of three, which is
+          what leaves the recent-activity list below enough room to show real entries. */}
+      <div className="mt-1.5 grid shrink-0 grid-cols-3 gap-1">
         <AccountMiniStat label="Présents" value={String(planning.presentAgents)} />
         <AccountMiniStat label="Indisponibles" value={String(planning.unavailableAgents)} />
         <AccountMiniStat label="Congés" value={String(planning.pendingLeaveRequests)} />
         <AccountMiniStat label="Shifts" value={String(planning.shiftSwapsToProcess)} />
         <AccountMiniStat label="Conflits" value={String(planning.detectedConflicts)} />
       </div>
-      <div className="mt-1.5 text-[13px] font-semibold">Activité récente</div>
-      <ul className="mt-1 flex-1 space-y-1 overflow-hidden">
+      <div className="mt-1.5 shrink-0 text-[13px] font-semibold">Activité récente</div>
+      <ul className="mt-1 min-h-[3.25rem] flex-1 space-y-1 overflow-y-auto">
         {managerDashboardMock.recentActivity.map((activity) => (
           <li key={activity} className="rounded-xl bg-muted px-2 py-1 text-[10px] text-foreground/80">
             {activity}
@@ -1147,8 +1152,8 @@ function MiddleRow({
         className="flex min-h-0 flex-col rounded-2xl border border-border/60 bg-white p-2.5 lg:col-span-6"
         style={{ boxShadow: "var(--cgi-shadow-card)" }}
       >
-        <div className="text-[13px] font-semibold">Répartition des tickets par statut</div>
-        <div className="mt-1 h-[100px] flex-1">
+        <div className="shrink-0 text-[13px] font-semibold">Répartition des tickets par statut</div>
+        <div className="mt-1 min-h-[100px] flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={statusChartData}
