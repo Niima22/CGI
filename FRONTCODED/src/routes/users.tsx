@@ -294,11 +294,6 @@ function UsersPage() {
             }
           />
 
-          <div className="shrink-0 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-            Depuis cette page, un Pilote cree le compte Keycloak, assigne son role technique et
-            synchronise le profil applicatif.
-          </div>
-
           <div className="grid shrink-0 gap-4 md:grid-cols-3">
             <StatCard label="Profils total" value={String(users.length)} />
             <StatCard

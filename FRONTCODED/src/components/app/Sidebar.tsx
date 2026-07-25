@@ -129,7 +129,6 @@ export function Sidebar() {
             { icon: CalendarDays, label: "Planning", to: "/planning" },
             { icon: GaugeCircle, label: "SLA", to: "/sla/policies" },
             { icon: Users, label: "Agents", to: "/employees" },
-            { icon: Users, label: "Bannettes", to: "/employees" },
           ]
         : [
             { icon: LayoutGrid, label: "Centre de controle", to: "/dashboard" },

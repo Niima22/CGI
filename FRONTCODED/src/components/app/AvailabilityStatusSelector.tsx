@@ -76,12 +76,19 @@ export function AvailabilityStatusSelector({ compact = false }: { compact?: bool
 
   async function handleChange(nextStatus: string) {
     const typedStatus = nextStatus as AvailabilityStatus;
+    const previous = status;
+    // Optimistic update so the trigger reflects the choice immediately.
+    setStatus(typedStatus);
     setSaving(true);
     try {
       const updated = await updateMyAvailabilityStatus(authenticatedFetch, typedStatus);
-      const persisted = updated.availabilityStatus ?? "OFFLINE";
+      const persisted = updated.availabilityStatus ?? typedStatus;
       setStatus(persisted);
       publishAvailabilityStatusUpdate(persisted);
+    } catch (caught) {
+      // Roll back to the last known value instead of silently keeping the optimistic one.
+      setStatus(previous);
+      console.error("Échec de la mise à jour du statut de disponibilité", caught);
     } finally {
       setSaving(false);
     }

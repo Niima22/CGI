@@ -62,11 +62,14 @@ export function UserAccountMenu({ placement = "topbar" }: { placement?: "sidebar
   useEffect(() => subscribeProfilePhotoUpdate(setProfilePhotoUrl), []);
 
   const isManager = user?.primaryRole === "MANAGER";
+  const isPilote = user?.primaryRole === "ADMIN";
   const isAgent = isAgentUser(user);
   const displayName = isManager
     ? "Hajar Ait Lahcen"
     : isAgent
       ? agentProfileMock.fullName
+    : isPilote
+      ? "Zakaria El Kouraichi"
     : fullName || user?.localProfile?.fullName || email || "Utilisateur";
   const displayRole = useMemo(
     () =>
@@ -79,7 +82,9 @@ export function UserAccountMenu({ placement = "topbar" }: { placement?: "sidebar
           : "Compte CGI",
     [user],
   );
-  const displayAvailabilityStatus = isManager || isAgent ? "AVAILABLE" : availabilityStatus;
+  // Every account shows its real availability, kept in sync with the selector via the
+  // availability event bus.
+  const displayAvailabilityStatus = availabilityStatus;
   const compact = placement === "topbar";
 
   return (

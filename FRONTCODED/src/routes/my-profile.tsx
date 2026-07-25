@@ -81,18 +81,6 @@ function MyProfilePage() {
   });
   const [notice, setNotice] = useState<string | null>(null);
   const isAgent = isAgentUser(user);
-  const effectiveRolesLabel = isAgent
-    ? agentProfileMock.effectiveRoles.join(", ")
-    : user?.roles.length
-      ? user.roles.map(getBusinessRoleLabel).join(", ")
-      : "Aucun role metier";
-  const localStatusLabel = isAgent
-    ? agentProfileMock.localStatus
-    : user?.localProfile?.accountStatus
-      ? user.localProfile.accountStatus === "ACTIVE"
-        ? "Actif"
-        : "Inactif"
-      : "Aucun";
 
   const accountWarnings = useMemo(() => {
     if (!user) {
@@ -308,32 +296,8 @@ function MyProfilePage() {
                 }
               />
               <Info
-                label="Roles effectifs"
-                value={effectiveRolesLabel}
-              />
-              <Info
                 label="Statut du compte"
                 value={isAgent ? agentProfileMock.accountStatus : user.accountStatus === "ACTIVE" ? "Actif" : "Inactif"}
-              />
-              <Info
-                label="Profil local"
-                value={isAgent ? agentProfileMock.localProfileStatus : user.localProfileLinked ? "Synchronise" : "Non synchronise"}
-              />
-              <Info label="ID Keycloak" value={isAgent ? agentProfileMock.keycloakId : user.keycloakId} />
-              <Info label="Profil local ID" value={isAgent ? agentProfileMock.id : user.localProfile?.id ?? "Aucun"} />
-              <Info
-                label="Role local"
-                value={
-                  isAgent
-                    ? agentProfileMock.localRole
-                    : user.localProfile?.role
-                      ? getBusinessRoleLabel(user.localProfile.role)
-                      : "Aucun"
-                }
-              />
-              <Info
-                label="Statut local"
-                value={localStatusLabel}
               />
               <Info
                 label="Cree le"
@@ -541,7 +505,6 @@ function MyProfilePage() {
                 <Info label="Bio" value={employee.bio} />
               )}
               <Info label="Photo de profil" value={employee.profilePhotoUrl ? "Photo enregistrée" : "Aucune photo"} />
-              <Info label="Manager Keycloak ID" value={employee.managerKeycloakId} />
               <Info label="Cree le" value={formatDate(employee.createdAt)} />
               <Info label="Mis a jour" value={formatDate(employee.updatedAt)} />
               </div>

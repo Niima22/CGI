@@ -49,39 +49,6 @@ import {
 } from "@/lib/api/departments";
 import { useAuth } from "@/lib/auth-store";
 
-const departmentDisplayRows = [
-  {
-    name: "Opérations",
-    description:
-      "Coordination des activités opérationnelles, du traitement des tickets et de la disponibilité des Agents.",
-    managerKeycloakId: "Sofia El Mernissi",
-  },
-  {
-    name: "Applications",
-    description:
-      "Gestion et suivi des applications métier utilisées par les différentes unités de l’organisation.",
-    managerKeycloakId: "Adnane Berrada",
-  },
-  {
-    name: "Infrastructure",
-    description:
-      "Supervision des équipements, des services techniques, des accès et de la disponibilité des systèmes.",
-    managerKeycloakId: "Lamia Tazi",
-  },
-  {
-    name: "Services métier",
-    description:
-      "Coordination des demandes fonctionnelles et accompagnement des utilisateurs dans leurs activités métier.",
-    managerKeycloakId: "Youssef El Mansouri",
-  },
-  {
-    name: "Pilotage",
-    description:
-      "Suivi des indicateurs KPI, des engagements SLA, des plannings et de la performance globale.",
-    managerKeycloakId: "Anissa Chraibi",
-  },
-];
-
 export const Route = createFileRoute("/departments")({
   head: () => ({
     meta: [
@@ -116,7 +83,11 @@ function DepartmentsPage() {
     setLoading(true);
     setError(null);
     try {
-      setDepartments(mapDepartmentDisplayRows(await fetchDepartments(authenticatedFetch, true)));
+      // Render the real departments (with their real active status) sorted by id, so the
+      // activate/deactivate toggle is reflected. The previous display overlay forced
+      // active:true on every row, which hid every deactivation.
+      const rows = await fetchDepartments(authenticatedFetch, true);
+      setDepartments([...rows].sort((a, b) => a.id - b.id));
     } catch (caught) {
       setError(readDepartmentError(caught, "Impossible de charger les départements."));
     } finally {
@@ -348,22 +319,6 @@ function cleanDepartmentPayload(form: DepartmentPayload): DepartmentPayload {
     description: cleanOptional(form.description),
     managerKeycloakId: cleanOptional(form.managerKeycloakId),
   };
-}
-
-function mapDepartmentDisplayRows(departments: Department[]) {
-  return departmentDisplayRows.map((display, index) => {
-    const source = departments[index] ?? departments[0];
-    const now = new Date().toISOString();
-    return {
-      ...(source ?? {
-        id: index + 1,
-        createdAt: now,
-        updatedAt: now,
-      }),
-      ...display,
-      active: true,
-    } as Department;
-  });
 }
 
 function cleanOptional(value: string | null | undefined) {

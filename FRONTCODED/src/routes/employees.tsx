@@ -193,7 +193,7 @@ function EmployeesPage() {
         matchesAccountStatus &&
         matchesAvailability
       );
-    });
+    }).sort((a, b) => a.id - b.id);
   }, [accountByEmployeeKey, accountStatus, availability, bannette, department, employees, query, role]);
 
   const summary = useMemo(() => {

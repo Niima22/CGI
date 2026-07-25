@@ -92,7 +92,7 @@ function QualityLabPage() {
 
   return (
     <AppShell lockScroll>
-      <div className="flex h-full min-h-0 origin-top scale-[0.96] flex-col gap-3 overflow-hidden">
+      <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
           <div>
             <Link
@@ -214,12 +214,14 @@ function ConsultantForm() {
         onSubmit={submit}
         className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card p-5 shadow-card"
       >
-        <div className="space-y-2.5">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-cgi-pink" />
-            <h2 className="text-lg font-semibold">Formulaire Consultant</h2>
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <FileText className="h-5 w-5 text-cgi-pink" />
+          <h2 className="text-lg font-semibold">Formulaire Consultant</h2>
+        </div>
 
+        {/* Fields scroll on their own so the action footer below stays visible even
+            when the card is shorter than its content. */}
+        <div className="mt-2.5 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
           <Input
             label="Titre du ticket"
             value={form.titre}
@@ -252,16 +254,16 @@ function ConsultantForm() {
             onChange={set("outils")}
             placeholder="Console du navigateur, journaux applicatifs"
           />
-          <div className="mt-4 flex justify-end border-t border-border pt-3">
-            <Button
-              type="button"
-              onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
-            >
-              <Wand2 className="h-4 w-4" />
-              {isGenerating ? "Génération..." : "Générer la trame"}
-            </Button>
-          </div>
+        </div>
+        <div className="mt-3 flex shrink-0 justify-end border-t border-border pt-3">
+          <Button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!canGenerate || isGenerating}
+          >
+            <Wand2 className="h-4 w-4" />
+            {isGenerating ? "Génération..." : "Générer la trame"}
+          </Button>
         </div>
 
         {error ? (
